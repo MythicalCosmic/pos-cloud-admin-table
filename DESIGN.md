@@ -28,12 +28,19 @@ colors:
   rose-dark-primary: "#F2A0BA"
   amber-primary: "#956000"
   amber-dark-primary: "#F1BE66"
+  chart-tag-dark: "#171923"
+  chart-tag-on-dark: "#FFFFFF"
+  chart-tag-light: "#F4F1FA"
+  chart-tag-on-light: "#302945"
 typography:
   display: { fontFamily: Hanken Grotesk, fontSize: 32px, fontWeight: 700, lineHeight: 40px }
   title: { fontFamily: Hanken Grotesk, fontSize: 24px, fontWeight: 600, lineHeight: 32px }
   body: { fontFamily: Hanken Grotesk, fontSize: 14px, fontWeight: 400, lineHeight: 22px }
   label: { fontFamily: Hanken Grotesk, fontSize: 12px, fontWeight: 600, lineHeight: 16px }
   quantity: { fontFamily: JetBrains Mono, fontSize: 30px, fontWeight: 600, lineHeight: 36px }
+  dashboard-heading: { fontFamily: Hanken Grotesk, fontSize: 32px, fontWeight: 600, lineHeight: "1.2", letterSpacing: "-.03em" }
+  dashboard-total: { fontFamily: Hanken Grotesk, fontSize: 29px, fontWeight: 600, lineHeight: "1.3" }
+  dashboard-metric: { fontFamily: Hanken Grotesk, fontSize: 21px, fontWeight: 600, lineHeight: "1.3", letterSpacing: "-.025em" }
 rounded:
   xs: 6px
   sm: 8px
@@ -44,7 +51,9 @@ rounded:
   chart-control: 7px
   chart-control-group: 9px
   workspace-control: 11px
-  overview-card: 12px
+  dashboard-surface: 16px
+  dashboard-control: 12px
+  dashboard-activity: 12px
   workspace-card: 18px
 spacing:
   one: 4px
@@ -58,14 +67,26 @@ components:
   button-primary: { backgroundColor: "{colors.blue-primary}", textColor: "{colors.blue-surface}" }
   button-primary-hover: { backgroundColor: "{colors.blue-hover}" }
   button-secondary: { backgroundColor: "{colors.blue-surface}", textColor: "{colors.blue-ink}" }
+  dashboard-card: { backgroundColor: "{colors.blue-surface}", textColor: "{colors.blue-ink}", rounded: "{rounded.dashboard-surface}", padding: "{spacing.five}" }
+  dashboard-summary-card: { typography: "{typography.dashboard-total}", rounded: "{rounded.dashboard-surface}", padding: "18px" }
 ---
 
 ## Overview
 
 Alpha POS puts restaurant activity, reporting and daily work in one readable workspace.
 Its visual direction comes from the user's legacy admin reference and the earlier approved Forest theme.
+The dashboard's approved September 10 reference adds softly raised surfaces, lightly tinted summary cards,
+shaded rounded data marks and clearly separated ring sectors. These dashboard treatments use the existing
+identity, fonts and six palettes; other workspaces retain their established visual rules.
 **Creative North Star: "Restaurant operations"** describes the product's existing purpose.
-**Key Characteristics:** full-width information, clear values, fine table rules, custom controls, restrained motion.
+
+**Key Characteristics:**
+
+- Full-width information and clear values.
+- Soft dashboard surfaces and shaded data marks.
+- Fine table rules and custom controls.
+- Restrained motion and visible keyboard focus.
+
 Implementation is authoritative. See [the detailed guide](docs/design-system.md), [tokens](src/styles/tokens.css),
 and [product constraints](PRODUCT.md). The portable tokens above are a selected source-backed subset.
 
@@ -77,36 +98,44 @@ with Light/Dark chosen independently. All six previews show their own colors in 
 `src/config/palettes.ts` supplies first-paint CSS, loader colors, previews and the Vuetify color mirror;
 `src/styles/tokens.css` retains typography, spacing, radii and elevation. Login and toast surfaces follow
 the selected palette. Body/placeholder text and primary button labels meet 4.5:1 on tested surfaces.
-Semantic success, warning and error colors retain their meaning. Chart revenue, expense, cash and card
-use the matching chart tokens; categorical rings add distinct series colors with exact-value legends.
+Semantic success, warning and error colors retain their meaning. Payment shares retain their tender colors;
+categorical rings use distinct palette series colors with exact-value legends. Dashboard time series shade
+the primary series from the fourth chart color into the primary accent, and use the expense color for expenses.
+Order channels share one mapping across columns, legends, ranked rows and DailyLedger: Hall uses primary,
+Delivery the fourth chart color, and Pickup the third chart color, through the shared order-channel helper.
 Chart selection adds a border, readable values and a pressed state alongside color. Series colors remain
-palette-bound; treemap labels use the existing contrast helper against each fill.
+palette-bound; treemap labels use the existing contrast helper against each fill. Floating chart value tags
+use the explicit dark/on-dark pair. Ring labels use that pair for the emphasized sector and the light/on-light
+pair for other visible labels; neither pair inherits a theme foreground that could lose contrast.
 **The Shared Palette Rule.** Read canonical tokens; do not hard-code a second palette inside a page.
 
 ## Typography
 
-Hanken Grotesk carries headings, labels and prose; JetBrains Mono carries quantities and reporting figures.
+Hanken Grotesk carries headings, labels and prose. Dashboard headline totals, KPI values and ring summaries
+also use Hanken Grotesk with tabular figures; JetBrains Mono remains the exact-value and accounting-report face.
 Use existing UZS formatters and tabular figures. Shared type tokens establish the base scale; responsive
 headings and KPI figures also adapt their size and spacing to the available width.
 Long Uzbek, Russian and English labels must wrap or have an accessible full-value detail.
-Detailed report cards use compact titles and quieter period/scope text below them. Metric rails retain
-tabular figures, with smaller sans-serif names when the value is a person or product.
+Detailed report cards use compact titles and quieter period/scope text below them. Dashboard KPI cards retain
+tabular figures, with smaller sans-serif names when the value is a person or product. Staff radar axis labels
+remain 11 CSS pixels as the SVG contracts on phones; scaling the chart must not shrink the text with it.
 Accounting reports use the shared money formatter's exact mode to preserve decimal-string precision and
 narrow no-break-space grouping without abbreviation. Unavailable cost, profit and margin remain dashes.
 
 ## Layout
 
 The continuous dashboard orders Overview, Sales, Products, Staff and Operations; navigation jumps to sections.
-Its header, today's independent order count, interval controls, section navigator and four opening Overview
-cards are preserved. Below them, the wider trend panel sits beside payment shares and category ranking,
-followed by a full-width recent-order ledger. Later chapters use compact metric rails with shared outer
-borders and internal rules. Report panels align to their content instead of stretching to match a tall neighbor.
-The dashboard surface brief records the detailed chapter composition and dataset boundaries.
+The renewed header, today's independent order count, interval controls and sticky section navigator lead into
+four tinted Overview cards. Performance and the three-column order-channel chart share an equal-width row;
+payment and category ring charts form the next equal-width pair. Recent activity follows as responsive order
+tiles. Later chapters use separated tinted KPI cards. Paired distributions, expense reports and staff panels
+stretch deliberately to the same row height. The dashboard surface brief records chapter composition and dataset boundaries.
 
-Products opens its analysis with equally sized columns for sold-product and sold-category unit-share pies.
-These stack at 1000px; the category map and synchronized ranking stack at 900px. Metric rails use two
-columns at 650px, with the first of Sales' five metrics spanning the phone row. Report content uses a
-16px rhythm and card padding reduces from 20px to 16px on phones.
+The opening totals become two columns at 1250px, Performance and order channels stack at 1020px, and the
+payment/category pair stacks at 650px. Products begins with equal sold-product and sold-category unit-share
+pies, stacking at 1000px; category map and ranking stack at 900px. Chapter KPI grids use two columns at
+650px, with Sales' first metric spanning the phone row. Report content uses a 16px rhythm and card padding
+reduces from 20px to 16px on phones. Recent activity uses two phone columns with wrapping record content.
 Phones use a date sheet and two-column opening totals. Customer, order and shift registers expose all fields through
 phone records and details; the phone chart metric switch gets a full row above comparison and chart style.
 Desktop keeps dense tables; DailyLedger uses expandable phone records with all source columns available.
@@ -130,33 +159,48 @@ Expandable phone records retain the same fields and cost evidence.
 
 Use tonal surfaces, one-pixel borders and the existing shadow vocabulary. Focus rings identify keyboard position.
 Hover and press feedback stay brief; pending animation conveys actual work. Respect reduced motion.
+Dashboard cards use a fine edge mixed from text and surface, with a low two-part shadow
+(`0 2px 3px -2px #15162512, 0 8px 24px -18px #15162530`). KPI backgrounds tint one edge with a chart color
+and fade into the surface. Dashboard KPI hover retains its resting elevation. Shading belongs to chart marks
+and useful summary surfaces; it does not change an encoded value or introduce decorative data.
 Distribution sectors preview through opacity and a small outward translation; exact rows add a quiet tonal
 surface on hover and a primary border when selected. Time-series tools use short color transitions, with
-chart updates honoring reduced motion. Proportional bars reflect values without animating their width.
+chart updates honoring reduced motion. Distribution bars update directly; kitchen bars use a brief width
+transition on the shared actual/target scale. The sidecar records system elevation and motion separately
+from the portable color, type and radius primitives.
 
 ## Shapes
 
 Use shared components for their complete shapes. The workspace-control and workspace-card roles preserve
-the established control and container silhouettes; the overview-card role belongs to the four opening totals.
-Reporting cards and metric-rail outlines use the lg radius, with square, border-separated cells inside a rail.
+the established control and container silhouettes. Dashboard report cards, all chapter KPI cards, date fields
+and today's count use the dashboard-surface radius; dashboard action buttons and activity tiles use their
+smaller dashboard roles. Product Performance keeps the lg radius for reporting panels and metric-rail outlines,
+with square, border-separated cells inside its rail.
 Distribution rows use sm corners. Inset chart buttons use chart-control corners within chart-control-group
 surfaces; the larger Overview metric selector uses md corners. These observed overrides supplement the
-base radius tokens. Tiny swatches, tracks, plot marks and focus outlines are chart geometry, not additional
-card or control radius roles.
+base radius tokens. Rounded SVG ring sectors are real annular paths with gaps and corners constrained by
+each actual share. Columns have softened ends; staff scatter marks are rounded squares. Tiny swatches,
+tracks, plot marks and focus outlines are chart geometry, not additional card or control radius roles.
 
 ## Components
 
 Reuse Alpha Button, Select, MultiSelect, FormInput, DateTimeField, Modal and DataTable.
 Each date endpoint combines a custom calendar and time control; validated drafts apply together.
 
-- TimeSeriesExplorer uses the existing ECharts SVG renderer for area/columns and exact point readouts.
+- TimeSeriesExplorer uses the existing ECharts SVG renderer for gradient areas, shaded rounded columns
+  and dark floating value tags. It retains exact point readouts.
   Pointer exploration, previous/next controls and Arrow/Home/End keys reach values. An explicit exploration
   control reveals the point scrubber and available zoom tools. Comparisons appear only with source data.
+- OrderChannelChart shows three simple Hall/Delivery/Pickup columns for the complete supplied period or
+  a selected date/bucket. A custom Select changes scope, and the adjacent exact counts and shares remain
+  available to keyboard and touch users. Missing channel counts retain an incomplete-data notice and dashes.
 - DistributionChart supports SVG ring sectors, strips and ranked bars. Hover or focus previews a row;
   click/tap or a row button pins it, and reset/Escape clears selection. The complete supplied dataset
   determines totals and shares even when only the leading rows are visible. Lists above 12 entries use
   the shared bounded Select to reach every row; smaller lists can expand in place. The Products pies show
-  five leading rows and a visible count of the reported products/categories in their scope.
+  five leading rows and a visible count of the reported products/categories in their scope. Rings pair a
+  large shaded visual with exact rows; narrow containers place the ring above a two-column legend. Value
+  tags stay readable on both the emphasized and quieter sectors.
 - CategoryMap synchronizes treemap selection, custom Select and exact ranked rows. Its Revenue/Units
   choice changes the measure for the same categories. Small unlabeled tiles remain available in the selector.
 - ComboPareto preserves every returned product and labels whether cumulative share uses the reported
@@ -164,12 +208,20 @@ Each date endpoint combines a custom calendar and time control; validated drafts
   keep narrow bars accessible. An 80% statement appears only when the cumulative series reaches it.
 - Staff leaderboard, primary comparison selector and Scatter share the selected person. Scatter previews
   points on hover/focus, pins through pointer or Enter/Space, and retains a full selector and exact orders,
-  revenue and AOV readout. Bubble size represents AOV. Radar compares reported orders, revenue, hours and
-  shifts against each measure's team maximum, with the scale explained and original values in View data.
+  revenue and AOV readout. AOV controls rounded-square mark size. Radar compares reported orders, revenue,
+  hours and shifts against each measure's team maximum, with the scale explained, color-linked selectors,
+  a 300-unit chart size and the original-value table open by default.
 - Affinity opens with ranked pairs and retains chord, matrix and product/pair drill-down views. Pair
   occurrences remain labeled as such; their sum is not a unique-order count.
-- DailyLedger retains revenue, expenses and all order-channel columns, sorting and pagination, with subtle
-  revenue bars alongside exact values. Missing source values remain dashes. ReportState uses compact
+- KitchenSpeed places the actual preparation-time bar and target marker on one shared scale that includes
+  overruns. Each row retains order count, actual time, target or untracked state, and a numeric overrun.
+  All categories and Above target filters expose real counts and a distinct no-overrun state.
+- Sales pairs colored channel rows with the latest returned expense records, four records per page.
+  Previous/next controls retain access to the complete returned list without forcing a tall neighboring card.
+- Recent activity retains each order's identity, status, channel, table/address, age, amount and order link
+  in compact tiles. Show all reveals the remaining returned records; the Orders route remains available.
+- DailyLedger retains revenue, expenses and all order-channel columns, sorting and pagination, with date
+  badges and shaded revenue cells behind exact values. Missing source values remain dashes. ReportState uses compact
   contextual copy, a quiet icon and an available action; ReportSkeleton reserves report structure without
   drawing pretend data. Unavailable, zero activity, first load, stale and partial failure remain distinct.
 - Product Performance combines the shared custom date, category, search and sort controls with optional
@@ -184,6 +236,9 @@ Each date endpoint combines a custom calendar and time control; validated drafts
   navigate, and Escape closes and restores the trigger. Focus moves to an available item when the current
   one becomes busy. The existing surface, border and shadow tokens support a short, reduced-motion-aware
   overlay transition.
+- Dashboard Export uses that report menu for ADMIN/MANAGER product-performance exports covering the applied
+  business dates, with the backend's 07:00–03:00 scope disclosed. Exact-time selections show a scope notice;
+  the separate loaded Dashboard snapshot CSV retains the exact reporting window and unavailable-value blanks.
 
 AI answer styles use the existing request, with the original question retained in the conversation.
 Loyalty settings use a disposable draft. ShiftLedger keeps original shift details and financial safeguards.
@@ -195,6 +250,8 @@ The Alpha monogram identifies favicon and startup state; locally bundled SVG ico
 - Keep loading, error, empty, stale and populated states distinct; keep all chart categories accessible.
 - Keep phone targets reachable and test full control visibility at 320px as well as 390px.
 - Keep chart share scope visible and every returned category, product and person reachable through exact-value controls.
+- Keep order-channel colors consistent and chart tags readable across all six light/dark palettes.
+- Keep preparation targets as markers on the actual-time scale, so overruns remain visible.
 - Keep accounting-report money exact and incomplete historical cost visible through warnings and unavailable-value dashes.
 - Do not invent live-looking totals or replace missing financial values with zero.
 - Do not turn a displayed subset into a period-wide denominator or normalized staff measures into performance scores.

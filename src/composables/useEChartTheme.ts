@@ -19,6 +19,7 @@ export interface EChartTokens {
   negative: string
   expense: string
   primary: string
+  secondary: string
   text: string
   textSecondary: string
   textTertiary: string
@@ -40,6 +41,7 @@ function read(): EChartTokens {
     negative: readVar('--color-negative', '#C8372A'),
     expense: readVar('--c3', '#A2683C'),
     primary: readVar('--primary', '#3A5BDB'),
+    secondary: readVar('--c4', '#A56CE8'),
     text: readVar('--text', '#0F1722'),
     textSecondary: readVar('--text-secondary', '#586172'),
     textTertiary: readVar('--text-tertiary', '#8A929E'),

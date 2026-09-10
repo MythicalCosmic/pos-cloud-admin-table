@@ -7,11 +7,13 @@ import Skeleton from '@/components/design/Skeleton.vue'
 import Select from '@/components/design/Select.vue'
 import DesignIcon from '@/components/design/DesignIcon.vue'
 import ChartTip from '@/components/design/charts/ChartTip.vue'
+import { designId } from '@/components/design/ids'
 
 interface ParetoDatum { label: string; value: number; share?: number | null; cumulativeShare?: number | null }
 const props = withDefaults(defineProps<{ data: ParetoDatum[]; totalRevenue?: number | null; height?: number; loading?: boolean }>(), { height: 260, loading: false })
 const { t } = useI18n({ useScope: 'global' })
 const [elRef, width] = useWidth()
+const gradientId = designId('pareto-material')
 const selected = ref(0)
 const hovered = ref<number | null>(null)
 const tip = ref({ show: false, x: 0, y: 0 })
@@ -121,6 +123,24 @@ watch(() => props.data, () => { selected.value = 0; clearPreview() })
         class="pareto__plot"
         @mouseleave="clearPreview"
       >
+        <defs>
+          <linearGradient
+            :id="gradientId"
+            x1="0"
+            y1="0"
+            x2="0"
+            y2="1"
+          >
+            <stop
+              offset="0"
+              stop-color="color-mix(in srgb, var(--c1) 45%, white)"
+            />
+            <stop
+              offset="1"
+              stop-color="var(--c1)"
+            />
+          </linearGradient>
+        </defs>
         <g
           v-for="value in ticks.ticks"
           :key="value"
@@ -163,8 +183,8 @@ watch(() => props.data, () => { selected.value = 0; clearPreview() })
             :y="y(Math.max(0, row.value))"
             :width="barWidth"
             :height="Math.max(0, row.value) / ticks.top * innerHeight"
-            :rx="Math.min(4, barWidth / 2)"
-            fill="var(--c1)"
+            :rx="Math.min(7, barWidth / 2)"
+            :fill="`url(#${gradientId})`"
             :opacity="index === activeIndex ? 1 : .5"
           />
         </g>

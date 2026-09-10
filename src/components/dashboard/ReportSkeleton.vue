@@ -98,11 +98,10 @@ const { t } = useI18n({ useScope: 'global' })
 
 <style scoped>
 .report-skeleton { display: grid; gap: 16px; min-width: 0; }
-.report-skeleton__metrics { display: grid; grid-template-columns: repeat(var(--metrics), minmax(0, 1fr)); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
-.report-skeleton__metrics > div { display: grid; gap: 14px; padding: 20px; }
-.report-skeleton__metrics > div + div { border-left: 1px solid var(--border); }
-.report-skeleton__workspace { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 16px; }
-.report-skeleton__plot, .report-skeleton__detail { padding: 20px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }
+.report-skeleton__metrics { display: grid; grid-template-columns: repeat(var(--metrics), minmax(0, 1fr)); gap: 10px; }
+.report-skeleton__metrics > div { display: grid; gap: 14px; padding: 20px; border: 1px solid var(--dash-edge, var(--border)); border-radius: 16px; background: var(--surface); }
+.report-skeleton__workspace { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.report-skeleton__plot, .report-skeleton__detail { padding: 20px; border: 1px solid var(--dash-edge, var(--border)); border-radius: 16px; background: var(--surface); box-shadow: var(--dash-shadow, var(--shadow-xs)); }
 .report-skeleton__heading, .report-skeleton__row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .report-skeleton__axis { display: grid; gap: 44px; padding: 35px 0 28px; }
 .report-skeleton__axis > span { display: flex; align-items: center; gap: 12px; }

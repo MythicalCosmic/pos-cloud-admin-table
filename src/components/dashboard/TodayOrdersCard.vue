@@ -55,11 +55,11 @@ const count = computed(() => {
 </template>
 
 <style scoped>
-.today-orders { display: flex; align-items: center; gap: 12px; min-inline-size: 230px; padding: 12px 16px; border: 1px solid var(--primary-border); border-radius: 12px; background: var(--primary-weak); }
+.today-orders { display: flex; align-items: center; gap: 12px; min-inline-size: 230px; padding: 12px 16px; border: 1px solid var(--dash-edge, var(--border)); border-radius: 16px; background: var(--surface); box-shadow: var(--dash-shadow, var(--shadow-xs)); }
 .today-orders__icon { display: flex; color: var(--primary); flex-shrink: 0; }
 .today-orders__body { flex: 1; min-inline-size: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 16px; align-items: center; }
 .today-orders__label { font-size: 12px; font-weight: 600; color: var(--text); }
-.today-orders__count { grid-column: 2; grid-row: 1 / 3; font: 600 28px/1.15 var(--font-mono); letter-spacing: -.03em; font-variant-numeric: tabular-nums; color: var(--primary); }
+.today-orders__count { grid-column: 2; grid-row: 1 / 3; font: 600 30px/1.15 var(--font-sans); letter-spacing: -.03em; font-variant-numeric: tabular-nums; color: var(--text); }
 .today-orders__note { grid-column: 1; font-size: 10px; color: var(--text-secondary); line-height: 1.5; }
 .today-orders__skeleton { grid-column: 2; grid-row: 1 / 3; display: block; block-size: 32px; inline-size: 48px; border-radius: 6px; background: var(--surface); }
 .today-orders > button { display: grid; place-items: center; flex: 0 0 44px; block-size: 44px; border-radius: 8px; color: var(--primary); margin-inline-end: -8px; }

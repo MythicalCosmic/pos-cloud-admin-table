@@ -11,6 +11,7 @@ import Button from '@/components/design/Button.vue'
 import DesignIcon from '@/components/design/DesignIcon.vue'
 import DistributionChart from '@/components/dashboard/DistributionChart.vue'
 import TimeSeriesExplorer from '@/components/dashboard/TimeSeriesExplorer.vue'
+import OrderChannelChart, { type ChannelPoint } from '@/components/dashboard/OrderChannelChart.vue'
 import ReportState from '@/components/dashboard/ReportState.vue'
 import ReportSkeleton from '@/components/dashboard/ReportSkeleton.vue'
 import { fmtNum } from '@/components/design/utils/format'
@@ -66,6 +67,7 @@ interface DashData {
   monthTarget: number
   revenue30: number[]
   orders30: number[]
+  channelDays: ChannelPoint[]
   aov30: number[]
 
   /** Revenue for the equal-length business-day window immediately before the selected one. */
@@ -256,6 +258,7 @@ function emptyDash(): DashData {
     monthTarget: 0,
     revenue30: [],
     orders30: [],
+    channelDays: [],
     aov30: [],
 
     // A failed comparison request must not render a fake all-zero comparison.
@@ -271,6 +274,14 @@ function emptyDash(): DashData {
 function asNum(v: unknown): number {
   const n = Number(v)
   return Number.isFinite(n) ? n : 0
+}
+
+function channelCount(value: unknown): number | null {
+  if (value === null || value === undefined || String(value).trim() === '')
+    return null
+  const number = Number(value)
+
+  return (Number.isFinite(number) && number >= 0) ? number : null
 }
 
 // Payment mix colors (kept stable across renders so DonutChart legend is consistent).
@@ -380,6 +391,13 @@ function applySalesBreakdown(mapped: DashData, sales: any) {
   mapped.dayLabels = Array.isArray(sales.dayLabels) ? sales.dayLabels.map(String) : []
 
   const days = Array.isArray(sales.channelDays) ? sales.channelDays : []
+
+  mapped.channelDays = days.map((day: { day?: string; hall?: unknown; delivery?: unknown; pickup?: unknown }, index: number) => ({
+    label: day.day ?? mapped.dayLabels[index] ?? '',
+    hall: channelCount(day.hall),
+    delivery: channelCount(day.delivery),
+    pickup: channelCount(day.pickup),
+  }))
 
   mapped.orders30 = days.map((day: any) => asNum(day?.hall) + asNum(day?.delivery) + asNum(day?.pickup))
 
@@ -541,7 +559,7 @@ const activeValue = computed(() => {
 
 const chartHasData = computed(() => !!data.value?.dayLabels.length && !!activeMetric.value?.data.length)
 const isCompact = useMediaQuery('(max-width: 600px)')
-const chartHeight = computed(() => isCompact.value ? 230 : 350)
+const chartHeight = computed(() => isCompact.value ? 230 : 260)
 const paymentSlices = computed(() => data.value?.paymentMix.map(slice => ({ ...slice, label: t(slice.label) })) ?? [])
 
 watch(sharedRange, () => { loadDashboard() })
@@ -788,7 +806,7 @@ onBeforeUnmount(() => { dashboardRequestId++ })
               :categories="data.dayLabels"
               :series="switchSeries"
               :height="chartHeight"
-              mode="area"
+              mode="bar"
               :unit="metricKey === 'ord' ? undefined : 'UZS'"
             >
               <template #controls>
@@ -891,10 +909,32 @@ onBeforeUnmount(() => { dashboardRequestId++ })
           </details>
         </Card>
 
+        <Card class="overview-panel overview-channel-flow">
+          <div class="overview-panel__head">
+            <div><h2>{{ t('dash_channel_title') }}</h2><p>{{ t('dash_channel_subtitle') }}</p></div>
+            <span class="overview-panel__icon"><DesignIcon
+              name="grid"
+              :size="18"
+            /></span>
+          </div>
+          <OrderChannelChart
+            v-if="data.channelDays.length"
+            :data="data.channelDays"
+          />
+          <ReportState
+            v-else
+            :title="salesUnavailable ? t('Could not load dashboard') : t('dash_no_activity')"
+            :description="salesUnavailable ? t('Check your connection and try again.') : t('Try a different date range.')"
+            :error="salesUnavailable"
+            :action="salesUnavailable ? t('Retry') : undefined"
+            @action="retryDashboard"
+          />
+        </Card>
+
         <div class="overview-breakdowns">
           <Card class="overview-panel overview-payments">
             <div class="overview-panel__head">
-              <div><h2>{{ t('Payment mix') }}</h2></div>
+              <div><h2>{{ t('Payment mix') }}</h2><p>{{ t('How guests pay') }}</p></div>
               <span class="overview-panel__icon"><DesignIcon
                 name="wallet"
                 :size="18"
@@ -924,9 +964,8 @@ onBeforeUnmount(() => { dashboardRequestId++ })
             </div>
             <DistributionChart
               v-if="data.categories.length"
-              visual="bars"
-              :limit="3"
-              ranked
+              visual="donut"
+              :limit="5"
               :data="data.categories"
               :label="t('Revenue by category')"
               unit="UZS"
@@ -979,6 +1018,13 @@ onBeforeUnmount(() => { dashboardRequestId++ })
                 class="overview-order"
               >
                 <td class="overview-order__title">
+                  <span
+                    class="overview-order__indicator"
+                    :class="`is-${o.status.toLowerCase()}`"
+                  ><DesignIcon
+                    :name="o.status === 'PREPARING' ? 'clock' : 'check'"
+                    :size="18"
+                  /></span>
                   <strong><RouterLink :to="{ path: '/orders', query: { id: o.displayId } }">#{{ o.displayId }}</RouterLink></strong>
                   <Badge :tone="typeTone(o.type)">
                     {{ t({ HALL: 'Hall', DELIVERY: 'Delivery', PICKUP: 'Pickup' }[o.type]) }}
@@ -987,7 +1033,10 @@ onBeforeUnmount(() => { dashboardRequestId++ })
                     {{ t({ PREPARING: 'Preparing', READY: 'Ready', COMPLETED: 'dash_order_completed' }[o.status]) }}
                   </Badge>
                 </td>
-                <td class="overview-order__info">
+                <td
+                  v-if="o.info && o.info !== '—'"
+                  class="overview-order__info"
+                >
                   {{ o.info }}
                 </td>
                 <td class="overview-order__time">

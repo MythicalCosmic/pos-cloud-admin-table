@@ -241,7 +241,7 @@ const radarSeries = computed(() => ranked.value.length < 2
     valueLabels: comparisonMeasures.value.map(measure => `${fmtNum(row[measure.key])}${measure.key === 'revenue' ? ' UZS' : ''}`),
   })))
 
-/* ---------- Scatter (orders vs revenue, bubble = AOV) ---------- */
+/* ---------- Scatter (orders vs revenue, marker size = AOV) ---------- */
 const palette = ['var(--c1)', 'var(--c2)', 'var(--c3)', 'var(--c4)', 'var(--c5)']
 
 const scatterData = computed(() => ranked.value.map((s, i) => ({
@@ -314,7 +314,7 @@ onBeforeUnmount(() => { staffRequestId++ })
             </div>
           </div>
           <div
-            class="card__body"
+            class="card__body staff-leaderboard"
             style="padding-top: 4px;"
           >
             <button
@@ -403,7 +403,7 @@ onBeforeUnmount(() => { staffRequestId++ })
               :axes="radarAxes"
               :series="radarSeries"
               :max="100"
-              :size="230"
+              :size="300"
               :show-legend="false"
             />
             <ReportState
@@ -415,6 +415,7 @@ onBeforeUnmount(() => { staffRequestId++ })
             <details
               v-if="radarSeries.length"
               class="staff-comparison-values"
+              open
             >
               <summary>{{ t('dash_view_data') }}</summary>
               <table>
@@ -456,7 +457,7 @@ onBeforeUnmount(() => { staffRequestId++ })
                 {{ t('Orders vs revenue') }}
               </div>
               <h3 class="card__insight">
-                {{ t('Bubble size = avg order value') }}
+                {{ t('Marker size = avg order value') }}
               </h3>
             </div>
           </div>

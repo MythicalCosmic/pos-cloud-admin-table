@@ -1,4 +1,9 @@
 {
+  "Marker size = avg order value": "Marker size = avg order value",
+  "dash_channel_incomplete": "Some channel counts were not reported. Missing values are shown as unavailable.",
+  "dash_channel_title": "Order channels",
+  "dash_channel_subtitle": "Compare hall, delivery and pickup orders",
+  "dash_channel_date": "Choose a period or date for order channels",
   "dash_export_report_scope": "All products · sales, ingredient costs and profit.",
   "dash_export_time_notice": "Reports use full business days, without your selected hours. For the exact interval, choose Dashboard snapshot (CSV).",
   "dash_export_snapshot": "Dashboard snapshot",
@@ -5808,5 +5813,8 @@
   "report_error_REPORT_TOO_LARGE": "This report is too large. Choose a shorter period or narrow the filters.",
   "report_error_AUTHENTICATION_REQUIRED": "Sign in to view this report.",
   "report_error_PERMISSION_DENIED": "Manager or Admin access is required for this report.",
-  "report_invalid_response": "The server returned an incomplete report. Please retry."
+  "report_invalid_response": "The server returned an incomplete report. Please retry.",
+  "dash_kitchen_above_target": "Above target",
+  "dash_kitchen_no_overruns": "No categories above their targets",
+  "dash_kitchen_no_overruns_body": "Switch to all categories to compare preparation times."
 }

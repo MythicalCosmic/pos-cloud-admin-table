@@ -1,4 +1,9 @@
 {
+  "Marker size = avg order value": "Belgi o‘lchami — o‘rtacha chek",
+  "dash_channel_incomplete": "Ayrim buyurtma manbalari bo‘yicha sonlar olinmadi. Yetishmayotgan qiymatlar mavjud emas deb ko‘rsatiladi.",
+  "dash_channel_title": "Buyurtma manbalari",
+  "dash_channel_subtitle": "Zal, yetkazib berish va olib ketish buyurtmalarini solishtiring",
+  "dash_channel_date": "Buyurtma manbalari uchun davr yoki sanani tanlang",
   "dash_export_report_scope": "Barcha mahsulotlar · sotuvlar, tannarx va foyda.",
   "dash_export_time_notice": "Hisobotlar tanlangan soatlarsiz to‘liq ish kunlarini qamrab oladi. Aniq vaqt oralig‘i uchun «Panel ma’lumotlari» (CSV) ni tanlang.",
   "dash_export_snapshot": "Panel ma’lumotlari",
@@ -5719,5 +5724,8 @@
   "report_error_REPORT_TOO_LARGE": "Hisobot juda katta. Qisqaroq davr yoki aniqroq filtrlarni tanlang.",
   "report_error_AUTHENTICATION_REQUIRED": "Hisobotni ko‘rish uchun tizimga kiring.",
   "report_error_PERMISSION_DENIED": "Bu hisobot uchun menejer yoki administrator huquqi kerak.",
-  "report_invalid_response": "Server to‘liq bo‘lmagan hisobot qaytardi. Qayta urinib ko‘ring."
+  "report_invalid_response": "Server to‘liq bo‘lmagan hisobot qaytardi. Qayta urinib ko‘ring.",
+  "dash_kitchen_above_target": "Me’yordan oshgan",
+  "dash_kitchen_no_overruns": "Me’yordan oshgan toifalar yo‘q",
+  "dash_kitchen_no_overruns_body": "Tayyorlash vaqtini solishtirish uchun barcha toifalarni tanlang."
 }

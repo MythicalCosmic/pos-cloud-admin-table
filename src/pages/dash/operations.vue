@@ -7,6 +7,7 @@ import ReportState from '@/components/dashboard/ReportState.vue'
 import ReportSkeleton from '@/components/dashboard/ReportSkeleton.vue'
 import DistributionChart from '@/components/dashboard/DistributionChart.vue'
 import DashboardNotice from '@/components/dashboard/DashboardNotice.vue'
+import KitchenSpeed from '@/components/dashboard/KitchenSpeed.vue'
 import { fmtNum } from '@/components/design/utils/format'
 import { getDashboard } from '@/services/dashboardRequests'
 import { useDashboardData } from '@/composables/useDashboardData'
@@ -45,7 +46,6 @@ const colors: Record<string, string> = {
 
 const statusLabels = { free: 'table_status_AVAILABLE', seated: 'Seated', reserved: 'Reserved', cleaning: 'Cleaning' }
 const num = (value: unknown) => Number.isFinite(Number(value)) ? Number(value) : 0
-const prepMax = computed(() => Math.max(1, ...data.value?.prep.map(row => Math.max(row.mins, row.target)) ?? []))
 
 const counters = computed(() => [
   { key: 'Open orders', value: stats.value ? num(stats.value.preparing_orders) + num(stats.value.ready_orders) + num(stats.value.unpaid_orders) : null, icon: 'receipt', tone: 'warning', period: t('Today') },
@@ -228,20 +228,10 @@ onBeforeUnmount(() => { requestId++ })
           </div>
         </div>
         <div class="card__body">
-          <template v-if="data?.prep.length">
-            <div
-              v-for="row in data.prep"
-              :key="row.label"
-              class="operations-stage"
-            >
-              <div class="operations-stage__head">
-                <span>{{ row.label }}</span><strong>{{ row.mins.toFixed(1) }} {{ t('min') }}<small>{{ t('Target') }} {{ row.target }} {{ t('min') }} · {{ fmtNum(row.orders) }} {{ t('Orders') }}</small></strong>
-              </div>
-              <div class="operations-stage__track">
-                <span :style="{ width: `${row.mins / prepMax * 100}%`, background: row.target && row.mins > row.target ? 'var(--error)' : 'var(--success)' }" />
-              </div>
-            </div>
-          </template>
+          <KitchenSpeed
+            v-if="data?.prep.length"
+            :data="data.prep"
+          />
           <ReportState
             v-else
             :title="t('No data for this range')"

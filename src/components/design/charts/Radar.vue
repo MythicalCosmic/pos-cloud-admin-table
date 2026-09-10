@@ -3,6 +3,7 @@ import StateFill from '../StateFill.vue'
 import { useTip } from './useTip'
 import { useShown } from '@/composables/useAlphaMotion'
 import ChartTip from '@/components/design/charts/ChartTip.vue'
+import { designId } from '@/components/design/ids'
 
 const props = withDefaults(defineProps<Props>(), {
   size: 280,
@@ -28,7 +29,11 @@ interface Props {
 }
 
 const shown = useShown(80)
+const gradientId = designId('radar-material')
 const { tip, show, move, hide } = useTip()
+const chartRoot = ref<HTMLElement>()
+const { width: renderedWidth } = useElementSize(chartRoot)
+const labelSize = computed(() => renderedWidth.value > 0 ? 11 * (props.size + 100) / renderedWidth.value : 11)
 
 const geom = computed(() => {
   const size = props.size
@@ -88,6 +93,7 @@ function vertexPt(s: Series, ai: number) {
   />
   <div
     v-else
+    ref="chartRoot"
     :style="{ position: 'relative', width: `${size + 100}px`, maxWidth: '100%', margin: '0 auto' }"
     @mouseleave="hide"
   >
@@ -98,6 +104,28 @@ function vertexPt(s: Series, ai: number) {
       overflow="visible"
       style="display: block; width: 100%; height: auto; overflow: visible;"
     >
+      <defs>
+        <linearGradient
+          v-for="(s, si) in series"
+          :id="`${gradientId}-${si}`"
+          :key="si"
+          x1="0"
+          y1="0"
+          x2="0"
+          y2="1"
+        >
+          <stop
+            offset="0"
+            :stop-color="s.color"
+            stop-opacity=".4"
+          />
+          <stop
+            offset="1"
+            :stop-color="s.color"
+            stop-opacity=".04"
+          />
+        </linearGradient>
+      </defs>
       <polygon
         v-for="(r, i) in rings"
         :key="`ring${i}`"
@@ -122,7 +150,7 @@ function vertexPt(s: Series, ai: number) {
         :y="labelPt(ai)[1]"
         :text-anchor="labelAnchor(ai)"
         dominant-baseline="middle"
-        font-size="11"
+        :font-size="labelSize"
         font-weight="600"
         fill="var(--text-secondary)"
       >{{ lab }}</text>
@@ -133,8 +161,7 @@ function vertexPt(s: Series, ai: number) {
       >
         <polygon
           :points="seriesPoly(s)"
-          :fill="s.color"
-          fill-opacity="0.16"
+          :fill="`url(#${gradientId}-${si})`"
           :stroke="s.color"
           stroke-width="2"
           :style="{ transition: 'opacity .2s ease' }"

@@ -18,8 +18,9 @@ source files. [DESIGN.md](../DESIGN.md) provides a portable token summary;
   both theme systems must be verified together.
 - [Theme configuration](../src/config/theme.ts) feeds the retained layout and
   Vuetify infrastructure.
-- UI typography uses Hanken Grotesk; KPI and money figures use JetBrains Mono.
-  The font stylesheets are loaded by [index.html](../index.html).
+- UI typography uses Hanken Grotesk. Dashboard KPI values and chart summaries
+  use tabular Hanken figures; exact-value rows and accounting reports retain
+  JetBrains Mono. The font stylesheets are loaded by [index.html](../index.html).
 
 ## Components and layout
 
@@ -53,10 +54,23 @@ Appearance previews use each option's own light/dark tokens. The selected check
 sits over the preview so long translated names can use the whole label width.
 The six choices form three desktop columns and two phone columns.
 
-### Dashboard layout: September 9
+### Dashboard layout: September 10
 
-The dashboard uses four separate summary cards, an asymmetric trend/recent-orders
-layout, and a compact section directory.
+The approved soft-chart reference applies to the full dashboard, including its
+heading, date controls and KPI cards. It supersedes the earlier header/cards
+exception and previous composition's visual styling. The existing five continuous
+sections, fonts, six palettes and all data/actions remain authoritative.
+
+The dashboard uses four tinted summary cards, an equal-width Performance and
+Order channels pair, then equally sized large payment and category pies. Recent
+activity follows as responsive order tiles with identity, status, channel,
+table/address, age, amount and links. Show all retains every returned record.
+Later sections use separate tinted KPI cards; paired distributions, expense
+reports and staff panels share their row height. Dashboard cards, date fields
+and today's counter have softly rounded 16px corners, a fine edge mixed from
+text and surface, and a restrained two-part shadow. This is a dashboard rule;
+Product Performance retains its 14px report panels and joined metric rail.
+
 All five sections remain on the page. Each start/end field opens a themed
 calendar with an integrated 24-hour time control: select the date, set the time,
 and confirm the endpoint. Native dialogs provide focus containment and Escape;
@@ -71,15 +85,48 @@ loading, unavailable/retry, and genuine zero states.
 
 Time-series explorers reuse the installed ECharts engine with modular SVG
 rendering (line, bar, grid, tooltip, data zoom). Vue owns controls and accessible
-point readouts. The main chart offers area/column views, a zoom navigator, and a
-keyboard/touch point selector; sales and hourly charts share the renderer.
-The overview starts in area mode; columns remain available. Payment and category
-distributions use interactive rings with ranked exact-value rows. Show all reveals
-additional rows without excluding them from the denominator. The shared component
-also retains its proportional-strip variant. Products pairs a five-product unit
-ring, explicitly scoped to the returned report, with the category distribution.
-Sales adds a sortable, paginated DailyLedger from existing daily arrays. Missing
-values remain absent, and no values or trends are fabricated.
+point readouts. The main chart offers area/column views, optional exploration and
+zoom tools, and a keyboard/touch point selector; sales and hourly charts share the
+renderer. Primary series shade from the fourth chart color into primary, while
+expenses retain the expense color. Columns have softly rounded ends, areas fade
+into the plot, and selected values use dark floating tags with white text.
+
+OrderChannelChart presents three simple Hall/Delivery/Pickup columns for the
+whole supplied period or a selected date/bucket, with exact counts and shares.
+The shared `orderChannelColors.ts` maps Hall to primary, Delivery to the fourth
+chart color and Pickup to the third chart color across the column chart, sales
+rankings and DailyLedger. Missing counts remain unavailable with a scope notice.
+
+Payment and category distributions use interactive shaded ring sectors with
+ranked exact-value rows. `roundedSector.ts` constrains gaps and corners to the
+actual share. The emphasized sector uses a dark value tag with white text; other
+visible tags use the fixed light background and dark text pair. Show all reveals
+additional rows without excluding them from the denominator. More than 12 rows
+use the bounded shared Select. The component retains proportional-strip and
+ranked-bar variants. Products pairs equally large sold-product and sold-category
+unit-share pies, each with five leading rows and a visible reported-dataset count;
+the full supplied dataset still determines sectors and shares. Its category
+treemap and ranking retain Revenue/Units switching and linked selection.
+
+Sales pairs colored channel rows with four returned expense records per page,
+keeping the record range and previous/next controls visible. DailyLedger keeps
+sorting, pagination and every source column, with date badges and shaded revenue
+cells behind exact values. Missing values remain absent, and no values or trends
+are fabricated.
+
+Staff scatter uses shaded rounded-square marks; AOV controls their size, with
+exact AOV retained in the readout. Hover/focus previews and click/tap or Enter/Space
+pins a person, synchronized with the leaderboard and primary comparison selector.
+Radar uses a 300-unit chart size with responsive labels held at 11 CSS pixels.
+It normalizes each measure against the reported team maximum, identifies people
+through color-linked selectors, and opens the original-value table by default.
+
+KitchenSpeed plots actual preparation time and a target marker on one shared
+scale that includes overruns. Category rows retain order counts, actual/target
+minutes, an untracked state where needed and a numeric overrun. All categories
+and Above target filters use actual counts and distinguish no overruns from
+missing data. It appears once in Products on the continuous dashboard and remains
+available on the standalone Operations route.
 
 Charts initialize near the viewport, resize with their cards, and dispose on
 unmount. There is no animation loop; transitions respect reduced motion.
@@ -88,6 +135,10 @@ affinity, Pareto, staff and sparkline SVGs. The main series keeps its exact data
 table; all explorers expose the selected point outside the SVG, and distribution
 rows provide keyboard/touch selection. Dense series keep every data point while
 axis labels adapt to width. Phone controls wrap and charts stay inside the page.
+Opening totals become two columns at 1250px, Performance and channels stack at
+1020px, product/category unit pies stack at 1000px, and the category map/ranking
+stacks at 900px. Payment and category pies stack at 650px. Narrow distribution
+containers put the ring above a two-column legend; recent activity uses two phone columns.
 QA includes range validation and exact-time API parameters, point selection,
 zoom/reset, series switching, refresh/error states, all three locales, both
 themes, and desktop/tablet/phone widths.
@@ -109,11 +160,11 @@ range. Optional 60-second polling pauses when the document is hidden. Same-range
 failures retain the last successful content with a stale notice; a changed range
 clears old values. Failed requests must not be presented as zero business activity.
 
-The reading path is headline totals, trend and recent orders, sales and costs,
+The reading path is headline totals, performance and channels, shares and recent activity, sales and costs,
 menu behavior, staff performance, and service. Navigation uses section links,
 section headings, 1–5 shortcuts, and an active-section indicator. Jumping focuses
 the destination without unmounting content. Chart metric and comparison choices
-survive refresh. Dashboard Export offers the backend's complete product-performance
+survive refresh. Dashboard Export offers ADMIN/MANAGER the backend's complete product-performance
 report as Excel, PDF or CSV for the applied business dates, with its 07:00–03:00
 scope shown before download. Exact-time selections display a clear scope notice.
 A separate Dashboard snapshot CSV preserves the loaded totals, payments,

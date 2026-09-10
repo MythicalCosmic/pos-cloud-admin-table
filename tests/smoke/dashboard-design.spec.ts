@@ -33,6 +33,8 @@ interface FixtureState {
   paretoShares?: boolean
   productCount?: number
   role?: string
+  partialChannels?: boolean
+  expenseCount?: number
 }
 
 function salesFixture(state: FixtureState) {
@@ -41,7 +43,7 @@ function salesFixture(state: FixtureState) {
     expense30: state.empty ? [] : revenueSeries.map(v => Math.round(v * 0.2)),
     revenue30: state.empty ? [] : revenueSeries,
     dayLabels: state.empty ? [] : revenueSeries.map((_, i) => `2026-08-${String(i + 1).padStart(2, '0')}`),
-    channelDays: state.empty ? [] : channels.map((row, i) => ({ ...row, day: `2026-08-${String(i + 1).padStart(2, '0')}` })),
+    channelDays: state.empty ? [] : channels.map((row, i) => ({ ...row, delivery: state.partialChannels && i === 0 ? null : row.delivery, pickup: state.partialChannels && i === 0 ? 0 : row.pickup, day: `2026-08-${String(i + 1).padStart(2, '0')}` })),
     grossMargin: state.empty ? undefined : 0.64,
     previous_period: state.empty
       ? undefined
@@ -115,7 +117,10 @@ function sectionFixture(path: string, state: FixtureState) {
   const key = Object.keys(sectionFixtures).find(endpoint => path.endsWith(endpoint))
   if (key === '/staff/performance' && state.staffCount !== undefined) {
     const data = sectionFixtures[key](state.empty) as { staff: unknown[] }
-    return { staff: data.staff.slice(0, state.staffCount) }
+    return { staff: Array.from({ length: state.staffCount }, (_, index) => ({ ...(data.staff[index % data.staff.length] as object), user_id: index + 1, ...(index >= data.staff.length ? { name: `Team member ${index + 1}`, revenue: 4_000_000 - index * 100_000 } : {}) })) }
+  }
+  if (key === '/dashboard/sales/expenses' && state.expenseCount !== undefined) {
+    return { total_expense: state.expenseCount * 100_000, expenses: Array.from({ length: state.expenseCount }, (_, index) => ({ id: index + 1, amount: 100_000, comment: `Expense record ${index + 1}`, category: 'Supplies', created_at: '2026-08-30T08:20:00Z', shift_id: 7, cashier_name: 'Aziza Karimova' })) }
   }
   return key ? sectionFixtures[key](state.empty) : null
 }
@@ -190,7 +195,7 @@ async function expectNoOverflow(page: Page) {
       .filter(el => el.getBoundingClientRect().right > document.documentElement.clientWidth + 1)
       .slice(0, 35)
       .map(el => ({ tag: el.tagName, class: el.getAttribute('class'), right: el.getBoundingClientRect().right, width: el.getBoundingClientRect().width })),
-    clipped: [...document.querySelectorAll<HTMLElement>('.date-fields__row, .datetime-field__trigger, .today-orders, .date-fields__timebar, .distribution__row, .series-explorer__point, .summary-metric__value, .summary-lead__amount, .overview-panel__head, .overview-order, .overview-chart-value, .dashboard-section__head, .herokpi__value, .kpi__value, .sales-expense-list__row')]
+    clipped: [...document.querySelectorAll<HTMLElement>('.date-fields__row, .datetime-field__trigger, .today-orders, .date-fields__timebar, .distribution__row, .series-explorer__point, .summary-metric__value, .summary-lead__amount, .overview-panel__head, .overview-order, .overview-chart-value, .channel-flow__selection, .dashboard-section__head, .herokpi__value, .kpi__value, .sales-expense-list__row')]
       .filter(el => el.clientWidth > 1 && el.scrollWidth > el.clientWidth + 1)
       .map(el => el.className),
   }))
@@ -208,6 +213,33 @@ async function expectReadableChartLabels(page: Page) {
     return labels.filter((label, i) => i > 0 && label.rect.left < labels[i - 1].rect.right + 3)
       .map(label => label.text)
   }))).toEqual([])
+}
+
+async function expectDonutLabelContrast(page: Page) {
+  const ratios = await page.locator('.distribution__ring-label').evaluateAll(labels => labels.map(label => {
+    const luminance = (color: string) => {
+      const rgb = color.match(/[\d.]+/g)!.slice(0, 3).map(Number).map(channel => channel / 255)
+      return rgb.reduce((sum, value, index) => sum + (value <= .04045 ? value / 12.92 : ((value + .055) / 1.055) ** 2.4) * [.2126, .7152, .0722][index], 0)
+    }
+    const text = label.querySelector('text')!
+    const back = label.querySelector('rect')
+    if (!back) return 0
+    const foreground = luminance(getComputedStyle(text).fill)
+    const background = luminance(getComputedStyle(back).fill)
+    return (Math.max(foreground, background) + .05) / (Math.min(foreground, background) + .05)
+  }))
+  expect(ratios.length).toBeGreaterThan(0)
+  expect(Math.min(...ratios)).toBeGreaterThanOrEqual(4.5)
+}
+
+async function expectChannelColorConsistency(page: Page) {
+  const channels = await page.locator('.channel-flow__selection dt i').evaluateAll(els => els.map(el => getComputedStyle(el).backgroundColor))
+  expect(channels).toHaveLength(3)
+  expect(new Set(channels).size).toBe(3)
+  const mix = await page.locator('.sales-order-type .distribution__track > span').evaluateAll(els => els.map(el => getComputedStyle(el).backgroundColor))
+  const ledger = await page.locator('.daily-ledger tbody tr').first().locator('.daily-ledger__channel i').evaluateAll(els => els.map(el => getComputedStyle(el).backgroundColor))
+  expect(mix).toEqual(channels)
+  expect(ledger).toEqual(channels)
 }
 
 interface ExportState { gate?: Promise<void>; error?: boolean }
@@ -583,7 +615,7 @@ test('initial loading reserves the layout; empty data does not invent a trend or
   await expect(page.locator('.summary-lead__amount')).toHaveCount(0)
   await page.setViewportSize({ width: 390, height: 844 })
   await expectNoOverflow(page)
-  await page.screenshot({ path: '/tmp/alpha-dashboard-rebuild/loading-mobile.png' })
+  await page.screenshot({ path: '/tmp/alpha-dashboard-rebuild/loading-mobile.png', animations: 'disabled' })
   release()
   await expect(page.locator('.summary-lead__amount')).toContainText('0')
   await expect(page.getByText('No trend activity in this period', { exact: true })).toBeVisible()
@@ -623,7 +655,7 @@ test('failed initial requests show a top-right error toast and a working retry w
   await page.screenshot({ path: '/tmp/smart-pos-dashboard-error-toast.png' })
   await page.setViewportSize({ width: 390, height: 844 })
   await expect(page.locator('.dash-errbar')).toHaveCount(0)
-  await page.screenshot({ path: '/tmp/alpha-dashboard-rebuild/review-error-mobile.png' })
+  await page.screenshot({ path: '/tmp/alpha-dashboard-rebuild/review-error-mobile.png', animations: 'disabled' })
   state.fail = false
   await page.locator('.overview-unavailable').getByRole('button', { name: 'Retry' }).click()
   await expect(page.locator('.summary-lead__amount')).toContainText(grouped(revenue))
@@ -664,7 +696,7 @@ test('optional breakdown failures remain distinct from zero sales and today fall
 async function captureSections(page: Page, locale: string, theme: string, width: number) {
   if (width !== 1440 && width !== 390)
     return
-  for (const chart of await page.locator('.series-explorer__canvas, .category-map__canvas').all()) {
+  for (const chart of await page.locator('.series-explorer__canvas, .category-map__canvas, .channel-flow__chart').all()) {
     await chart.scrollIntoViewIfNeeded()
     await expect(chart.locator('svg')).toBeVisible()
   }
@@ -1014,7 +1046,7 @@ test('staff comparison exposes reported measures and changes the selected team m
   await setup(page)
   await page.goto('/')
   const staff = page.locator('#dashboard-staff')
-  await staff.locator('.staff-comparison-values summary').click()
+  await expect(staff.locator('.staff-comparison-values')).toHaveAttribute('open', '')
   const values = staff.locator('.staff-comparison-values table')
   await expect(values).toContainText('150')
   await expect(values).toContainText(grouped(10_000_000))
@@ -1167,18 +1199,20 @@ test('blue and forest palettes persist with both display modes and synchronize c
 test('new palettes recolor populated charts without changing their values or phone layout', async ({ page }) => {
   await setup(page)
   await page.goto('/')
-  for (const palette of ['teal', 'violet', 'rose', 'amber'] as const) for (const mode of ['light', 'dark'] as const) {
+  for (const palette of ['blue', 'forest', 'teal', 'violet', 'rose', 'amber'] as const) for (const mode of ['light', 'dark'] as const) {
     await page.setViewportSize({ width: 1440, height: 960 })
     await page.getByRole('button', { name: 'Account menu', exact: true }).click()
     await page.getByRole('menuitem', { name: 'Appearance', exact: true }).click()
     const appearance = page.getByRole('dialog', { name: 'Appearance', exact: true })
-    await appearance.getByRole('button', { name: palette[0].toUpperCase() + palette.slice(1), exact: true }).click()
+    await appearance.getByRole('button', { name: palette === 'blue' ? 'Legacy blue' : palette[0].toUpperCase() + palette.slice(1), exact: true }).click()
     await appearance.getByRole('button', { name: mode === 'light' ? 'Light' : 'Dark', exact: true }).click()
     await page.keyboard.press('Escape')
     const chart = page.locator('.overview-performance .series-explorer__canvas')
     await chart.scrollIntoViewIfNeeded()
-    await expect.poll(() => chart.locator('svg path').evaluateAll(paths => paths.map(path => path.getAttribute('stroke')?.toLowerCase()))).toContain(alphaPaletteTokens(palette, mode).primary.toLowerCase())
+    await expect.poll(() => chart.locator('svg stop').evaluateAll(stops => stops.map(stop => stop.getAttribute('stop-color')?.toLowerCase()))).toContain(alphaPaletteTokens(palette, mode).primary.toLowerCase())
     await expect(page.locator('.summary-lead__amount')).toContainText(grouped(revenue))
+    await expectDonutLabelContrast(page)
+    await expectChannelColorConsistency(page)
     for (const width of [1440, 390]) {
       await page.setViewportSize({ width, height: 960 })
       await page.evaluate(() => window.scrollTo(0, 0))
@@ -1287,4 +1321,77 @@ test('large product pies retain all slices without expanding hundreds of legend 
   await expect(pie.locator('.distribution__summary')).toContainText('Product 241')
   await expect(pie.locator('.distribution__summary strong')).toContainText('1')
   await expectNoOverflow(page)
+})
+
+
+test('order channel exploration retains every business date and distinguishes missing counts from zero', async ({ page }) => {
+  await setup(page, { partialChannels: true })
+  await page.setViewportSize({ width: 1440, height: 1000 })
+  await page.goto('/')
+  const flow = page.locator('.channel-flow')
+  await expect(flow.locator('dl')).toContainText('Hall')
+  const select = flow.getByRole('combobox', { name: 'Choose a period or date for order channels' })
+  await select.click()
+  await expect(page.getByRole('option')).toHaveCount(31)
+  await page.getByRole('option', { name: '2026-08-01', exact: true }).click()
+  await expect(flow.locator('dd')).toHaveText(['16 —', '— —', '0 —'])
+  await expect(flow.locator('.channel-flow__notice')).toContainText('not reported')
+  await select.focus()
+  await page.keyboard.press('Enter')
+  await page.keyboard.press('End')
+  await page.keyboard.press('Enter')
+  await expect(flow.locator('dd')).toHaveText(['17 77.3%', '3 13.6%', '2 9.1%'])
+  await expect(select).toBeFocused()
+  await page.setViewportSize({ width: 320, height: 720 })
+  await expectNoOverflow(page)
+})
+
+
+test('donut labels stay readable while hovering, selecting, and dimming sectors', async ({ page }) => {
+  await setup(page, {}, 'en', 'dark')
+  await page.goto('/')
+  const payment = page.locator('.overview-payments')
+  await expect(payment.locator('.distribution__ring')).toBeVisible()
+  await expectDonutLabelContrast(page)
+  const card = payment.getByRole('button', { name: /^Card/ })
+  await card.hover()
+  await expectDonutLabelContrast(page)
+  await card.click()
+  await page.mouse.move(1, 1)
+  await expectDonutLabelContrast(page)
+  await payment.screenshot({ path: '/tmp/alpha-dashboard-rebuild/verdict-payment-selected-dark.png', animations: 'disabled' })
+  await card.focus()
+  await page.keyboard.press('Escape')
+  await expectDonutLabelContrast(page)
+})
+
+test('expense pagination, kitchen targets, and open staff values remain useful with many records', async ({ page }) => {
+  await setup(page, { expenseCount: 12, staffCount: 10 }, 'en', 'dark')
+  await page.goto('/')
+  const expenses = page.locator('.sales-expense-list')
+  await expect(expenses.locator('.sales-expense-list__row')).toHaveCount(4)
+  await expect(expenses).toContainText('1–4 of 12')
+  await expenses.getByRole('button', { name: 'Next page', exact: true }).click()
+  await expect(expenses).toContainText('5–8 of 12')
+  await expect(expenses.locator('.sales-expense-list__row').first()).toContainText('Expense record 5')
+  const staff = page.locator('#dashboard-staff')
+  await expect(staff.locator('.lb-row')).toHaveCount(5)
+  await expect(staff.locator('.staff-comparison-values table')).toBeVisible()
+  const kitchen = page.locator('.kitchen-speed').first()
+  await expect(kitchen.locator('.prep-list__item')).toHaveCount(7)
+  await expect(kitchen.locator('.prep-list__item.is-late')).toHaveCount(2)
+  await kitchen.getByRole('button', { name: 'Above target 2', exact: true }).click()
+  await expect(kitchen.locator('.prep-list__item')).toHaveCount(2)
+  const geometry = await kitchen.locator('.prep-list__item').first().evaluate(el => ({ actual: el.querySelector('.prep-list__track > span')!.getBoundingClientRect().right, target: el.querySelector('.prep-list__track > i')!.getBoundingClientRect().left }))
+  expect(geometry.actual).toBeGreaterThan(geometry.target)
+  await kitchen.getByRole('button', { name: 'All categories 7', exact: true }).click()
+  for (const width of [1440, 390, 320]) {
+    await page.setViewportSize({ width, height: 1000 })
+    await expectNoOverflow(page)
+    const radarTextSizes = await staff.locator('.staff-row-1 svg text').evaluateAll(labels => labels.map(label => parseFloat(getComputedStyle(label).fontSize) * ((label as SVGTextElement).getScreenCTM()?.a ?? 1)))
+    expect(Math.min(...radarTextSizes)).toBeGreaterThanOrEqual(10.9)
+    for (const [name, selector] of [['expenses', '.sales-expense-grid'], ['kitchen', '.kitchen-speed'], ['staff', '.staff-row-1']] as const) {
+      await page.locator(selector).first().screenshot({ path: `/tmp/alpha-dashboard-rebuild/verdict-${name}-${width}.png`, animations: 'disabled', style: '.topbar, .dashboard-toolbar, .mobile-tabbar, .scroll-to-top { opacity: 0 !important; }' })
+    }
+  }
 })

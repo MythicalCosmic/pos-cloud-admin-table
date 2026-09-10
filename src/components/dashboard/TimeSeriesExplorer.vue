@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { use } from 'echarts/core'
+import { color as chartColor, use } from 'echarts/core'
 import { SVGRenderer } from 'echarts/renderers'
 import { BarChart, LineChart } from 'echarts/charts'
-import { DataZoomComponent, GridComponent, TooltipComponent } from 'echarts/components'
+import { DataZoomComponent, GridComponent, MarkPointComponent, TooltipComponent } from 'echarts/components'
 import type { EChartsOption } from 'echarts'
 import VChart from 'vue-echarts'
 import ReportState from './ReportState.vue'
@@ -21,7 +21,7 @@ const props = withDefaults(defineProps<{
   compact?: boolean
 }>(), { height: 340, unit: '', mode: 'area', compact: false })
 
-use([SVGRenderer, LineChart, BarChart, GridComponent, TooltipComponent, DataZoomComponent])
+use([SVGRenderer, LineChart, BarChart, GridComponent, TooltipComponent, DataZoomComponent, MarkPointComponent])
 interface Series { key: string; label: string; data: number[]; color?: string; dashed?: boolean }
 const { t } = useI18n({ useScope: 'global' })
 const { tokens } = useEChartTheme()
@@ -112,20 +112,56 @@ function seriesColor(index: number): string {
   return props.series[index]?.dashed ? tokens.value.textSecondary : tokens.value.expense
 }
 
-function seriesOption(series: Series, index: number) {
+function barOption(series: Series, index: number) {
   const C = tokens.value
   const color = seriesColor(index)
-  if (chartMode.value === 'bar' && !series.dashed) {
-    return {
-      id: series.key,
-      name: series.label,
-      type: 'bar' as const,
-      data: series.data,
-      barMaxWidth: 28,
-      itemStyle: { color, borderRadius: [5, 5, 0, 0], opacity: index === 0 ? 0.8 : 0.5 },
-      emphasis: { focus: 'series' as const, itemStyle: { opacity: 1 } },
-    }
+  return {
+    id: series.key,
+    name: series.label,
+    type: 'bar' as const,
+    data: series.data.map((value, point) => ({
+      value,
+      itemStyle: {
+        color: {
+          type: 'linear' as const,
+          x: 0,
+          y: 0,
+          x2: 0,
+          y2: 1,
+          colorStops: [
+            { offset: 0, color: index === 0 ? C.secondary : chartColor.lift(color, 0.28) },
+            { offset: 1, color },
+          ],
+        },
+        opacity: point === cursor.value ? 1 : 0.84,
+      },
+      label: { show: point === cursor.value && index === 0, formatter: () => fmtAbbr(value) },
+    })),
+    barMaxWidth: 48,
+    barCategoryGap: '18%',
+    itemStyle: { borderRadius: [7, 7, 4, 4], borderColor: `${color}22`, borderWidth: 1 },
+    label: { position: 'top' as const, color: '#FFFFFF', backgroundColor: '#171923', borderRadius: 5, padding: [5, 7], fontSize: 11, fontFamily: C.fontUI, distance: 9 },
+    emphasis: { focus: 'series' as const, itemStyle: { opacity: 1 } },
   }
+}
+
+function pointMarker(series: Series, color: string) {
+  return {
+    silent: true,
+    symbol: 'circle',
+    symbolSize: 10,
+    itemStyle: { color, borderColor: tokens.value.surface, borderWidth: 2 },
+    label: { show: true, position: 'top' as const, distance: 10, color: '#FFFFFF', backgroundColor: '#171923', borderRadius: 5, padding: [5, 7], fontSize: 11, formatter: () => fmtAbbr(series.data[cursor.value]) },
+    data: Number.isFinite(series.data[cursor.value]) ? [{ name: labels.value[cursor.value], coord: [cursor.value, series.data[cursor.value]] as [number, number], value: series.data[cursor.value] }] : [],
+  }
+}
+
+function seriesOption(series: Series, index: number) {
+  if (chartMode.value === 'bar' && !series.dashed)
+    return barOption(series, index)
+  const C = tokens.value
+  const color = seriesColor(index)
+
   return {
     id: series.key,
     name: series.label,
@@ -135,10 +171,11 @@ function seriesOption(series: Series, index: number) {
     smoothMonotone: 'x' as const,
     showSymbol: series.data.length === 1,
     symbol: 'circle',
-    symbolSize: 8,
+    symbolSize: 9,
     itemStyle: { color, borderColor: C.surface, borderWidth: 3 },
-    lineStyle: { color, width: series.dashed ? 1.8 : 3, type: series.dashed ? 'dashed' as const : 'solid' as const },
-    areaStyle: series.dashed ? undefined : { color: { type: 'linear' as const, x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: `${color}35` }, { offset: 1, color: `${color}00` }] } },
+    lineStyle: { color: index === 0 ? { type: 'linear' as const, x: 0, y: 0, x2: 1, y2: 0, colorStops: [{ offset: 0, color: C.secondary }, { offset: 1, color }] } : color, width: series.dashed ? 1.6 : 2.5, type: series.dashed ? 'dashed' as const : 'solid' as const },
+    areaStyle: series.dashed ? undefined : { color: { type: 'linear' as const, x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: `${index === 0 ? C.secondary : color}65` }, { offset: 1, color: `${color}08` }] } },
+    markPoint: index === 0 ? pointMarker(series, color) : undefined,
     emphasis: { focus: 'series' as const, scale: true },
   }
 }
@@ -150,18 +187,18 @@ const option = computed<EChartsOption>(() => {
   return {
     animation: reducedMotion.value !== 'reduce',
     animationDuration: 350,
-    animationDurationUpdate: 240,
+    animationDurationUpdate: 180,
     textStyle: { fontFamily: C.fontUI },
-    grid: { left: 4, right: 12, top: 24, bottom: (exploring.value && !props.compact) ? 58 : 12, containLabel: true },
+    grid: { left: 4, right: 12, top: 38, bottom: (exploring.value && !props.compact) ? 58 : 12, containLabel: true },
     tooltip: {
       renderMode: 'richText',
       trigger: 'axis',
       confine: true,
-      backgroundColor: C.surface,
-      borderColor: C.border,
+      backgroundColor: '#171923',
+      borderColor: '#ffffff26',
       borderWidth: 1,
       padding: [10, 14],
-      textStyle: { color: C.text, fontFamily: C.fontUI, fontSize: 12 },
+      textStyle: { color: '#FFFFFF', fontFamily: C.fontUI, fontSize: 12 },
       axisPointer: { type: chartMode.value === 'bar' ? 'shadow' : 'line', lineStyle: { color: C.primary, type: 'dashed' }, shadowStyle: { color: C.primary, opacity: 0.06 } },
       valueFormatter: value => `${fmtNum(Number(value))}${props.unit ? ` ${props.unit}` : ''}`,
     },
@@ -184,7 +221,7 @@ const option = computed<EChartsOption>(() => {
     },
     yAxis: {
       type: 'value',
-      min: 0,
+      min: props.series.some(series => series.data.some(value => value < 0)) ? undefined : 0,
       splitNumber: 3,
       axisLabel: { color: C.textSecondary, fontSize: 10, fontFamily: C.fontMono, formatter: (value: number) => fmtAbbr(value) },
       splitLine: { lineStyle: { color: C.border, type: [3, 5], opacity: 0.65 } },

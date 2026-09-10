@@ -7,6 +7,7 @@ import ReportState from '@/components/dashboard/ReportState.vue'
 import Select from '@/components/design/Select.vue'
 import { niceTicks } from '@/components/design/charts/niceTicks'
 import { useWidth } from '@/components/design/charts/useWidth'
+import { designId } from '@/components/design/ids'
 
 const props = withDefaults(defineProps<Props>(), {
   height: 300,
@@ -38,6 +39,7 @@ interface Props {
 }
 
 const shown = useShown(80)
+const gradientId = designId('scatter-material')
 const [boxRef, w] = useWidth()
 const { tip, show, move, hide } = useTip()
 const selected = ref(props.selectedIndex ?? 0)
@@ -118,6 +120,26 @@ const yFmt = computed(() => props.yFormat ?? fmtAbbr)
       style="overflow: visible;"
       @mouseleave="clearPreview"
     >
+      <defs>
+        <linearGradient
+          v-for="(point, index) in data"
+          :id="`${gradientId}-${index}`"
+          :key="index"
+          x1="0"
+          y1="0"
+          x2="1"
+          y2="1"
+        >
+          <stop
+            offset="0"
+            :stop-color="`color-mix(in srgb, ${point.color || 'var(--primary)'} 48%, white)`"
+          />
+          <stop
+            offset="1"
+            :stop-color="point.color || 'var(--primary)'"
+          />
+        </linearGradient>
+      </defs>
       <g
         v-for="(tk, i) in layout.ny.ticks"
         :key="`yt${i}`"
@@ -128,6 +150,7 @@ const yFmt = computed(() => props.yFormat ?? fmtAbbr)
           :y1="layout.Y(tk)"
           :y2="layout.Y(tk)"
           stroke="var(--chart-grid)"
+          stroke-dasharray="5 6"
         />
         <text
           :x="padL - 8"
@@ -180,24 +203,48 @@ const yFmt = computed(() => props.yFormat ?? fmtAbbr)
           :r="Math.max(22, (d.r || 8) + 4)"
           fill="transparent"
         />
-        <circle
+        <rect
           v-if="i === activeIndex"
-          :cx="layout.X(d.x)"
-          :cy="layout.Y(d.y)"
-          :r="(d.r || 8) + 4"
+          :x="layout.X(d.x) - (d.r || 8) - 4"
+          :y="layout.Y(d.y) - (d.r || 8) - 4"
+          :width="(d.r || 8) * 2 + 8"
+          :height="(d.r || 8) * 2 + 8"
+          rx="10"
           fill="none"
           stroke="var(--text)"
           stroke-width="1.5"
         />
-        <circle
-          :cx="layout.X(d.x)"
-          :cy="layout.Y(d.y)"
-          :r="shown ? (d.r || 8) : 0"
-          :fill="d.color || 'var(--primary)'"
-          :fill-opacity="i === activeIndex ? .85 : .45"
+        <rect
+          :x="layout.X(d.x) - (d.r || 8)"
+          :y="layout.Y(d.y) - (d.r || 8)"
+          :width="(d.r || 8) * 2"
+          :height="(d.r || 8) * 2"
+          :rx="Math.min(8, (d.r || 8) / 2)"
+          :fill="`url(#${gradientId}-${i})`"
+          :fill-opacity="shown ? i === activeIndex ? 1 : .6 : 0"
           :stroke="d.color || 'var(--primary)'"
           stroke-width="1.5"
         />
+        <rect
+          v-if="(d.r || 8) >= 14"
+          :x="layout.X(d.x) - Math.min((d.r || 8) - 2, 18)"
+          :y="layout.Y(d.y) - 8"
+          :width="Math.min((d.r || 8) * 2 - 4, 36)"
+          height="16"
+          rx="4"
+          fill="#171923"
+          pointer-events="none"
+        />
+        <text
+          v-if="(d.r || 8) >= 14"
+          :x="layout.X(d.x)"
+          :y="layout.Y(d.y) + 3.5"
+          text-anchor="middle"
+          font-size="10"
+          font-weight="600"
+          fill="#FFFFFF"
+          pointer-events="none"
+        >{{ fmtAbbr(d.x) }}</text>
       </g>
     </svg>
     <div class="scatter-chart__selection">

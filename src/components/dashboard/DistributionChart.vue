@@ -3,6 +3,8 @@ import ReportState from './ReportState.vue'
 import DesignIcon from '@/components/design/DesignIcon.vue'
 import Select from '@/components/design/Select.vue'
 import { fmtAbbr, fmtNum, fmtPct } from '@/components/design/utils/format'
+import { designId } from '@/components/design/ids'
+import { roundedSector } from '@/components/design/charts/roundedSector'
 
 const props = withDefaults(defineProps<{
   data: Array<{ label: string; value: number; color?: string }>
@@ -31,6 +33,9 @@ const options = computed(() => props.data.map((row, index) => ({ value: String(i
 const activeIndex = computed(() => hovered.value ?? selected.value)
 const active = computed(() => activeIndex.value === null ? undefined : props.data[activeIndex.value])
 const colors = ['var(--c1)', 'var(--c2)', 'var(--c3)', 'var(--c4)', 'var(--c5)', 'var(--primary-hover)']
+const gradientId = designId('distribution-material')
+const leadingIndex = computed(() => props.data.reduce((best, row, index, rows) => row.value > (rows[best]?.value ?? 0) ? index : best, 0))
+const emphasisIndex = computed(() => activeIndex.value ?? leadingIndex.value)
 const color = (index: number) => props.data[index]?.color || colors[index % colors.length]
 const share = (value: number) => total.value > 0 ? value / total.value * 100 : 0
 const percent = (value: number) => hasNegative.value ? '—' : fmtPct(share(value), 1)
@@ -44,23 +49,25 @@ function choose(value: string) { selected.value = value === '' ? null : Number(v
 // Filled sectors give each tender an exact hit region; dashed full circles overlap.
 const ringSegments = computed(() => {
   let offset = -Math.PI / 2
-  const point = (angle: number, radius: number) => `${(110 + Math.cos(angle) * radius).toFixed(4)} ${(110 + Math.sin(angle) * radius).toFixed(4)}`
   const multiple = props.data.filter(row => row.value > 0).length > 1
   return props.data.flatMap((row, index) => {
     const angle = positiveTotal.value ? Math.max(0, row.value) / positiveTotal.value * Math.PI * 2 : 0
     if (!angle)
       return []
-    const gap = multiple ? Math.min(0.025, angle * 0.14) : 0.00001
+    const gap = multiple ? Math.min(0.065, angle * 0.14) : 0.00001
     const from = offset + gap / 2
     const to = offset + angle - gap / 2
-    const large = to - from > Math.PI ? 1 : 0
     const mid = offset + angle / 2
 
     offset += angle
     return [{
       index,
-      transform: `translate(${Math.cos(mid) * 4}px, ${Math.sin(mid) * 4}px)`,
-      path: `M${point(from, 94)} A94 94 0 ${large} 1 ${point(to, 94)} L${point(to, 69)} A69 69 0 ${large} 0 ${point(from, 69)} Z`,
+      transform: `translate(${Math.cos(mid) * 3}px, ${Math.sin(mid) * 3}px)`,
+      path: roundedSector(from, to, 94, 61, multiple ? 5 : 0),
+      labelX: 110 + Math.cos(mid) * 77.5,
+      labelY: 110 + Math.sin(mid) * 77.5,
+      showLabel: angle > 0.45,
+      percent: fmtPct(row.value / positiveTotal.value * 100, 0),
     }]
   })
 })
@@ -120,26 +127,67 @@ watch(() => props.selectedIndex, value => {
           :aria-label="ringDescription"
           @mouseleave="hovered = null"
         >
+          <defs>
+            <linearGradient
+              v-for="segment in ringSegments"
+              :id="`${gradientId}-${segment.index}`"
+              :key="segment.index"
+              x1="0"
+              y1="0"
+              x2="1"
+              y2="1"
+            >
+              <stop
+                offset="0"
+                :stop-color="`color-mix(in srgb, ${color(segment.index)} 52%, white)`"
+              />
+              <stop
+                offset="1"
+                :stop-color="color(segment.index)"
+              />
+            </linearGradient>
+          </defs>
           <circle
             cx="110"
             cy="110"
-            r="81.5"
+            r="77.5"
             fill="none"
-            stroke="var(--chart-track)"
-            stroke-width="25"
+            stroke="transparent"
+            stroke-width="33"
           />
           <path
             v-for="segment in ringSegments"
             :key="segment.index"
             :d="segment.path"
-            :fill="color(segment.index)"
+            :fill="`url(#${gradientId}-${segment.index})`"
             :data-segment="segment.index"
-            :style="{ opacity: activeIndex === null || activeIndex === segment.index ? 1 : .28, transform: activeIndex === segment.index ? segment.transform : undefined }"
+            :style="{ opacity: emphasisIndex === segment.index ? 1 : activeIndex === null ? .75 : .38, transform: activeIndex === segment.index ? segment.transform : undefined }"
             @mouseenter="hovered = segment.index"
             @click="select(segment.index)"
           >
             <title>{{ data[segment.index].label }} · {{ fmtNum(data[segment.index].value) }} {{ unit }}</title>
           </path>
+          <g
+            v-for="segment in ringSegments.filter(segment => segment.showLabel)"
+            :key="`label-${segment.index}`"
+            class="distribution__ring-label"
+            :transform="`translate(${segment.labelX}, ${segment.labelY})`"
+            aria-hidden="true"
+          >
+            <rect
+              x="-19"
+              y="-10"
+              width="38"
+              height="20"
+              rx="6"
+              :fill="emphasisIndex === segment.index ? '#171923' : '#f4f1fa'"
+            />
+            <text
+              y="3.5"
+              text-anchor="middle"
+              :fill="emphasisIndex === segment.index ? '#ffffff' : '#302945'"
+            >{{ segment.percent }}</text>
+          </g>
         </svg>
         <div
           class="distribution__center"
@@ -225,28 +273,29 @@ watch(() => props.selectedIndex, value => {
 
 <style scoped>
 .distribution { container-type: inline-size; display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; gap: 10px 16px; }
-.distribution__summary { grid-column: 1 / -1; min-width: 0; display: flex; align-items: baseline; flex-wrap: wrap; gap: 5px 12px; padding: 0 0 8px; position: relative; }
-.distribution__summary > span { color: var(--text-secondary); font-size: 11px; overflow-wrap: anywhere; }
-.distribution__summary > strong { margin-left: auto; display: flex; align-items: baseline; flex-wrap: wrap; gap: 5px; font: 500 15px var(--font-mono); color: var(--text); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.distribution__summary { grid-column: 1 / -1; min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 5px 12px; padding: 0 0 8px; position: relative; }
+.distribution__summary > span { grid-column: 1; color: var(--text-secondary); font-size: 11px; overflow-wrap: anywhere; }
+.distribution__summary > strong { grid-column: 1; margin: 0; display: flex; align-items: baseline; flex-wrap: wrap; gap: 5px; font: 600 24px/1.3 var(--font-sans); color: var(--text); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .distribution__summary small { color: var(--text-secondary); font: 10px var(--font-sans); }
-.distribution__summary button { flex-shrink: 0; align-self: center; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 8px; background: var(--primary-weak); color: var(--primary); }
-.distribution__visual { position: relative; width: 180px; max-width: 100%; justify-self: center; align-self: center; }
+.distribution__summary button { grid-column: 2; grid-row: 1 / 3; flex-shrink: 0; align-self: center; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 8px; background: var(--primary-weak); color: var(--primary); }
+.distribution__visual { position: relative; width: 100%; max-width: 320px; justify-self: center; align-self: center; }
 .distribution__ring { display: block; width: 100%; overflow: visible; }
 .distribution__ring path { cursor: pointer; transition: opacity 180ms ease-out, transform 180ms ease-out; }
+.distribution__ring-label { pointer-events: none; font: 500 10px var(--font-sans); font-variant-numeric: tabular-nums; }
 .distribution__center { position: absolute; inset: 32% 24%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; pointer-events: none; text-align: center; }
-.distribution__center strong { color: var(--text); font: 500 20px var(--font-mono); letter-spacing: -.03em; }
+.distribution__center strong { color: var(--text); font: 600 21px var(--font-sans); font-variant-numeric: tabular-nums; letter-spacing: -.03em; }
 .distribution__center span { font-size: 10px; color: var(--text-secondary); line-height: 1.4; max-width: 100%; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow-wrap: anywhere; }
 .distribution__rows { display: grid; min-width: 0; align-content: center; }
 .distribution__row { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; align-items: center; gap: 4px 9px; text-align: left; min-height: 52px; min-width: 0; padding: 9px 7px; border: 1px solid transparent; border-radius: 8px; transition: background 150ms, border-color 150ms; }
 .distribution__row[data-active] { background: var(--surface-2); }
 .distribution__row[aria-pressed="true"] { border-color: color-mix(in srgb, var(--primary) 40%, var(--border)); background: var(--primary-weak); }
-.distribution__marker { width: 7px; height: 7px; border-radius: 50%; background: var(--row-color); }
+.distribution__marker { width: 7px; height: 7px; border-radius: 2px; background: linear-gradient(135deg, color-mix(in srgb, var(--row-color) 55%, white), var(--row-color)); }
 .distribution__row-title { color: var(--text); font-size: 12px; font-weight: 500; line-height: 1.4; overflow-wrap: anywhere; }
 .distribution__percent { color: var(--text-secondary); font: 500 11px var(--font-mono); text-align: right; }
 .distribution__row-value { grid-column: 2 / -1; display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px; color: var(--text); font: 400 12px var(--font-mono); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .distribution__row-value small { color: var(--text-secondary); font: 10px var(--font-sans); }
 .distribution__track { grid-column: 2 / -1; display: block; height: 4px; background: var(--chart-track); border-radius: 3px; overflow: hidden; margin-top: 3px; }
-.distribution__track > span { display: block; height: 100%; border-radius: inherit; }
+.distribution__track > span { display: block; height: 100%; border-radius: inherit; background-image: linear-gradient(90deg, #ffffff70, #ffffff00) !important; }
 .distribution__strip { height: 20px; display: flex; gap: 3px; border-radius: 6px; overflow: hidden; }
 .distribution__strip > span { flex-basis: 0; cursor: pointer; transition: opacity 150ms; }
 .distribution--ranked .distribution__row { grid-template-columns: 24px minmax(0, 1fr) auto; }
@@ -257,9 +306,12 @@ watch(() => props.selectedIndex, value => {
 .distribution__more { grid-column: 1 / -1; display: flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; color: var(--primary); font-size: 11px; font-weight: 600; border-top: 1px solid var(--border); }
 .distribution__more:hover { background: var(--surface-2); }
 .distribution button:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
-.distribution--donut { grid-template-columns: minmax(110px, .85fr) minmax(0, 1.3fr); align-items: center; }
+.distribution--donut { grid-template-columns: minmax(0, 1fr) minmax(160px, 1.1fr); align-items: center; }
+.distribution--donut .distribution__rows { order: 1; }
+.distribution--donut .distribution__visual { order: 2; }
+.distribution--donut :is(.distribution__hint, .distribution__more, .distribution__explorer) { order: 3; }
 .distribution--donut > .report-state { grid-column: 1 / -1; }
-@container (max-width: 350px) { .distribution__visual { width: 130px; } .distribution__center strong { font-size: 16px; } .distribution__row { padding-inline: 4px; gap: 4px 6px; } .distribution__row-title { font-size: 11px; } .distribution__row-value { font-size: 11px; } }
+@container (max-width: 420px) { .distribution--donut .distribution__visual { order: 1; width: 220px; grid-column: 1 / -1; } .distribution--donut .distribution__rows { order: 2; grid-column: 1 / -1; grid-template-columns: repeat(2, minmax(0, 1fr)); } .distribution__visual { width: 220px; } .distribution__center strong { font-size: 16px; } .distribution__row { padding-inline: 4px; gap: 4px 6px; } .distribution__row-title { font-size: 11px; } .distribution__row-value { font-size: 11px; } }
 @media (max-width: 600px) { .distribution__summary button { width: 44px; height: 44px; } }
 @media (prefers-reduced-motion: reduce) { .distribution__ring path, .distribution__row, .distribution__strip > span { transition: none; } }
 </style>

@@ -12,6 +12,7 @@ import DesignIcon from '@/components/design/DesignIcon.vue'
 import DistributionChart from '@/components/dashboard/DistributionChart.vue'
 import TimeSeriesExplorer from '@/components/dashboard/TimeSeriesExplorer.vue'
 import DailyLedger from '@/components/dashboard/DailyLedger.vue'
+import { orderChannelColors } from '@/components/design/charts/orderChannelColors'
 import { fmtAbbr, fmtNum } from '@/components/design/utils/format'
 import { useFormatters } from '@/composables/useFormatters'
 import { useDashboardData } from '@/composables/useDashboardData'
@@ -29,6 +30,7 @@ const { t, locale } = useI18n({ useScope: 'global' })
 const { formatCurrency } = useFormatters()
 const { range: sharedRange } = useDashboardData()
 const windowLabel = computed(() => formatWindow(sharedRange.value, t))
+const channelColors = orderChannelColors()
 
 // ---------- Data shape mirroring window.DASH ----------
 interface DashData {
@@ -212,6 +214,12 @@ const revenueByDay = computed(() => {
 })
 
 const expenseRecords = computed(() => expenseDetails.value?.rows ?? [])
+const expensePage = ref(1)
+const expensePageSize = 4
+const expensePages = computed(() => Math.max(1, Math.ceil(expenseRecords.value.length / expensePageSize)))
+const visibleExpenses = computed(() => expenseRecords.value.slice((expensePage.value - 1) * expensePageSize, expensePage.value * expensePageSize))
+
+watch(expenseRecords, () => { expensePage.value = 1 })
 
 function formatExpenseDateTime(value: string): string {
   const date = new Date(value)
@@ -261,9 +269,9 @@ const orderTypeMix = computed(() => {
   }, { hall: 0, delivery: 0, pickup: 0 })
 
   return [
-    { label: t('Hall'), value: totals.hall, color: 'rgb(var(--v-theme-c1))' },
-    { label: t('Delivery'), value: totals.delivery, color: 'rgb(var(--v-theme-c3))' },
-    { label: t('Pickup'), value: totals.pickup, color: 'rgb(var(--v-theme-c2))' },
+    { label: t('Hall'), value: totals.hall, color: channelColors.hall },
+    { label: t('Delivery'), value: totals.delivery, color: channelColors.delivery },
+    { label: t('Pickup'), value: totals.pickup, color: channelColors.pickup },
   ].filter(row => row.value > 0)
 })
 
@@ -589,6 +597,7 @@ onBeforeUnmount(() => { salesRequestId++ })
             <DistributionChart
               :data="orderTypeMix"
               :label="t('Orders')"
+              visual="bars"
             />
           </div>
         </Card>
@@ -633,7 +642,7 @@ onBeforeUnmount(() => { salesRequestId++ })
               class="sales-expense-list__rows"
             >
               <div
-                v-for="row in expenseRecords"
+                v-for="row in visibleExpenses"
                 :key="row.id"
                 class="sales-expense-list__row"
               >
@@ -646,6 +655,29 @@ onBeforeUnmount(() => { salesRequestId++ })
                 </span>
                 <strong class="mono">{{ formatCurrency(row.amount) }}</strong>
               </div>
+              <nav
+                v-if="expensePages > 1"
+                class="sales-expense-list__pagination"
+                :aria-label="t('Latest expense records')"
+              >
+                <span>{{ fmtNum((expensePage - 1) * expensePageSize + 1) }}–{{ fmtNum(Math.min(expensePage * expensePageSize, expenseRecords.length)) }} {{ t('of') }} {{ fmtNum(expenseRecords.length) }}</span>
+                <button
+                  type="button"
+                  :disabled="expensePage === 1"
+                  :aria-label="t('$vuetify.pagination.ariaLabel.previous')"
+                  @click="expensePage--"
+                >
+                  <DesignIcon name="chevleft" />
+                </button>
+                <button
+                  type="button"
+                  :disabled="expensePage === expensePages"
+                  :aria-label="t('$vuetify.pagination.ariaLabel.next')"
+                  @click="expensePage++"
+                >
+                  <DesignIcon name="chevright" />
+                </button>
+              </nav>
             </div>
             <ReportState
               v-else

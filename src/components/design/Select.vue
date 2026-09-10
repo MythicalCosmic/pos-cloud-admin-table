@@ -39,6 +39,7 @@ const root = ref<HTMLElement | null>(null)
 const menu = ref<HTMLElement | null>(null)
 const open = ref(false)
 const activeIndex = ref(-1)
+let keyboardNavigation = false
 const menuStyle = ref<Record<string, string>>({})
 
 const id = designId('select')
@@ -85,6 +86,7 @@ const selectedIndex = computed(() => {
   const idx = keyboardOptions.value.findIndex(o =>
     o.isPlaceholder ? !hasValue.value : String(o.value) === String(props.modelValue),
   )
+
   return idx >= 0 ? idx : 0
 })
 
@@ -96,15 +98,19 @@ const describedBy = computed(() => {
 })
 
 const invalid = computed(() => !!props.error || !!field?.invalid.value)
+
 const accessibleLabel = computed(() => {
-  if (attrs['aria-label']) return String(attrs['aria-label'])
-  if (field?.labelId) return undefined
+  if (attrs['aria-label'])
+    return String(attrs['aria-label'])
+  if (field?.labelId)
+    return undefined
   return props.placeholder || currentLabel.value || t('Select')
 })
 
 function recalcMenu() {
   const el = root.value
-  if (!el) return
+  if (!el)
+    return
   const r = el.getBoundingClientRect()
   const vh = window.innerHeight
   const vw = window.innerWidth
@@ -113,6 +119,7 @@ function recalcMenu() {
   const wantUp = below < 240 && above > below
   const width = Math.min(r.width, Math.max(120, vw - 16))
   const left = Math.max(8, Math.min(r.left, vw - width - 8))
+
   menuStyle.value = {
     position: 'fixed',
     left: `${left}px`,
@@ -123,7 +130,8 @@ function recalcMenu() {
 }
 
 function toggle() {
-  if (props.disabled) return
+  if (props.disabled)
+    return
   if (!open.value) {
     recalcMenu()
     activeIndex.value = selectedIndex.value
@@ -147,51 +155,69 @@ function clearVal() {
   open.value = false
 }
 
-function onKey(ev: KeyboardEvent) {
-  if (props.disabled) return
-
-  if (ev.key === 'Escape') {
-    if (open.value) ev.preventDefault()
-    open.value = false
-    return
+function stepOption(delta: number) {
+  if (!open.value) {
+    recalcMenu()
+    open.value = true
+    activeIndex.value = selectedIndex.value
   }
-  if (ev.key === 'Tab') {
-    open.value = false
-    return
-  }
-  if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') {
-    ev.preventDefault()
-    if (!open.value) {
-      recalcMenu()
-      open.value = true
-      activeIndex.value = selectedIndex.value
-    }
-    const count = keyboardOptions.value.length
-    if (count) {
-      const delta = ev.key === 'ArrowDown' ? 1 : -1
-      activeIndex.value = (activeIndex.value + delta + count) % count
-      nextTick(scrollActiveIntoView)
-    }
-    return
-  }
-  if (ev.key === 'Home' || ev.key === 'End') {
-    if (!open.value) return
-    ev.preventDefault()
-    activeIndex.value = ev.key === 'Home' ? 0 : keyboardOptions.value.length - 1
+  const count = keyboardOptions.value.length
+  if (count) {
+    activeIndex.value = (activeIndex.value + delta + count) % count
     nextTick(scrollActiveIntoView)
+  }
+}
+
+function commitOption() {
+  if (!open.value) { toggle(); return }
+  const option = keyboardOptions.value[activeIndex.value]
+  if (!option)
     return
+  if (option.isPlaceholder)
+    clearVal()
+  else pick(option.value)
+}
+
+function onKey(ev: KeyboardEvent) {
+  if (props.disabled)
+    return
+  keyboardNavigation = true
+  switch (ev.key) {
+    case 'Escape':
+      if (open.value)
+        ev.preventDefault()
+      open.value = false
+      break
+    case 'Tab':
+      open.value = false
+      break
+    case 'ArrowDown':
+    case 'ArrowUp':
+      ev.preventDefault()
+      stepOption(ev.key === 'ArrowDown' ? 1 : -1)
+      break
+    case 'Home':
+    case 'End':
+      if (!open.value)
+        return
+      ev.preventDefault()
+      activeIndex.value = ev.key === 'Home' ? 0 : keyboardOptions.value.length - 1
+      nextTick(scrollActiveIntoView)
+      break
+    case 'Enter':
+    case ' ':
+      ev.preventDefault()
+      commitOption()
   }
-  if (ev.key === 'Enter' || ev.key === ' ') {
-    ev.preventDefault()
-    if (!open.value) {
-      toggle()
-      return
-    }
-    const option = keyboardOptions.value[activeIndex.value]
-    if (!option) return
-    if (option.isPlaceholder) clearVal()
-    else pick(option.value)
-  }
+}
+
+// Scrolling to a keyboard option can move another row under a stationary mouse.
+// Only a deliberate pointer movement may replace the keyboard highlight.
+function pointAtOption(index: number, event: MouseEvent) {
+  if (keyboardNavigation && !event.movementX && !event.movementY)
+    return
+  keyboardNavigation = false
+  activeIndex.value = index
 }
 
 function scrollActiveIntoView() {
@@ -201,11 +227,13 @@ function scrollActiveIntoView() {
 }
 
 function onScroll() {
-  if (open.value) recalcMenu()
+  if (open.value)
+    recalcMenu()
 }
 
 function onResize() {
-  if (open.value) recalcMenu()
+  if (open.value)
+    recalcMenu()
 }
 
 onClickOutside(root, () => { open.value = false }, { ignore: [menu] })
@@ -280,15 +308,15 @@ onBeforeUnmount(() => {
           :class="{ 'is-active': !hasValue, 'is-focused': activeIndex === 0 }"
           role="option"
           :aria-selected="!hasValue"
-          @mouseenter="activeIndex = 0"
+          @mousemove="pointAtOption(0, $event)"
           @click="clearVal"
         >
           <span>{{ placeholder }}</span>
         </div>
         <div
           v-for="(o, oi) in normalized"
-          :key="o.value"
           :id="optionId((placeholder !== undefined ? 1 : 0) + oi)"
+          :key="o.value"
           class="select__opt"
           :class="{
             'is-active': String(o.value) === String(modelValue),
@@ -296,7 +324,7 @@ onBeforeUnmount(() => {
           }"
           role="option"
           :aria-selected="String(o.value) === String(modelValue)"
-          @mouseenter="activeIndex = (placeholder !== undefined ? 1 : 0) + oi"
+          @mousemove="pointAtOption((placeholder !== undefined ? 1 : 0) + oi, $event)"
           @click="pick(o.value)"
         >
           <span>{{ o.label }}</span>

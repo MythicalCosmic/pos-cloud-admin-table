@@ -5,6 +5,7 @@ import DataTable from '@/components/design/DataTable.vue'
 import type { DataTableColumn } from '@/components/design/DataTable.vue'
 import { fmtNum } from '@/components/design/utils/format'
 import { useFormatters } from '@/composables/useFormatters'
+import { orderChannelColors } from '@/components/design/charts/orderChannelColors'
 
 const props = defineProps<{
   dates: string[]
@@ -15,6 +16,7 @@ const props = defineProps<{
 
 const { t } = useI18n({ useScope: 'global' })
 const { formatCurrency } = useFormatters()
+const channelColors = orderChannelColors()
 
 const rows = computed(() => props.dates.map((date, index) => {
   const channel = props.channels.find(row => row.label === date)?.values
@@ -62,6 +64,9 @@ const columns = computed<DataTableColumn<LedgerRow>[]>(() => [
       :mobile-summary="['revenue', 'expenses']"
       :per-page-options="[7, 14, 30]"
     >
+      <template #cell.date="{ row }">
+        <span class="daily-ledger__date"><span aria-hidden="true">{{ String(row.date).slice(-2) }}</span><strong>{{ row.date }}</strong></span>
+      </template>
       <template #cell.revenue="{ row }">
         <span class="daily-ledger__revenue">
           <span>{{ row.revenue === null ? '—' : formatCurrency(row.revenue) }}</span>
@@ -70,6 +75,13 @@ const columns = computed<DataTableColumn<LedgerRow>[]>(() => [
             aria-hidden="true"
           ><b :style="{ width: `${Math.abs(Number(row.revenue)) / maxRevenue * 100}%` }" /></i>
         </span>
+      </template>
+      <template
+        v-for="key in (['hall', 'delivery', 'pickup'] as const)"
+        :key="key"
+        #[`cell.${key}`]="{ row }"
+      >
+        <span class="daily-ledger__channel"><i :style="{ background: channelColors[key] }" />{{ row[key] === null ? '—' : fmtNum(row[key]) }}</span>
       </template>
       <template #empty>
         <ReportState
@@ -83,9 +95,14 @@ const columns = computed<DataTableColumn<LedgerRow>[]>(() => [
 
 <style scoped>
 .daily-ledger { min-width: 0; }
-.daily-ledger__revenue { display: grid; justify-items: end; gap: 6px; }
-.daily-ledger__revenue i { width: 100%; max-width: 140px; height: 3px; background: var(--chart-track); border-radius: 3px; overflow: hidden; }
-.daily-ledger__revenue b { display: block; height: 100%; background: var(--primary); border-radius: inherit; }
+.daily-ledger__date { display: inline-flex; align-items: center; gap: 10px; white-space: nowrap; }
+.daily-ledger__date > span { display: grid; place-items: center; width: 32px; height: 34px; border-radius: 9px; background: var(--primary-weak); color: var(--primary); font: 600 16px var(--font-sans); }
+.daily-ledger__date > strong { font: 500 12px var(--font-sans); }
+.daily-ledger__revenue { position: relative; display: grid; justify-items: end; padding: 8px 10px; isolation: isolate; }
+.daily-ledger__revenue i { position: absolute; z-index: -1; inset: 0; border-radius: 6px; overflow: hidden; }
+.daily-ledger__revenue b { display: block; height: 100%; background: linear-gradient(90deg, color-mix(in srgb, var(--c4) 9%, transparent), color-mix(in srgb, var(--primary) 24%, transparent)); border-radius: inherit; }
+.daily-ledger__channel { display: inline-flex; gap: 8px; align-items: center; }
+.daily-ledger__channel i { width: 5px; height: 5px; border-radius: 2px; }
 .daily-ledger :deep(.dtable td) { padding-block: 11px; }
 .daily-ledger :deep(.dtable th:first-child), .daily-ledger :deep(.dtable td:first-child) { position: sticky; left: 0; background: var(--surface); }
 .daily-ledger__hint { margin: 5px 0 0; font-size: 12px; line-height: 1.5; color: var(--text-secondary); }

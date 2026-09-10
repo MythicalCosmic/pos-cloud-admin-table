@@ -8,6 +8,7 @@ import Kpi from '@/components/design/Kpi.vue'
 import Delta from '@/components/design/Delta.vue'
 import DistributionChart from '@/components/dashboard/DistributionChart.vue'
 import CategoryMap from '@/components/dashboard/CategoryMap.vue'
+import KitchenSpeed from '@/components/dashboard/KitchenSpeed.vue'
 import ComboPareto from '@/components/design/charts/ComboPareto.vue'
 import Sparkline from '@/components/design/charts/Sparkline.vue'
 import Affinity from '@/components/design/charts/Affinity.vue'
@@ -148,22 +149,6 @@ const categoryComposition = computed(() => {
     color: c.color || palette[i % palette.length],
   }))
 })
-
-const prepMaxMins = computed(() => Math.max(
-  1,
-  ...(data.value?.prepByCategory || []).map(row => Math.max(row.mins, row.target)),
-))
-
-function prepBarWidth(row: PrepRow): number {
-  const scale = row.target || prepMaxMins.value
-  return Math.min(100, Math.max(0, row.mins / scale * 100))
-}
-
-function prepBarColor(row: PrepRow): string {
-  if (row.target && row.mins > row.target)
-    return 'rgb(var(--v-theme-error))'
-  return 'rgb(var(--v-theme-success))'
-}
 
 /* ---------- BE → FE shape mappers ----------
    Confirmed BE contracts (alpha_pos_server/admins/views/analytics_views.py
@@ -581,24 +566,8 @@ onBeforeUnmount(() => { productsRequestId++ })
               </h3>
             </div>
           </div>
-          <div class="card__body prep-list">
-            <div
-              v-for="row in data.prepByCategory"
-              :key="row.label"
-            >
-              <div class="prep-list__head">
-                <span style="font-size: 13px; font-weight: 600;">{{ row.label }}</span>
-                <span
-                  class="mono"
-                  style="font-size: 12px; font-weight: 700;"
-                >
-                  {{ row.mins.toFixed(1) }}m<span v-if="row.target"> · {{ t('Target') }} {{ row.target }}m</span><span v-if="row.orders"> · {{ row.orders }} {{ t('Orders') }}</span>
-                </span>
-              </div>
-              <div style="height: 10px; border-radius: 999px; background: rgb(var(--v-theme-chart-track)); overflow: hidden;">
-                <div :style="{ width: `${prepBarWidth(row)}%`, height: '100%', borderRadius: 'inherit', background: prepBarColor(row) }" />
-              </div>
-            </div>
+          <div class="card__body">
+            <KitchenSpeed :data="data.prepByCategory" />
           </div>
         </Card>
       </div>

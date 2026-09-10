@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { use } from 'echarts/core'
+import { color as chartColor, use } from 'echarts/core'
 import { SVGRenderer } from 'echarts/renderers'
 import { TreemapChart } from 'echarts/charts'
 import { TooltipComponent } from 'echarts/components'
@@ -53,7 +53,7 @@ const option = computed<EChartsOption>(() => {
   return {
     animation: reducedMotion.value !== 'reduce',
     animationDurationUpdate: 300,
-    tooltip: { renderMode: 'richText', confine: true, backgroundColor: C.surface, borderColor: C.border, textStyle: { color: C.text, fontFamily: C.fontUI }, formatter: (params: any) => `${params.name}\n${fmtNum(Number(params.value))} ${props.unit}` },
+    tooltip: { renderMode: 'richText', confine: true, backgroundColor: '#171923', borderColor: '#ffffff26', textStyle: { color: '#FFFFFF', fontFamily: C.fontUI }, formatter: (params: any) => `${params.name}\n${fmtNum(Number(params.value))} ${props.unit}` },
     series: [{
       type: 'treemap',
       left: 0,
@@ -81,7 +81,7 @@ const option = computed<EChartsOption>(() => {
       itemStyle: { borderColor: C.surface, borderWidth: 0, gapWidth: 6, borderRadius: 12 },
       emphasis: { itemStyle: { borderColor: C.textSecondary, borderWidth: 2 }, label: { show: true } },
       levels: [{ itemStyle: { borderColor: C.surface, borderWidth: 0, gapWidth: 6 } }],
-      data: props.data.map((row, index) => ({ name: row.label, value: Math.max(0, row.value), label: { color: chartTextColor(colors[index % colors.length]) }, itemStyle: { color: colors[index % colors.length], borderRadius: 9, borderColor: index === selected.value ? C.text : C.surface, borderWidth: index === selected.value ? 2 : 0 } })),
+      data: props.data.map((row, index) => ({ name: row.label, value: Math.max(0, row.value), label: { color: chartTextColor(`#${chartColor.toHex(chartColor.lift(colors[index % colors.length], 0.45))}`) }, itemStyle: { color: { type: 'linear' as const, x: 0, y: 0, x2: 1, y2: 1, colorStops: [{ offset: 0, color: chartColor.lift(colors[index % colors.length], 0.75) }, { offset: 1, color: chartColor.lift(colors[index % colors.length], 0.45) }] }, borderRadius: 10, borderColor: index === selected.value ? C.text : C.surface, borderWidth: index === selected.value ? 2 : 0 } })),
     }],
   }
 })

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-10T00:17:24.116401+00:00",
+  "generatedAt": "2026-09-10T11:36:48.049118+00:00",
   "title": "Design System: Alpha POS",
   "extensions": {
     "colorMeta": {
@@ -367,18 +367,99 @@
           "oklch(80% 0.1210 79.47)",
           "oklch(95% 0.1210 79.47)"
         ]
+      },
+      "chart-tag-dark": {
+        "role": "neutral",
+        "displayName": "Chart tag dark",
+        "tonalRamp": [
+          "oklch(15% 0.0199 275.80)",
+          "oklch(25% 0.0199 275.80)",
+          "oklch(35% 0.0199 275.80)",
+          "oklch(45% 0.0199 275.80)",
+          "oklch(55% 0.0199 275.80)",
+          "oklch(65% 0.0199 275.80)",
+          "oklch(80% 0.0199 275.80)",
+          "oklch(95% 0.0199 275.80)"
+        ]
+      },
+      "chart-tag-on-dark": {
+        "role": "neutral",
+        "displayName": "Chart tag white text",
+        "tonalRamp": [
+          "oklch(15% 0.0000 0.00)",
+          "oklch(25% 0.0000 0.00)",
+          "oklch(35% 0.0000 0.00)",
+          "oklch(45% 0.0000 0.00)",
+          "oklch(55% 0.0000 0.00)",
+          "oklch(65% 0.0000 0.00)",
+          "oklch(80% 0.0000 0.00)",
+          "oklch(95% 0.0000 0.00)"
+        ]
+      },
+      "chart-tag-light": {
+        "role": "neutral",
+        "displayName": "Chart tag light",
+        "tonalRamp": [
+          "oklch(15% 0.0123 301.29)",
+          "oklch(25% 0.0123 301.29)",
+          "oklch(35% 0.0123 301.29)",
+          "oklch(45% 0.0123 301.29)",
+          "oklch(55% 0.0123 301.29)",
+          "oklch(65% 0.0123 301.29)",
+          "oklch(80% 0.0123 301.29)",
+          "oklch(95% 0.0123 301.29)"
+        ]
+      },
+      "chart-tag-on-light": {
+        "role": "neutral",
+        "displayName": "Chart tag dark text",
+        "tonalRamp": [
+          "oklch(15% 0.0503 294.69)",
+          "oklch(25% 0.0503 294.69)",
+          "oklch(35% 0.0503 294.69)",
+          "oklch(45% 0.0503 294.69)",
+          "oklch(55% 0.0503 294.69)",
+          "oklch(65% 0.0503 294.69)",
+          "oklch(80% 0.0503 294.69)",
+          "oklch(95% 0.0503 294.69)"
+        ]
       }
     },
     "shadows": [
       {
         "name": "focus",
-        "value": "0 0 0 3px var(--primary-ring)",
-        "purpose": "Keyboard focus; resolves with the selected palette."
+        "value": "var(--shadow-focus, 0 0 0 3px var(--primary-ring))",
+        "purpose": "Shared focus ring; resolves with the selected palette."
       },
       {
         "name": "surface-xs",
-        "value": "0 1px 2px rgba(16,24,40,0.05)",
-        "purpose": "Existing light-theme low elevation; dark counterpart stays in tokens.css."
+        "value": "var(--shadow-xs)",
+        "purpose": "Low system elevation. tokens.css owns both light and dark values."
+      },
+      {
+        "name": "surface-sm",
+        "value": "var(--shadow-sm)",
+        "purpose": "Small system elevation. tokens.css owns both light and dark values."
+      },
+      {
+        "name": "surface-md",
+        "value": "var(--shadow-md)",
+        "purpose": "Medium system elevation. tokens.css owns both light and dark values."
+      },
+      {
+        "name": "surface-lg",
+        "value": "var(--shadow-lg)",
+        "purpose": "Raised menus and overlays, including ProductReportExport; tokens.css supplies each theme."
+      },
+      {
+        "name": "workspace-card",
+        "value": "0 2px 5px rgb(16 32 21 / 2%)",
+        "purpose": "The incumbent shared workspace card shadow in design-workspace.css."
+      },
+      {
+        "name": "dashboard-surface",
+        "value": "var(--dash-shadow, 0 2px 3px -2px #15162512, 0 8px 24px -18px #15162530)",
+        "purpose": "Soft dashboard surface and KPI elevation; dashboard.css keeps this resting shadow on KPI hover."
       }
     ],
     "motion": [
@@ -395,7 +476,7 @@
       {
         "name": "distribution-row-feedback",
         "value": "150ms",
-        "purpose": "Exact-value row background/border and composition-strip opacity feedback; bar widths update directly."
+        "purpose": "Exact-value row background/border and composition-strip opacity feedback; distribution bar widths update directly."
       },
       {
         "name": "distribution-sector-feedback",
@@ -409,13 +490,38 @@
       },
       {
         "name": "series-update",
-        "value": "240ms",
-        "purpose": "Existing ECharts SVG time-series data updates; disabled when reduced motion is requested."
+        "value": "180ms",
+        "purpose": "ECharts SVG time-series and order-channel data updates; disabled when reduced motion is requested."
       },
       {
         "name": "report-export-overlay",
         "value": "160ms ease-out",
         "purpose": "ProductReportExport opacity and transform transition; reduced motion removes it. Uses the existing surface, border and shadow tokens."
+      },
+      {
+        "name": "control-feedback",
+        "value": "160ms ease",
+        "purpose": "Existing shared button and field background, border, color and focus feedback; reduced motion removes transitions."
+      },
+      {
+        "name": "overview-segment-feedback",
+        "value": "160ms",
+        "purpose": "Overview metric selector background, text and low-shadow feedback; reduced motion removes transitions."
+      },
+      {
+        "name": "channel-enter",
+        "value": "360ms",
+        "purpose": "OrderChannelChart SVG column entry; reduced motion disables it."
+      },
+      {
+        "name": "kitchen-bar-feedback",
+        "value": "200ms ease-out",
+        "purpose": "KitchenSpeed actual-time bar width changes on a stable target-inclusive scale; reduced motion removes the transition."
+      },
+      {
+        "name": "radar-opacity-feedback",
+        "value": "200ms ease",
+        "purpose": "Radar series opacity changes; the dashboard reduced-motion rule removes descendant transitions."
       }
     ],
     "breakpoints": [
@@ -440,7 +546,7 @@
         "value": "600px"
       },
       {
-        "name": "report-metric-rails",
+        "name": "dashboard-kpi-grid",
         "value": "650px"
       },
       {
@@ -454,8 +560,42 @@
       {
         "name": "affinity-details-stack",
         "value": "850px"
+      },
+      {
+        "name": "overview-totals",
+        "value": "1250px"
+      },
+      {
+        "name": "overview-chart-pair",
+        "value": "1020px"
+      },
+      {
+        "name": "overview-ring-pair",
+        "value": "650px"
+      },
+      {
+        "name": "distribution-container",
+        "value": "420px"
       }
-    ]
+    ],
+    "typographyMeta": {
+      "quantity": {
+        "displayName": "Exact reporting quantity",
+        "purpose": "JetBrains Mono for exact chart rows and accounting values; dashboard headline totals use Hanken Grotesk."
+      },
+      "dashboard-heading": {
+        "displayName": "Dashboard heading",
+        "purpose": "The renewed continuous-dashboard page heading; responsive size adjustments remain in dashboard.css."
+      },
+      "dashboard-total": {
+        "displayName": "Dashboard headline total",
+        "purpose": "Tabular Hanken figures in the four opening cards; reduces to 22px on phones."
+      },
+      "dashboard-metric": {
+        "displayName": "Dashboard chapter metric",
+        "purpose": "Tabular Hanken figures in separate tinted chapter cards; names use the smaller sans-serif treatment."
+      }
+    }
   },
   "components": [
     {
@@ -517,16 +657,16 @@
     {
       "name": "Reporting surface",
       "kind": "card",
-      "description": "Quiet ruled surface; absent value stays absent.",
+      "description": "Product Performance retains its quiet 14px reporting surface and exact mono values; absent values stay absent.",
       "html": "<article class=\"ds-report\"><span>Selected period</span><strong>—</strong><p>No report values in this preview.</p></article>",
-      "css": ".ds-report{padding:18px;border:1px solid var(--border,#dbe3f0);border-radius:14px;background:var(--surface,#fff);color:var(--text,#17243b);font:400 13px var(--font-sans,\"Hanken Grotesk\",sans-serif)}.ds-report strong{display:block;margin-top:12px;font:600 30px var(--font-mono,\"JetBrains Mono\",monospace);font-variant-numeric:tabular-nums}.ds-report p{margin:10px 0 0;color:var(--text-secondary,#52627a)}"
+      "css": ".ds-report{padding:17px 16px;border:1px solid var(--border,#dbe3f0);border-radius:14px;background:var(--surface,#fff);color:var(--text,#17243b);font:400 13px var(--font-sans,\"Hanken Grotesk\",sans-serif)}.ds-report strong{display:block;margin-top:12px;font:500 clamp(17px,1.35vw,24px) var(--font-mono,\"JetBrains Mono\",monospace);letter-spacing:-.03em;font-variant-numeric:tabular-nums}.ds-report p{margin:9px 0 0;font-size:10px;line-height:1.5;color:var(--text-secondary,#52627a)}"
     },
     {
       "name": "Distribution row",
       "kind": "custom",
       "description": "Exact-value chart row with hover preview, visible keyboard focus and pinned selection. Dashes are preview placeholders; production values and percentages come from the complete supplied dataset.",
       "html": "<button class=\"ds-distribution-row\" type=\"button\" aria-pressed=\"true\"><span class=\"ds-distribution-marker\" aria-hidden=\"true\"></span><span class=\"ds-distribution-title\">Category</span><strong class=\"ds-distribution-percent\">—</strong><span class=\"ds-distribution-value\">—<small>UZS</small></span></button>",
-      "css": ".ds-distribution-row{display:grid;grid-template-columns:10px minmax(0,1fr) auto;align-items:center;gap:4px 9px;text-align:left;width:100%;min-height:52px;min-width:0;padding:9px 7px;border:1px solid transparent;border-radius:8px;background:transparent;cursor:pointer;transition:background 150ms,border-color 150ms}.ds-distribution-row:hover{background:var(--surface-2,#f7f9fd)}.ds-distribution-row[aria-pressed=\"true\"]{border-color:color-mix(in srgb,var(--primary,#2563eb) 40%,var(--border,#dbe3f0));background:var(--primary-weak,#ebf2ff)}.ds-distribution-row:focus-visible{outline:2px solid var(--primary,#2563eb);outline-offset:2px}.ds-distribution-marker{width:7px;height:7px;border-radius:50%;background:var(--c1,#2563eb)}.ds-distribution-title{color:var(--text,#17243b);font:500 12px/1.4 var(--font-sans,\"Hanken Grotesk\",sans-serif);overflow-wrap:anywhere}.ds-distribution-percent{color:var(--text-secondary,#52627a);font:500 11px var(--font-mono,\"JetBrains Mono\",monospace);text-align:right}.ds-distribution-value{grid-column:2/-1;display:flex;align-items:baseline;flex-wrap:wrap;gap:4px;color:var(--text,#17243b);font:400 12px var(--font-mono,\"JetBrains Mono\",monospace);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}.ds-distribution-value small{color:var(--text-secondary,#52627a);font:10px var(--font-sans,\"Hanken Grotesk\",sans-serif)}@media(prefers-reduced-motion:reduce){.ds-distribution-row{transition:none}}"
+      "css": ".ds-distribution-row{display:grid;grid-template-columns:10px minmax(0,1fr) auto;align-items:center;gap:4px 9px;text-align:left;width:100%;min-height:52px;min-width:0;padding:9px 7px;border:1px solid transparent;border-radius:8px;background:transparent;cursor:pointer;transition:background 150ms,border-color 150ms}.ds-distribution-row:hover{background:var(--surface-2,#f7f9fd)}.ds-distribution-row[aria-pressed=\"true\"]{border-color:color-mix(in srgb,var(--primary,#2563eb) 40%,var(--border,#dbe3f0));background:var(--primary-weak,#ebf2ff)}.ds-distribution-row:focus-visible{outline:2px solid var(--primary,#2563eb);outline-offset:2px}.ds-distribution-marker{width:7px;height:7px;border-radius:2px;background:linear-gradient(135deg,color-mix(in srgb,var(--c1,#2563eb) 55%,white),var(--c1,#2563eb))}.ds-distribution-title{color:var(--text,#17243b);font:500 12px/1.4 var(--font-sans,\"Hanken Grotesk\",sans-serif);overflow-wrap:anywhere}.ds-distribution-percent{color:var(--text-secondary,#52627a);font:500 11px var(--font-mono,\"JetBrains Mono\",monospace);text-align:right}.ds-distribution-value{grid-column:2/-1;display:flex;align-items:baseline;flex-wrap:wrap;gap:4px;color:var(--text,#17243b);font:400 12px var(--font-mono,\"JetBrains Mono\",monospace);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}.ds-distribution-value small{color:var(--text-secondary,#52627a);font:10px var(--font-sans,\"Hanken Grotesk\",sans-serif)}@media(prefers-reduced-motion:reduce){.ds-distribution-row{transition:none}}"
     },
     {
       "name": "Report export menu",
@@ -534,17 +674,39 @@
       "description": "Open-state preview of ProductReportExport. Production generation tracks each format separately, keeps other formats usable, and moves keyboard focus when an item becomes busy.",
       "html": "<div class=\"ds-report-export-menu\" role=\"menu\" aria-label=\"Export\"><p role=\"none\">All matching products, across every page.</p><button type=\"button\" role=\"menuitem\"><span class=\"ds-report-export-format\">XLSX</span><span>Excel</span><svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 15V3m9 12v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"/><path d=\"m7 10l5 5l5-5\"/></svg></button><button type=\"button\" role=\"menuitem\"><span class=\"ds-report-export-format\">PDF</span><span>PDF</span><svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 15V3m9 12v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"/><path d=\"m7 10l5 5l5-5\"/></svg></button><button type=\"button\" role=\"menuitem\"><span class=\"ds-report-export-format\">CSV</span><span>CSV</span><svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 15V3m9 12v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"/><path d=\"m7 10l5 5l5-5\"/></svg></button></div>",
       "css": ".ds-report-export-menu{width:min(268px,calc(100vw - 40px));background:var(--surface,#fff);border:1px solid var(--border,#dbe3f0);border-radius:12px;padding:6px;box-shadow:var(--shadow-lg,0 16px 40px rgba(16,24,40,.14),0 4px 10px rgba(16,24,40,.06));font-family:var(--font-sans,\"Hanken Grotesk\",sans-serif);transform-origin:top right}.ds-report-export-menu p{margin:6px 9px 9px;font-size:11px;line-height:1.5;color:var(--text-secondary,#52627a)}.ds-report-export-menu button{width:100%;min-height:46px;display:flex;align-items:center;gap:10px;padding:8px 10px;border:0;background:transparent;color:var(--text,#17243b);border-radius:7px;font:400 12px var(--font-sans,\"Hanken Grotesk\",sans-serif);cursor:pointer}.ds-report-export-menu button>:last-child{margin-inline-start:auto}.ds-report-export-menu button:hover:not(:disabled),.ds-report-export-menu button:focus-visible{background:var(--primary-weak,#ebf2ff);color:var(--primary,#2563eb);outline:none}.ds-report-export-menu button:disabled{opacity:.6;cursor:default}.ds-report-export-format{width:38px;font:500 9px var(--font-mono,\"JetBrains Mono\",monospace);letter-spacing:.04em;padding:5px 0;text-align:center;border:1px solid var(--border,#dbe3f0);border-radius:4px}"
+    },
+    {
+      "name": "Dashboard reporting surface",
+      "kind": "card",
+      "refersTo": "dashboard-card",
+      "description": "Soft dashboard card with the source fine edge, 16px corners and restrained two-part elevation. The preview contains no report data.",
+      "html": "<article class=\"ds-dashboard-card\"><h3>Performance</h3><p class=\"ds-dashboard-scope\">Selected period</p><div class=\"ds-dashboard-empty\">No report values in this preview.</div></article>",
+      "css": ".ds-dashboard-card{min-width:0;padding:20px;border:1px solid var(--dash-edge,color-mix(in srgb,var(--text,#17243b) 10%,var(--surface,#fff)));border-radius:16px;background:var(--surface,#fff);box-shadow:var(--dash-shadow,0 2px 3px -2px #15162512,0 8px 24px -18px #15162530);color:var(--text,#17243b);font-family:var(--font-sans,\"Hanken Grotesk\",sans-serif)}.ds-dashboard-card h3{margin:0;font-size:16px;font-weight:600;letter-spacing:-.02em;line-height:1.4}.ds-dashboard-scope{margin:4px 0 0;color:var(--text-secondary,#52627a);font-size:12px;line-height:1.5}.ds-dashboard-empty{padding:28px 0 8px;color:var(--text-secondary,#52627a);font-size:12px;line-height:1.5}@media(max-width:650px){.ds-dashboard-card{padding:16px}}"
+    },
+    {
+      "name": "Dashboard summary card",
+      "kind": "card",
+      "refersTo": "dashboard-summary-card",
+      "description": "The opening KPI is a selectable, softly tinted Hanken total. Dashes are preview placeholders; production selection controls the Performance metric.",
+      "html": "<article class=\"ds-dashboard-kpi\"><button class=\"ds-dashboard-kpi-select\" type=\"button\" aria-label=\"Select revenue\" aria-pressed=\"true\"></button><span class=\"ds-dashboard-kpi-head\">Revenue<svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 8V5a2 2 0 0 0-2-2H6a3 3 0 0 0 0 6h14v12H6a3 3 0 0 1-3-3V6m17 6h-4v5h4\"/></svg></span><strong class=\"ds-dashboard-kpi-value\">—<small>UZS</small></strong><span class=\"ds-dashboard-kpi-scope\">No report values in this preview.</span></article>",
+      "css": ".ds-dashboard-kpi{--ds-metric-color:var(--chart-revenue,var(--primary,#2563eb));position:relative;min-width:0;padding:18px;border:1px solid color-mix(in srgb,var(--ds-metric-color) 45%,var(--dash-edge,var(--border,#dbe3f0)));border-radius:16px;background:linear-gradient(125deg,color-mix(in srgb,var(--ds-metric-color) 8%,var(--surface,#fff)),var(--surface,#fff));box-shadow:var(--dash-shadow,0 2px 3px -2px #15162512,0 8px 24px -18px #15162530);color:var(--text,#17243b);font-family:var(--font-sans,\"Hanken Grotesk\",sans-serif)}.ds-dashboard-kpi-select{position:absolute;z-index:1;inset:0;width:100%;height:100%;padding:0;border:0;border-radius:inherit;background:transparent;cursor:pointer}.ds-dashboard-kpi-select:hover{background:color-mix(in srgb,var(--primary,#2563eb) 3%,transparent)}.ds-dashboard-kpi-select:focus-visible{border-radius:10px;outline:2px solid var(--primary,#2563eb);outline-offset:-3px}.ds-dashboard-kpi-head{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:20px;font-size:12px;font-weight:550}.ds-dashboard-kpi-head svg{color:var(--primary,#2563eb)}.ds-dashboard-kpi-value{display:flex;align-items:baseline;flex-wrap:wrap;gap:5px;margin:12px 0 8px;font:600 29px/1.3 var(--font-sans,\"Hanken Grotesk\",sans-serif);font-variant-numeric:tabular-nums;letter-spacing:-.03em;overflow-wrap:anywhere}.ds-dashboard-kpi-value small{font-size:10px;font-weight:400;color:var(--text-secondary,#52627a)}.ds-dashboard-kpi-scope{font-size:11px;line-height:1.5;color:var(--text-secondary,#52627a)}@media(max-width:650px){.ds-dashboard-kpi{padding:14px}.ds-dashboard-kpi-head{font-size:11px}.ds-dashboard-kpi-value{font-size:22px;margin:6px 0 4px}}"
+    },
+    {
+      "name": "Rounded distribution sectors",
+      "kind": "custom",
+      "description": "Illustrative 60/40 geometry preview from roundedSector.ts, with source gradients and contrast-safe dark/light percentage tags. Production sectors use actual shares and retain exact rows.",
+      "html": "<figure class=\"ds-ring-preview\"><svg viewBox=\"0 0 220 220\" role=\"img\" aria-label=\"Illustrative 60 and 40 percent sector geometry, not business data\"><defs><linearGradient id=\"ds-ring-a\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0\" stop-color=\"color-mix(in srgb,var(--c1,#2563eb) 52%,white)\"/><stop offset=\"1\" stop-color=\"var(--c1,#2563eb)\"/></linearGradient><linearGradient id=\"ds-ring-b\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0\" stop-color=\"color-mix(in srgb,var(--c4,#7c3aed) 52%,white)\"/><stop offset=\"1\" stop-color=\"var(--c4,#7c3aed)\"/></linearGradient></defs><path class=\"ds-ring-sector ds-ring-sector-a\" tabindex=\"0\" aria-label=\"Illustrative first share: 60 percent\" d=\"M118.0451 16.3449 A94 94 0 1 1 61.4596 190.4974 Q57.2485 187.8028 60.0544 183.6644 L72.9617 164.6275 Q75.7676 160.4891 80.0164 163.1223 A61 61 0 1 0 116.9673 49.3992 Q111.9822 49.0322 112.1446 44.0349 L112.8920 21.0470 Q113.0545 16.0496 118.0451 16.3449 Z\" fill=\"url(#ds-ring-a)\"/><path class=\"ds-ring-sector ds-ring-sector-b\" tabindex=\"0\" aria-label=\"Illustrative second share: 40 percent\" d=\"M48.4423 181.0397 A94 94 0 0 1 101.9549 16.3449 Q106.9455 16.0496 107.1080 21.0470 L107.8554 44.0349 Q108.0178 49.0322 103.0327 49.3992 A61 61 0 0 0 68.7431 154.9318 Q72.5604 158.1589 69.4916 162.1063 L55.3751 180.2646 Q52.3063 184.2121 48.4423 181.0397 Z\" fill=\"url(#ds-ring-b)\"/><g class=\"ds-ring-tag\" transform=\"translate(183.708 133.949)\"><rect x=\"-19\" y=\"-10\" width=\"38\" height=\"20\" rx=\"6\" fill=\"#171923\"/><text y=\"3.5\" fill=\"#FFFFFF\">60%</text></g><g class=\"ds-ring-tag\" transform=\"translate(36.292 86.051)\"><rect x=\"-19\" y=\"-10\" width=\"38\" height=\"20\" rx=\"6\" fill=\"#F4F1FA\"/><text y=\"3.5\" fill=\"#302945\">40%</text></g><text class=\"ds-ring-center\" x=\"110\" y=\"114\">Preview</text></svg><figcaption>Illustrative sector geometry</figcaption></figure>",
+      "css": ".ds-ring-preview{margin:0;width:100%;max-width:320px;color:var(--text,#17243b);font-family:var(--font-sans,\"Hanken Grotesk\",sans-serif)}.ds-ring-preview svg{display:block;width:100%;overflow:visible}.ds-ring-sector{cursor:pointer;transition:opacity 180ms ease-out,transform 180ms ease-out}.ds-ring-sector-b{opacity:.75}.ds-ring-sector:hover,.ds-ring-sector:focus-visible{opacity:1;outline:none;stroke:var(--text,#17243b);stroke-width:1.5}.ds-ring-sector-a:hover{transform:translate(2.853px,.927px)}.ds-ring-sector-b:hover{transform:translate(-2.853px,-.927px)}.ds-ring-tag{pointer-events:none}.ds-ring-tag text{text-anchor:middle;font:500 10px var(--font-sans,\"Hanken Grotesk\",sans-serif);font-variant-numeric:tabular-nums}.ds-ring-center{text-anchor:middle;fill:var(--text,#17243b);font:600 16px var(--font-sans,\"Hanken Grotesk\",sans-serif)}.ds-ring-preview figcaption{margin-top:6px;color:var(--text-secondary,#52627a);font-size:11px;text-align:center}@media(prefers-reduced-motion:reduce){.ds-ring-sector{transition:none}.ds-ring-sector:hover{transform:none}}"
     }
   ],
   "narrative": {
     "northStar": "Restaurant operations",
-    "overview": "Alpha POS puts restaurant activity, reporting and daily work in one readable workspace. Its visual direction comes from the user's legacy admin reference and the earlier approved Forest theme.",
+    "overview": "Alpha POS puts restaurant activity, reporting and daily work in one readable workspace. Its visual direction comes from the user's legacy admin reference and the earlier approved Forest theme. The dashboard's approved September 10 reference adds softly raised surfaces, lightly tinted summary cards, shaded rounded data marks and clearly separated ring sectors. These dashboard treatments use the existing identity, fonts and six palettes; other workspaces retain their established visual rules.",
     "keyCharacteristics": [
-      "full-width information",
-      "clear values",
-      "fine table rules",
-      "custom controls",
-      "restrained motion"
+      "Full-width information and clear values.",
+      "Soft dashboard surfaces and shaded data marks.",
+      "Fine table rules and custom controls.",
+      "Restrained motion and visible keyboard focus."
     ],
     "rules": [
       {
@@ -558,6 +720,8 @@
       "Keep loading, error, empty, stale and populated states distinct; keep all chart categories accessible.",
       "Keep phone targets reachable and test full control visibility at 320px as well as 390px.",
       "Keep chart share scope visible and every returned category, product and person reachable through exact-value controls.",
+      "Keep order-channel colors consistent and chart tags readable across all six light/dark palettes.",
+      "Keep preparation targets as markers on the actual-time scale, so overruns remain visible.",
       "Keep accounting-report money exact and incomplete historical cost visible through warnings and unavailable-value dashes."
     ],
     "donts": [
