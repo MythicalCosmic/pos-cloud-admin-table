@@ -78,6 +78,8 @@ Its visual direction comes from the user's legacy admin reference and the earlie
 The dashboard's approved September 10 reference adds softly raised surfaces, lightly tinted summary cards,
 shaded rounded data marks and clearly separated ring sectors. These dashboard treatments use the existing
 identity, fonts and six palettes; other workspaces retain their established visual rules.
+Orders and the AI conversation extend these soft surfaces through ticket cards, shared analytical charts
+and readable replies, without introducing another palette or typeface.
 **Creative North Star: "Restaurant operations"** describes the product's existing purpose.
 
 **Key Characteristics:**
@@ -121,6 +123,8 @@ tabular figures, with smaller sans-serif names when the value is a person or pro
 remain 11 CSS pixels as the SVG contracts on phones; scaling the chart must not shrink the text with it.
 Accounting reports use the shared money formatter's exact mode to preserve decimal-string precision and
 narrow no-break-space grouping without abbreviation. Unavailable cost, profit and margin remain dashes.
+Orders also uses tabular Hanken KPI and ticket totals. Assistant replies keep readable body text and
+internally scrolling tables; numeric cells align right with tabular figures.
 
 ## Layout
 
@@ -149,6 +153,13 @@ domain sizing classes continue to work after teleporting.
 Custom Input/Textarea wrappers own layout classes and styles; exclude those two attributes from
 native field bindings so Vue does not merge a second control surface onto the input.
 
+Orders places the shared dashboard date fields above its KPIs. Its optional insights pair two large
+payment rings beneath a compact five-status strip. Equal ticket cards open details in a 640px desktop
+side panel or phone sheet, preserving the register's layout; the full table remains selectable.
+Phone pagination retains first/current/last pages plus previous/next arrows within the available width.
+The AI workspace keeps a 232px desktop history column, the scrollable thread and a reachable composer.
+Thinking Level sits below desktop history and in a shared-preference dialog on compact layouts.
+
 Product Performance uses the same compact report surfaces for its custom filter toolbar, six full-result
 metric cells and ledger. The metric rail moves from six to three columns at 1350px, then two at 700px.
 On phones, search, sort and export each have a full row; the selected sort label wraps and its control
@@ -168,6 +179,10 @@ surface on hover and a primary border when selected. Time-series tools use short
 chart updates honoring reduced motion. Distribution bars update directly; kitchen bars use a brief width
 transition on the shared actual/target scale. The sidecar records system elevation and motion separately
 from the portable color, type and radius primitives.
+Orders and AI use the same low surface shadow through their own scoped aliases. New completed AI replies
+may reveal gradually at word and Markdown boundaries; the full response remains stored. Show full answer
+ends the reveal, and reduced motion, a hidden document or a very large answer displays it immediately.
+The thread follows the latest reply only while the reader is following it.
 
 ## Shapes
 
@@ -181,6 +196,9 @@ surfaces; the larger Overview metric selector uses md corners. These observed ov
 base radius tokens. Rounded SVG ring sectors are real annular paths with gaps and corners constrained by
 each actual share. Columns have softened ends; staff scatter marks are rounded squares. Tiny swatches,
 tracks, plot marks and focus outlines are chart geometry, not additional card or control radius roles.
+Orders tickets, KPIs and insight cards reuse the dashboard's softened surface radius. Its desktop detail
+panel uses the workspace-card radius and changes to the softened surface radius on phones. AI message,
+composer and chart surfaces follow the same family; phone messages and prompt cards use lg corners.
 
 ## Components
 
@@ -201,6 +219,7 @@ Each date endpoint combines a custom calendar and time control; validated drafts
   five leading rows and a visible count of the reported products/categories in their scope. Rings pair a
   large shaded visual with exact rows; narrow containers place the ring above a two-column legend. Value
   tags stay readable on both the emphasized and quieter sectors.
+  Callers can set percentage precision; Orders uses two decimals without changing dashboard defaults.
 - CategoryMap synchronizes treemap selection, custom Select and exact ranked rows. Its Revenue/Units
   choice changes the measure for the same categories. Small unlabeled tiles remain available in the selector.
 - ComboPareto preserves every returned product and labels whether cumulative share uses the reported
@@ -239,6 +258,24 @@ Each date endpoint combines a custom calendar and time control; validated drafts
 - Dashboard Export uses that report menu for ADMIN/MANAGER product-performance exports covering the applied
   business dates, with the backend's 07:00–03:00 scope disclosed. Exact-time selections show a scope notice;
   the separate loaded Dashboard snapshot CSV retains the exact reporting window and unavailable-value blanks.
+- DashboardFilters and DateRangeFields share the same desktop controls and phone sheet. Orders opts into
+  All time, with empty endpoints, while working-hour and explicit-time selections use the existing date
+  parameter builder. Manual date/time drafts validate before Apply; presets retain their immediate behavior.
+- OrdersInsights exposes five status filters, a paid/unpaid count ring and a grouped tender-amount ring.
+  Scope labels distinguish full filtered counts from loaded-page fallbacks. Display grouping combines
+  CARD/HUMO/UZCARD while retaining digital tenders; payment mutation contracts remain unchanged.
+- OrderTickets keeps compact item previews, preparation state, payment, amount, selection and actions.
+  Full item/customer/cashier/payment details open in the shared Modal with focus containment and restoration.
+  The original twelve table columns, sorting, export, pagination and row/bulk actions remain available.
+- ProgressiveReply reveals only a new completed answer. It changes presentation, not the stored answer
+  or the existing JSON response from `/ai/query/`; this is not backend token streaming. Copy/export and
+  history retain the complete content. Reading earlier messages stops automatic scrolling.
+- ThinkingLevel is a keyboard-accessible Low/Medium/High/Max range with matching labels, defaulting to Low.
+  Desktop and dialog views share a page preference. Preview and disconnected copy remain explicit; it sends
+  no model or effort field. The dialog's repeated label is visually hidden locally while retaining its input association.
+- AIChartBlock reuses TimeSeriesExplorer, DistributionChart and selectable ranked bars, retaining all
+  returned series, exact-value tables and accessible selectors. Malformed data remains available as a
+  fallback instead of invented values. History snippets omit fenced payloads; Markdown remains sanitized.
 
 AI answer styles use the existing request, with the original question retained in the conversation.
 Loyalty settings use a disposable draft. ShiftLedger keeps original shift details and financial safeguards.

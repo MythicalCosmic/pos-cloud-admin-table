@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-10T11:36:48.049118+00:00",
+  "generatedAt": "2026-09-10T12:34:18.710898+00:00",
   "title": "Design System: Alpha POS",
   "extensions": {
     "colorMeta": {
@@ -460,6 +460,16 @@
         "name": "dashboard-surface",
         "value": "var(--dash-shadow, 0 2px 3px -2px #15162512, 0 8px 24px -18px #15162530)",
         "purpose": "Soft dashboard surface and KPI elevation; dashboard.css keeps this resting shadow on KPI hover."
+      },
+      {
+        "name": "orders-surface",
+        "value": "var(--orders-shadow, 0 2px 3px -2px #15162512, 0 8px 24px -18px #15162530)",
+        "purpose": "Orders aliases the approved soft surface elevation for tickets, KPIs and insights."
+      },
+      {
+        "name": "assistant-surface",
+        "value": "var(--assistant-shadow, 0 2px 3px -2px #15162512, 0 8px 24px -18px #15162530)",
+        "purpose": "AI aliases the same elevation for messages, composer, prompts and active history."
       }
     ],
     "motion": [
@@ -522,6 +532,26 @@
         "name": "radar-opacity-feedback",
         "value": "200ms ease",
         "purpose": "Radar series opacity changes; the dashboard reduced-motion rule removes descendant transitions."
+      },
+      {
+        "name": "order-ticket-feedback",
+        "value": "160ms",
+        "purpose": "Ticket border and shadow feedback; reduced motion removes transitions."
+      },
+      {
+        "name": "reply-reveal-step",
+        "value": "40ms",
+        "purpose": "Presentation-only prefix updates after the complete JSON answer is stored; word and Markdown boundaries preserve readable content."
+      },
+      {
+        "name": "reply-reveal-duration",
+        "value": "650–6000ms",
+        "purpose": "Duration clamps content length / 240 * 1000ms. Show full answer ends it; reduced motion, hidden documents and content above 60000 characters show immediately."
+      },
+      {
+        "name": "reply-cursor",
+        "value": "900ms ease-in-out",
+        "purpose": "Cursor opacity cycle only during the visual reveal with no reduced-motion preference; it is not backend streaming."
       }
     ],
     "breakpoints": [
@@ -576,6 +606,30 @@
       {
         "name": "distribution-container",
         "value": "420px"
+      },
+      {
+        "name": "order-ticket-pair",
+        "value": "1250px"
+      },
+      {
+        "name": "order-ticket-stack",
+        "value": "650px"
+      },
+      {
+        "name": "orders-insights-stack",
+        "value": "1100px"
+      },
+      {
+        "name": "orders-kpi-pair",
+        "value": "1000px"
+      },
+      {
+        "name": "order-detail-sheet",
+        "value": "700px"
+      },
+      {
+        "name": "thinking-level-dialog",
+        "value": "1100px"
       }
     ],
     "typographyMeta": {
@@ -701,7 +755,7 @@
   ],
   "narrative": {
     "northStar": "Restaurant operations",
-    "overview": "Alpha POS puts restaurant activity, reporting and daily work in one readable workspace. Its visual direction comes from the user's legacy admin reference and the earlier approved Forest theme. The dashboard's approved September 10 reference adds softly raised surfaces, lightly tinted summary cards, shaded rounded data marks and clearly separated ring sectors. These dashboard treatments use the existing identity, fonts and six palettes; other workspaces retain their established visual rules.",
+    "overview": "Alpha POS puts restaurant activity, reporting and daily work in one readable workspace. Its visual direction comes from the user's legacy admin reference and the earlier approved Forest theme. The dashboard's approved September 10 reference adds softly raised surfaces, lightly tinted summary cards, shaded rounded data marks and clearly separated ring sectors. These dashboard treatments use the existing identity, fonts and six palettes; other workspaces retain their established visual rules. Orders and the AI conversation extend these soft surfaces through ticket cards, shared analytical charts and readable replies, without introducing another palette or typeface.",
     "keyCharacteristics": [
       "Full-width information and clear values.",
       "Soft dashboard surfaces and shaded data marks.",

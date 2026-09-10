@@ -287,7 +287,9 @@ AI uses a dedicated conversation workspace with searchable history, pins,
 rename/delete, copy/export, optional date context and starter/follow-up prompts.
 Requests are single-flight and abortable. Failed or stopped responses support
 retry, and drafts cannot be consumed by a request running in another chat.
-Loading shows actual elapsed time; completed answers display immediately.
+Loading shows actual elapsed time. A new completed answer may reveal gradually
+through ProgressiveReply; the full server reply is already stored. Show full
+answer, reduced motion, hidden documents and very large replies bypass the reveal.
 Malformed chart responses expose their content instead of spinning forever or
 inventing values. Rendered Markdown remains sanitized.
 
@@ -335,9 +337,57 @@ null-versus-zero distinctions. Receive-money still submits CASH, combined-termin
 HUMO and PAYME only; financial rules and backend ownership remain unchanged.
 
 The AI composer offers Auto, Brief and Actions through the existing query API.
-The visible question remains unchanged, retries retain their request context,
-and new long answers begin at their heading unless the user is reading history.
+The visible question remains unchanged and retries retain their request context.
+The thread follows the latest reply only while the reader remains near the end;
+scrolling into history preserves that reading position and exposes Jump to latest.
 History, pinning, search, export, stop and recovery remain available. On narrow
 phones, context has its own toolbar row; style and Send/Stop share the next row.
 The inner thread grid must shrink to its workspace so controls remain fully
 visible at 320px. Pending feedback is indeterminate and reduced-motion aware.
+
+### Orders and AI extension: September 10
+
+Orders places `DashboardFilters` above its four softly tinted KPIs. Desktop and
+phone use the same `DateRangeFields`; Orders opts into All time with empty date
+endpoints. Presets, working hours, explicit times and Apply retain the existing
+Asia/Tashkent date-parameter builder for both list and stats requests. Status,
+payment, cashier, category, product, order-type and search filters remain intact.
+
+Optional insights begin with a compact five-status strip, followed by equal
+large paid/unpaid-count and tender-amount rings using `DistributionChart`.
+Percentages use two decimals. Full filtered counts and loaded-page fallbacks
+have explicit scope labels. Tender display groups CARD/HUMO/UZCARD together;
+Payme, Click and other returned tender types remain distinct. This display
+grouping does not change payment submission contracts.
+
+Orders defaults to equal ticket cards, with the original twelve-column table
+available through the view switch. Tickets retain selection, item previews,
+preparation state, settlement and original actions. Complete details open in a
+640px desktop side panel or phone sheet, keeping neighboring tickets stationary.
+The shared Modal retains focus containment, Escape and focus return. Sorting,
+export, row/bulk actions and server pagination remain available. At 650px and
+below, shared pagination shows first/current/last pages and adjacent-page arrows,
+keeping even registers with thousands of pages within the phone width.
+
+AI uses the approved soft surfaces, a 232px desktop history column and a reachable
+composer. `ProgressiveReply` reveals new replies only after the existing
+`/ai/query/` JSON request completes. The store retains the complete answer;
+this is presentation, not backend token streaming. Reveal advances at word and
+Markdown boundaries over 650–6000ms, with Show full answer available. Reduced
+motion, a hidden document or answers above 60,000 characters display immediately.
+History, search, pinning, rename/delete, copy/export, retry and abort remain intact.
+
+`ThinkingLevel` offers Low/Medium/High/Max, defaults to Low, and shares one page
+preference between the history footer and compact dialog. Native range keyboard
+behavior, named step buttons and value labels remain accessible. Preview and
+the disconnected explanation stay visible; no effort/model field is added to
+requests. Its repeated dialog label is visually hidden by component-local CSS
+so teleporting preserves both the minimal header and accessible input name.
+
+Assistant prose and tables remain readable, with right-aligned tabular numeric
+cells and internal table scrolling. Charts reuse `TimeSeriesExplorer`,
+`DistributionChart` and selectable ranked bars with all returned series, exact
+tables and data fallbacks. Fenced payloads are omitted from history snippets;
+the saved content and sanitized Markdown rendering remain intact. See the
+[Orders brief](../.impeccable/surfaces/src-pages-orders-index-vue.md) and
+[AI brief](../.impeccable/surfaces/src-pages-ai-assistant-index-vue.md).
