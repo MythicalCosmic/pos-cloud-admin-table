@@ -33,6 +33,21 @@ const md = new MarkdownIt({
   },
 })
 
+md.renderer.rules.table_open = () => '<div class="md-table-wrap"><table>\n'
+md.renderer.rules.table_close = () => '</table></div>\n'
+for (const type of ['th_open', 'td_open']) {
+  md.renderer.rules[type] = (tokens, index, options, _env, self) => {
+    const token = tokens[index]
+    const alignment = token.attrGet('style')
+    const text = tokens[index + 1]?.content.replace(/\*/g, '').trim() ?? ''
+    if (alignment === 'text-align:right' || (type === 'td_open' && /^[+−-]?\d[\d\s,.]*(?:\s*[\p{L}%]+)?$/u.test(text)))
+      token.attrJoin('class', 'md-number')
+    else if (alignment === 'text-align:center')
+      token.attrJoin('class', 'md-center')
+    return self.renderToken(tokens, index, options)
+  }
+}
+
 function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
@@ -104,7 +119,7 @@ const root = ref<HTMLElement | null>(null)
 
 function attachCodeActions() {
   const el = root.value
-  if (!el)
+  if (!el || props.streaming)
     return
   el.querySelectorAll('pre').forEach(pre => {
     if ((pre as HTMLElement).dataset.mdAttached)
@@ -154,7 +169,7 @@ function attachCodeActions() {
   })
 }
 
-watch(() => props.content, async () => {
+watch(() => [props.content, props.streaming], async () => {
   await nextTick()
   attachCodeActions()
 })
@@ -229,7 +244,7 @@ onMounted(() => {
 .md blockquote {
   margin: 0.6em 0;
   padding: 0.4em 1em;
-  border-left: 3px solid var(--primary);
+  border-left: 1px solid var(--primary);
   background: var(--primary-weak);
   color: var(--text-secondary);
   border-radius: 4px;
@@ -241,17 +256,24 @@ onMounted(() => {
 }
 
 /* Tables */
+.md-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin: 16px 0;
+}
 .md table {
   width: 100%;
   border-collapse: collapse;
-  margin: 0.7em 0;
+  margin: 0;
   font-size: var(--fs-sm);
-  display: block;
-  overflow-x: auto;
+  display: table;
 }
-.md table thead { background: var(--surface-inset); }
+.md table thead { background: color-mix(in srgb, var(--primary) 5%, var(--surface)); }
 .md table th, .md table td {
-  padding: 8px 10px;
+  padding: 12px 14px;
   border-bottom: 1px solid var(--border);
   text-align: left;
   vertical-align: top;
@@ -259,10 +281,16 @@ onMounted(() => {
 .md table th {
   font-weight: var(--fw-semibold);
   color: var(--text);
-  font-size: var(--fs-label);
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0;
+  text-transform: none;
 }
+.md table tbody tr:last-child td { border-bottom: 0; }
+.md table tbody tr:nth-child(even) { background: color-mix(in srgb, var(--surface-2) 48%, transparent); }
+.md table tbody tr:hover { background: var(--primary-weak); }
+.md table :is(th, td).md-number { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.md table :is(th, td).md-center { text-align: center; }
+@media (max-width: 600px) { .md table th, .md table td { padding: 10px; font-size: 12px; } }
 
 /* Inline code */
 .md :not(pre) > code {

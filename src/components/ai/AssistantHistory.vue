@@ -32,6 +32,9 @@ const groups = computed(() => [
 
 const title = (value: string) => value === 'New chat' ? t('New chat') : value
 const dateLabel = (ts: number) => new Intl.DateTimeFormat(String(locale.value), { day: '2-digit', month: '2-digit' }).format(new Date(ts))
+function preview(content: string) {
+  return content.replace(/```[\s\S]*?(?:```|$)/g, ' ').replace(/[#*`]/g, '').replace(/\s+/g, ' ').trim() || t('ai_workspace_chart_reply')
+}
 </script>
 
 <template>
@@ -135,7 +138,7 @@ const dateLabel = (ts: number) => new Intl.DateTimeFormat(String(locale.value), 
             @click="emit('select', chat.id)"
           >
             <span class="assistant-chat__title">{{ title(chat.title) }}</span>
-            <span class="assistant-chat__preview">{{ chat.messages.at(-1)?.content.replace(/[#*`]/g, '') || chat.preview || t('Empty conversation') }}</span>
+            <span class="assistant-chat__preview">{{ chat.messages.at(-1)?.content || chat.preview ? preview(chat.messages.at(-1)?.content || chat.preview || '') : t('Empty conversation') }}</span>
             <span class="assistant-chat__date"><DesignIcon
               :name="generating === chat.id ? 'sparkle' : 'clock'"
               :size="12"

@@ -1,10 +1,6 @@
 <script setup lang="ts">
-/* Per-method payment breakdown.
-   Port of v3 PaymentBreakdown — used inside the Orders expanded row.
-   Props:
-     methods: Array<{ type: string, amount: number }>
-     total:   number
-*/
+import { fmtPct } from '@/components/design/utils/format'
+import { groupPaymentMethods, paymentMethodColors, paymentMethodNames } from '@/utils/paymentBreakdown'
 
 interface Method {
   type: string
@@ -20,129 +16,74 @@ const props = defineProps<Props>()
 const { t } = useI18n({ useScope: 'global' })
 const { formatCurrency } = useFormatters()
 
-const TONE: Record<string, string> = {
-  Cash: 'var(--c2)',
-  CASH: 'var(--c2)',
-  Uzcard: 'var(--c1)',
-  UZCARD: 'var(--c1)',
-  Humo: 'var(--c4)',
-  HUMO: 'var(--c4)',
-  Payme: 'var(--c3)',
-  PAYME: 'var(--c3)',
-  Click: 'var(--c5)',
-  CLICK: 'var(--c5)',
-  Card: 'var(--c1)',
-  CARD: 'var(--c1)',
-}
-
 function colorFor(type: string) {
-  return TONE[type] ?? TONE[type?.toUpperCase()] ?? 'var(--c5)'
+  return paymentMethodColors[type.toUpperCase()] ?? 'var(--c5)'
 }
-
 function nameFor(type: string) {
-  if (!type) return ''
   const key = type.toUpperCase()
-  // Reuse existing payment_method_* keys where possible
-  const mapped: Record<string, string> = {
-    CASH: t('Cash'),
-    UZCARD: t('Uzcard'),
-    HUMO: t('Humo'),
-    PAYME: t('Payme'),
-    CLICK: t('Click'),
-    CARD: t('Card'),
-  }
-  return mapped[key] ?? type
+  return paymentMethodNames[key] ? t(paymentMethodNames[key]) : type
 }
 
-// Customer-facing reporting treats every physical/card-network tender as one
-// Card total. Keep Payme, Click, and other distinct methods separate.
-const methods = computed<Method[]>(() => {
-  const grouped = new Map<string, number>()
-
-  for (const method of props.methods ?? []) {
-    const rawType = String(method.type ?? '').toUpperCase()
-    const type = ['CARD', 'HUMO', 'UZCARD'].includes(rawType) ? 'CARD' : rawType
-    const amount = Number(method.amount) || 0
-    if (!type || amount <= 0)
-      continue
-    grouped.set(type, (grouped.get(type) ?? 0) + amount)
-  }
-
-  return Array.from(grouped, ([type, amount]) => ({ type, amount }))
-})
+const methods = computed(() => groupPaymentMethods(props.methods ?? []))
 
 const safeTotal = computed(() => {
   const n = Number(props.total) || 0
-  if (n > 0) return n
-  return methods.value.reduce((a, m) => a + (Number(m.amount) || 0), 0) || 1
+  if (n > 0)
+    return n
+  return methods.value.reduce((a, m) => a + m.amount, 0)
 })
 
 const mixed = computed(() => methods.value.length > 1)
 
 function pct(amount: number | string) {
   const n = Number(amount) || 0
-  return Math.round((n / safeTotal.value) * 100)
+  return fmtPct(safeTotal.value > 0 ? n / safeTotal.value * 100 : 0, 2)
 }
 </script>
 
 <template>
   <div class="paybreak">
-    <div class="row between" style="margin-bottom: 10px;">
-      <span class="kpi__label">
-        {{ t('Payment') }}
-        <span v-if="mixed" class="badge t-primary" style="margin-left: 6px;">
-          {{ t('Mixed') }} · {{ methods.length }}
-        </span>
-      </span>
-      <span class="mono cell-strong" style="font-size: 13px;">
-        {{ formatCurrency(safeTotal) }}
-      </span>
+    <div class="paybreak__head">
+      <strong>{{ formatCurrency(safeTotal) }}<small>UZS</small></strong><span v-if="mixed">{{ t('Mixed') }} · {{ methods.length }}</span>
     </div>
-
-    <div class="paybreak__bar">
-      <div
-        v-for="(m, i) in methods"
-        :key="i"
-        class="paybreak__seg"
-        :title="nameFor(m.type)"
-        :style="{
-          width: `${(Number(m.amount) || 0) / safeTotal * 100}%`,
-          background: colorFor(m.type),
-        }"
+    <div
+      class="paybreak__bar"
+      aria-hidden="true"
+    >
+      <span
+        v-for="method in methods"
+        :key="method.type"
+        :style="{ 'width': `${Number(method.amount) / safeTotal * 100}%`, '--tender-color': colorFor(method.type) }"
       />
     </div>
-
     <div class="paybreak__list">
-      <div v-for="(m, i) in methods" :key="`row-${i}`" class="row between">
-        <span class="legend-item">
-          <span class="legend-swatch" :style="{ background: colorFor(m.type) }" />
-          {{ nameFor(m.type) }}
-        </span>
-        <span class="row" style="gap: 8px;">
-          <span class="mono cell-strong" style="font-size: 13px;">
-            {{ formatCurrency(m.amount) }}
-          </span>
-          <span class="tertiary mono" style="font-size: 11px; width: 34px; text-align: right;">
-            {{ pct(m.amount) }}%
-          </span>
-        </span>
+      <div
+        v-for="method in methods"
+        :key="method.type"
+        class="paybreak__row"
+      >
+        <span
+          class="paybreak__swatch"
+          :style="{ background: colorFor(method.type) }"
+        /><span>{{ nameFor(method.type) }}</span>
+        <strong>{{ formatCurrency(method.amount) }}</strong><small>{{ pct(method.amount) }}</small>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.row {
-  display: flex;
-  align-items: center;
-}
-.row.between {
-  justify-content: space-between;
-}
-.paybreak__list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-top: 12px;
-}
+.paybreak { padding: 0; border: 0; border-radius: 0; background: transparent; }
+.paybreak__head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+.paybreak__head strong { font: 600 22px/1.3 var(--font-sans); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.paybreak__head small { color: var(--text-secondary); margin-left: 5px; font-size: 9px; font-weight: 400; }
+.paybreak__head > span { font-size: 10px; white-space: nowrap; padding: 4px 7px; border-radius: 6px; color: var(--primary); background: var(--primary-weak); }
+.paybreak__bar { display: flex; height: 14px; gap: 2px; overflow: hidden; border-radius: 5px; background: var(--surface-2); }
+.paybreak__bar > span { height: 100%; background: linear-gradient(135deg, color-mix(in srgb, var(--tender-color) 60%, white), var(--tender-color)); }
+.paybreak__list { display: grid; gap: 0; margin-top: 12px; }
+.paybreak__row { display: grid; grid-template-columns: 7px 1fr auto; gap: 3px 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 11px; }
+.paybreak__row:last-child { border-bottom: 0; }
+.paybreak__swatch { width: 7px; height: 7px; border-radius: 2px; }
+.paybreak__row strong { font-size: 12px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.paybreak__row small { grid-column: 3; color: var(--text-secondary); font-size: 10px; text-align: end; font-variant-numeric: tabular-nums; }
 </style>

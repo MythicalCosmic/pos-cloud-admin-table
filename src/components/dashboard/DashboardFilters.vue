@@ -5,7 +5,7 @@ import DesignIcon from '@/components/design/DesignIcon.vue'
 import Modal from '@/components/design/Modal.vue'
 import { formatMonthNumber } from '@/utils/monthLabels'
 
-const props = defineProps<{ modelValue: DateRangeValue }>()
+const props = defineProps<{ modelValue: DateRangeValue; includeAll?: boolean }>()
 const emit = defineEmits<{ (e: 'update:modelValue', value: DateRangeValue): void }>()
 const { t, locale } = useI18n({ useScope: 'global' })
 const compact = useMediaQuery('(max-width: 650px)')
@@ -20,6 +20,8 @@ const label = computed(() => {
   }
 
   const range = props.modelValue
+  if (!range.from || !range.to)
+    return t('All time')
   return `${format(range.from)}${range.fromTime ? `, ${range.fromTime}` : ''} — ${format(range.to)}${range.toTime ? `, ${range.toTime}` : ''}`
 })
 
@@ -61,6 +63,7 @@ watch(compact, () => { open.value = false })
           v-if="open"
           class="dashboard-filters__sheet"
           :model-value="modelValue"
+          :include-all="includeAll"
           allow-unchanged
           @update:model-value="apply"
         />
@@ -69,6 +72,7 @@ watch(compact, () => { open.value = false })
     <DateRangeFields
       v-else
       :model-value="modelValue"
+      :include-all="includeAll"
       @update:model-value="apply"
     />
   </div>

@@ -694,7 +694,7 @@ export const useAIAssistantStore = defineStore('aiAssistant', () => {
         throw new Error('Request stopped')
       const content = await requestAnswer(text, context, conversationId, controller.signal)
 
-      // This endpoint returns a complete answer; reveal it without a simulated stream.
+      // Store the complete answer once. ProgressiveReply owns the optional visual reveal.
       updateAnswer(chat.id, answer.id, { content, streaming: false })
       finalize(chat.id, answer.id, true)
       return true

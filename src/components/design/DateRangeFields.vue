@@ -6,14 +6,14 @@ import DateTimeField from './DateTimeField.vue'
 import { designId } from './ids'
 import { buildDateParams, businessPreset, useBusinessDay } from '@/composables/useBusinessDay'
 
-const props = defineProps<{ modelValue: DateRangeValue; allowUnchanged?: boolean }>()
+const props = defineProps<{ modelValue: DateRangeValue; allowUnchanged?: boolean; includeAll?: boolean }>()
 const emit = defineEmits<{ (e: 'update:modelValue', value: DateRangeValue): void }>()
 const { t } = useI18n({ useScope: 'global' })
 const biz = useBusinessDay()
 const id = designId('date-fields')
 const draft = ref<DateRangeValue>({ ...props.modelValue })
 
-const presets = [
+const presets = computed(() => [
   ['today', 'Today'],
   ['yesterday', 'Yesterday'],
   ['7d', 'Last 7 days'],
@@ -21,14 +21,18 @@ const presets = [
   ['month', 'This month'],
   ['prevmonth', 'Last month'],
   ['year', 'This year'],
-]
+  ...(props.includeAll ? [['all', 'All time']] : []),
+])
 
 watch(() => props.modelValue, value => { draft.value = { ...value } }, { deep: true })
 
 const maxDate = computed(() => businessPreset('today').to)
 const validDate = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value))
+const allTime = computed(() => props.includeAll && draft.value.preset === 'all' && !draft.value.from && !draft.value.to)
 
 const error = computed(() => {
+  if (allTime.value)
+    return ''
   if (!validDate(draft.value.from) || !validDate(draft.value.to))
     return t('dash_dates_required')
   if (draft.value.from > draft.value.to)
@@ -63,10 +67,14 @@ function apply() {
 function preset(key: string) {
   if (!key)
     return
-  draft.value = { ...businessPreset(key), preset: key, mode: 'date' }
+  draft.value = (key === 'all' && props.includeAll)
+    ? { from: '', to: '', preset: 'all', mode: 'date' }
+    : { ...businessPreset(key), preset: key, mode: 'date' }
   emit('update:modelValue', { ...draft.value })
 }
 function selectEndpoint(endpoint: 'from' | 'to', value: { date: string; time: string }) {
+  if (allTime.value)
+    draft.value = { from: value.date, to: value.date, mode: 'time' }
   draft.value[endpoint] = value.date
   draft.value[endpoint === 'from' ? 'fromTime' : 'toTime'] = value.time
   draft.value.fromTime ||= biz.open.value
@@ -74,6 +82,11 @@ function selectEndpoint(endpoint: 'from' | 'to', value: { date: string; time: st
   draft.value.preset = undefined
 }
 function setTimes(working: boolean) {
+  if (allTime.value) {
+    if (!working)
+      return
+    draft.value = { ...businessPreset('today'), mode: 'time' }
+  }
   draft.value.preset = undefined
   draft.value.fromTime = working ? biz.open.value : ''
   draft.value.toTime = working ? biz.close.value : ''
@@ -93,6 +106,7 @@ function setTimes(working: boolean) {
         :time="draft.fromTime"
         :default-time="biz.open.value"
         :label="t('dash_start_date')"
+        :placeholder="allTime ? t('All time') : undefined"
         :max="maxDate"
         :invalid="!!error"
         :described-by="error ? `${id}-error` : undefined"
@@ -108,6 +122,7 @@ function setTimes(working: boolean) {
         :time="draft.toTime"
         :default-time="biz.close.value"
         :label="t('dash_end_date')"
+        :placeholder="allTime ? t('All time') : undefined"
         :max="maxDate"
         :invalid="!!error"
         :described-by="error ? `${id}-error` : undefined"

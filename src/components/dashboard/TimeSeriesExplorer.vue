@@ -19,6 +19,7 @@ const props = withDefaults(defineProps<{
   unit?: string
   mode?: 'area' | 'bar'
   compact?: boolean
+  colors?: string[]
 }>(), { height: 340, unit: '', mode: 'area', compact: false })
 
 use([SVGRenderer, LineChart, BarChart, GridComponent, TooltipComponent, DataZoomComponent, MarkPointComponent])
@@ -107,6 +108,8 @@ function resetZoom() {
 }
 
 function seriesColor(index: number): string {
+  if (props.colors?.[index])
+    return props.colors[index]
   if (index === 0)
     return tokens.value.primary
   return props.series[index]?.dashed ? tokens.value.textSecondary : tokens.value.expense

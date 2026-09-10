@@ -150,6 +150,8 @@ test('history supports hydration, message search, pinned chats, and honest renam
   state.failDetail = false
   await page.getByRole('button', { name: 'Retry', exact: true }).click()
   await expect(page.locator('.assistant-message__answer')).toContainText('Your busiest service was lunch.')
+  await expect(page.locator('.progressive-reply')).toHaveAttribute('aria-busy', 'false')
+  await expect(page.locator('.assistant-reveal-control')).toHaveCount(0)
   await page.getByRole('searchbox').fill('busiest')
   await expect(page.getByRole('button', { name: 'September review', exact: true })).toBeVisible()
   await page.getByRole('searchbox').fill('')
@@ -214,6 +216,13 @@ for (const locale of ['en', 'ru', 'uz']) {
       }
       release()
       await expect(page.locator('.assistant-message__answer')).toContainText('A clearer picture')
+      await expect(page.locator('.progressive-reply')).toHaveAttribute('aria-busy', 'false')
+      for (const width of [1440, 390, 320]) {
+        await page.setViewportSize({ width, height: 900 })
+        await noOverflow(page)
+        await page.locator('.assistant-scroll').evaluate(el => { el.scrollTop = 0 })
+        if ((locale === 'en' && theme === 'dark') || (locale === 'ru' && theme === 'light')) await page.screenshot({ path: `/tmp/alpha-ai-answer-${locale}-${theme}-${width}.png`, animations: 'disabled' })
+      }
     })
   }
 }
@@ -231,7 +240,7 @@ test('malformed chart responses expose their data without a permanent loader or 
 })
 
 
-test('answer style reaches the API without changing the visible question and long replies begin at the heading', async ({ page }) => {
+test('new replies reveal progressively, follow the latest text, and respect scrolling up or showing the full answer', async ({ page }) => {
   let release!: () => void
   const state: State = { gate: new Promise(resolve => { release = resolve }), reply: '## Start here\n\n' + Array.from({ length: 45 }, (_, i) => `Step ${i + 1}: Review the real report before changing service.\n\n`).join('') }
   const calls = await setup(page, state)
@@ -243,14 +252,106 @@ test('answer style reaches the API without changing the visible question and lon
   await composer(page).press('Enter')
   await expect(page.locator('.assistant-pending')).toBeVisible()
   await expect(page.locator('#app-loader')).toHaveCount(0)
-  await page.evaluate(() => document.getAnimations().forEach(animation => animation.updatePlaybackRate(0.1)))
-  await page.screenshot({ path: '/tmp/alpha-ai-pending-slow.png' })
+  await page.screenshot({ path: '/tmp/alpha-ai-pending-phone.png', animations: 'disabled' })
   release()
-  await expect(page.locator('.assistant-message__answer h2')).toBeInViewport()
+  await expect(page.locator('.progressive-reply')).toHaveAttribute('aria-busy', 'true')
+  await expect(page.locator('.assistant-message__answer')).not.toContainText('Step 45:')
   await expect(page.locator('.assistant-message__question')).toHaveText('Plan tomorrow')
   const sent = calls.find(call => call.path.endsWith('/ai/query/'))
   expect(sent?.body.query).toContain('prioritized action plan')
   expect(sent?.body.query).toContain('Plan tomorrow')
+  await expect.poll(() => page.locator('.assistant-scroll').evaluate(el => el.scrollTop)).toBeGreaterThan(160)
+  const textLength = await page.locator('.assistant-message__answer').innerText()
+  expect(textLength.length).toBeLessThan(state.reply!.length)
+  await page.locator('.assistant-scroll').evaluate(el => { el.scrollTop = 0; el.dispatchEvent(new Event('scroll')) })
   await expect(page.getByRole('button', { name: 'Jump to latest', exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Show full answer', exact: true }).click()
+  await expect(page.locator('.progressive-reply')).toHaveAttribute('aria-busy', 'false')
+  await expect(page.locator('.assistant-message__answer')).toContainText('Step 45:')
+  expect(await page.locator('.assistant-scroll').evaluate(el => el.scrollTop)).toBeLessThan(20)
+  await page.getByRole('button', { name: 'Jump to latest', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Jump to latest', exact: true })).toHaveCount(0)
   await noOverflow(page)
+})
+
+test('ranked answer tables use the available width and preserve all server quantities', async ({ page }) => {
+  const rows = Array.from({ length: 10 }, (_, i) => `| ${i + 1} | Product ${i + 1} with a descriptive menu name | ${822 - i * 37} pcs |`).join('\n')
+  await setup(page, { reply: `## Top items this month\n\nQuantity sold from paid sales, with refunds deducted.\n\n| Rank | Item | Quantity sold |\n|---:|---|---:|\n${rows}` })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/ai-assistant')
+  await composer(page).fill('Top items this month')
+  await composer(page).press('Enter')
+  await expect(page.locator('.md tbody tr')).toHaveCount(10)
+  await expect(page.locator('.md tbody tr').first().locator('td').last()).toHaveText('822 pcs')
+  await expect(page.locator('.md tbody tr').last().locator('td').last()).toHaveText('489 pcs')
+  for (const width of [1440, 390, 320]) {
+    await page.setViewportSize({ width, height: 900 })
+    const dimensions = await page.locator('.md-table-wrap').evaluate(el => ({ wrap: el.clientWidth, table: el.querySelector('table')!.getBoundingClientRect().width }))
+    expect(dimensions.table).toBeGreaterThanOrEqual(dimensions.wrap - 1)
+    expect(dimensions.table).toBeLessThanOrEqual(dimensions.wrap + 1)
+    await noOverflow(page)
+    await page.locator('.assistant-scroll').evaluate(el => { el.scrollTop = 130 })
+    await page.screenshot({ path: `/tmp/alpha-ai-ranked-table-${width}.png`, animations: 'disabled' })
+  }
+})
+
+test('thinking level is a keyboard-accessible preview and does not alter the AI request', async ({ page }) => {
+  const calls = await setup(page)
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto('/ai-assistant')
+  const slider = page.getByRole('slider', { name: 'Thinking level', exact: true })
+  await expect(slider).toHaveAttribute('aria-valuetext', 'Low')
+  await slider.focus()
+  await page.keyboard.press('End')
+  await expect(slider).toHaveAttribute('aria-valuetext', 'Max')
+  await expect(page.locator('.thinking-level')).toContainText('Not connected yet')
+  await composer(page).fill('Review sales')
+  await composer(page).press('Enter')
+  await expect(page.locator('.assistant-message__answer')).toContainText('A clearer picture')
+  const query = calls.find(call => call.path.endsWith('/ai/query/'))!.body
+  expect(query.query).toBe('Review sales')
+  expect(Object.keys(query).some(key => /reasoning|effort|thinking/i.test(key))).toBe(false)
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.getByRole('button', { name: 'Thinking level', exact: true }).click()
+  await expect(page.getByRole('dialog').getByRole('slider')).toHaveAttribute('aria-valuetext', 'Max')
+  await page.getByRole('button', { name: 'Medium', exact: true }).click()
+  await expect(page.getByRole('dialog').getByRole('slider')).toHaveAttribute('aria-valuetext', 'Medium')
+  await page.screenshot({ path: '/tmp/alpha-ai-thinking-phone.png', animations: 'disabled' })
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('button', { name: 'Thinking level', exact: true })).toBeFocused()
+  await noOverflow(page)
+})
+
+test('AI chart cards retain all values and series while supporting ranked and ring selection', async ({ page }) => {
+  const charts = [
+    { type: 'hbar', title: 'Top products by revenue', subtitle: 'from /sales_report', data: [{ label: 'Lavash katta', value: 540000 }, { label: 'Non burger standard', value: 504000 }, { label: 'Tandir Lavash', value: 494000 }, { label: 'Hot Dog Kanada', value: 435000 }, { label: 'Hot Dog mini', value: 420000 }] },
+    { type: 'line', title: 'Order channels', categories: ['Monday', 'Tuesday', 'Wednesday'], series: [{ label: 'Hall', data: [100, 120, 130] }, { label: 'Delivery', data: [30, 40, 25] }, { label: 'Pickup', data: [15, 24, 30] }] },
+    { type: 'donut', title: 'Payment mix', data: [{ label: 'Cash', value: 750000 }, { label: 'Card', value: 500000 }, { label: 'Payme', value: 200000 }] },
+  ]
+  await setup(page, { reply: '## Sales review\n\n' + charts.map(chart => '```chart\n' + JSON.stringify(chart) + '\n```').join('\n\n') })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/ai-assistant')
+  await composer(page).fill('Show my charts')
+  await composer(page).press('Enter')
+  await expect(page.locator('.aichart')).toHaveCount(3)
+  const ranking = page.locator('.aichart').first()
+  await ranking.locator('.ai-ranking > button').nth(2).click()
+  await expect(ranking.locator('.ai-ranking__readout')).toContainText('Tandir Lavash')
+  await ranking.locator('.aichart__data summary').click()
+  await expect(ranking.locator('tbody tr')).toHaveCount(5)
+  const series = page.locator('.aichart').nth(1)
+  await series.locator('.aichart__data summary').click()
+  await expect(series.locator('thead')).toContainText('Pickup')
+  await expect(series.locator('tbody tr').first()).toContainText('100')
+  const ring = page.locator('.aichart').last()
+  await ring.locator('.distribution__row').nth(1).click()
+  await expect(ring.locator('.distribution__summary')).toContainText('Card')
+  for (const width of [1440, 390, 320]) {
+    await page.setViewportSize({ width, height: 900 })
+    await noOverflow(page)
+    await ranking.scrollIntoViewIfNeeded()
+    await page.screenshot({ path: `/tmp/alpha-ai-rich-ranking-${width}.png`, animations: 'disabled' })
+    await ring.scrollIntoViewIfNeeded()
+    await page.screenshot({ path: `/tmp/alpha-ai-rich-ring-${width}.png`, animations: 'disabled' })
+  }
 })

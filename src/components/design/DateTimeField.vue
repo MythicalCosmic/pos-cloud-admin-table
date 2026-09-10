@@ -7,6 +7,7 @@ const props = defineProps<{
   time?: string
   defaultTime: string
   label: string
+  placeholder?: string
   max: string
   invalid?: boolean
   describedBy?: string
@@ -33,7 +34,7 @@ const parse = (date: string) => new Date(`${date}T12:00:00`)
 
 function formatDate(value: string) {
   if (!value)
-    return t('Date')
+    return props.placeholder || t('Date')
   const date = parse(value)
 
   if (String(locale.value).startsWith('uz'))

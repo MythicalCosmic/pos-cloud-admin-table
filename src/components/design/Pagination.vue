@@ -1,13 +1,9 @@
 <script setup lang="ts">
-/* ============================================================
-   ALPHA POS - Pagination
-   Vue 3 port of .tmp-handoff-v3/.../app/ui.jsx Pagination component.
-   Decision #3 (v3): standalone partial used by DataTable.vue.
-   Decision #4 (v3): total formatted via Intl.NumberFormat (comma sep).
-   ============================================================ */
 import DesignIcon from './DesignIcon.vue'
 import Select from './Select.vue'
 import { cx } from './utils'
+
+import { fmtNum } from './utils/format'
 
 interface Props {
   page: number
@@ -23,14 +19,16 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   (e: 'page', p: number): void
-  (e: 'per-page', n: number): void
+  (e: 'perPage', n: number): void
 }>()
 
 const { t } = useI18n({ useScope: 'global' })
+const compact = useMediaQuery('(max-width: 650px)')
 
 const rangeStart = computed(() =>
   props.total === 0 ? 0 : (props.page - 1) * props.perPage + 1,
 )
+
 const rangeEnd = computed(() =>
   Math.min(props.page * props.perPage, props.total),
 )
@@ -38,6 +36,11 @@ const rangeEnd = computed(() =>
 const pageNums = computed<(number | '…')[]>(() => {
   const pages = props.pages
   const page = props.page
+
+  // Keep first/current/last and adjacent-page arrows within a phone viewport,
+  // even when the filtered register contains thousands of pages.
+  if (compact.value)
+    return [...new Set([1, page, pages])].filter(value => value > 0 && value <= pages).sort((a, b) => a - b)
   if (pages <= 7)
     return Array.from({ length: pages }, (_, i) => i + 1)
   if (page <= 4)
@@ -46,8 +49,6 @@ const pageNums = computed<(number | '…')[]>(() => {
     return [1, '…', pages - 4, pages - 3, pages - 2, pages - 1, pages]
   return [1, '…', page - 1, page, page + 1, '…', pages]
 })
-
-import { fmtNum } from './utils/format'
 
 function fmtTotal(n: number) {
   // Locale-aware via the project formatter (uses non-breaking space — matches
@@ -64,7 +65,7 @@ function goPage(n: number) {
 function onPpChange(v: string) {
   const n = Number(v)
   if (!Number.isNaN(n))
-    emit('per-page', n)
+    emit('perPage', n)
 }
 </script>
 
@@ -140,5 +141,6 @@ function onPpChange(v: string) {
   display: flex;
   align-items: center;
 }
-
+.pglist { max-width: 100%; flex-wrap: wrap; }
+@media (max-width: 650px) { .pglist .pgbtn { min-width: 44px; height: 44px; } }
 </style>

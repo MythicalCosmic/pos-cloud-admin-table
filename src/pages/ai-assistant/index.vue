@@ -9,9 +9,10 @@ import type { DateRangeValue } from '@/components/design/DateRangePicker.vue'
 import type { AIPageContext } from '@/composables/useAIPageContext'
 import AssistantHistory from '@/components/ai/AssistantHistory.vue'
 import AssistantPresence from '@/components/ai/AssistantPresence.vue'
+import ProgressiveReply from '@/components/ai/ProgressiveReply.vue'
+import ThinkingLevel from '@/components/ai/ThinkingLevel.vue'
 import DesignIcon from '@/components/design/DesignIcon.vue'
 import Button from '@/components/design/Button.vue'
-import MarkdownMessage from '@/components/design/MarkdownMessage.vue'
 import Modal from '@/components/design/Modal.vue'
 import DateRangeFields from '@/components/design/DateRangeFields.vue'
 import { buildDateParams, businessPreset } from '@/composables/useBusinessDay'
@@ -30,6 +31,8 @@ const historyFailed = computed(() => active.value?.serverId !== undefined && cha
 const compact = useMediaQuery('(max-width: 1100px)')
 const historyOpen = ref(false)
 const historyHidden = ref(false)
+const thinkingOpen = ref(false)
+const thinkingLevel = ref(0)
 const draft = ref('')
 const answerStyle = ref('auto')
 const answerStyles = computed(() => ['auto', 'brief', 'actions'].map(value => ({ value, label: t(`ai_answer_${value}`) })))
@@ -37,6 +40,9 @@ const scrollRef = ref<HTMLElement | null>(null)
 const textareaRef = ref<HTMLTextAreaElement | null>(null)
 const followLatest = ref(true)
 const copiedId = ref<string | null>(null)
+const liveReplyIds = ref(new Set<string>())
+const finishedReplyIds = ref(new Set<string>())
+const revealingId = ref<string | null>(null)
 const now = ref(Date.now())
 let ticker: ReturnType<typeof setInterval> | undefined
 let copyTimer: ReturnType<typeof setTimeout> | undefined
@@ -90,25 +96,30 @@ function onScroll() {
   if (el)
     followLatest.value = el.scrollHeight - el.scrollTop - el.clientHeight < 100
 }
-watch(() => ({ count: messages.value.length, id: messages.value.at(-1)?.id, content: messages.value.at(-1)?.content, streaming: messages.value.at(-1)?.streaming, hydrating: hydrating.value }), async (next, previous) => {
+watch(() => messages.value.filter(message => message.streaming).map(message => message.id), ids => {
+  if (ids.some(id => !liveReplyIds.value.has(id)))
+    liveReplyIds.value = new Set([...liveReplyIds.value, ...ids])
+}, { flush: 'sync' })
+function shouldReveal(message: ChatMessage) {
+  return liveReplyIds.value.has(message.id) && !finishedReplyIds.value.has(message.id) && messages.value.at(-1)?.id === message.id
+}
+async function followReply() {
   const wasFollowing = followLatest.value
 
   await nextTick()
-  if (!wasFollowing)
-    return
-
-  // The API delivers complete answers. Start reading a new reply at its heading,
-  // while leaving someone reading earlier messages in their chosen position.
-  const container = scrollRef.value
-  if (container && previous?.streaming && !next.streaming && previous.id === next.id) {
-    const reply = Array.from(container.querySelectorAll<HTMLElement>('.assistant-message')).at(-1)
-    if (reply)
-      container.scrollTop += reply.getBoundingClientRect().top - container.getBoundingClientRect().top - 16
-  }
-  else { jumpToLatest() }
-})
+  if (wasFollowing && scrollRef.value)
+    scrollRef.value.scrollTop = scrollRef.value.scrollHeight
+}
+function finishReply(id: string) {
+  finishedReplyIds.value = new Set([...finishedReplyIds.value, id])
+  if (revealingId.value === id)
+    revealingId.value = null
+}
+watch(() => ({ count: messages.value.length, content: messages.value.at(-1)?.content, streaming: messages.value.at(-1)?.streaming, hydrating: hydrating.value }), followReply)
 watch(activeId, async () => {
   restoringDraft = true
+  revealingId.value = null
+  liveReplyIds.value = new Set(messages.value.filter(message => message.streaming).map(message => message.id))
   draft.value = active.value?.draft ?? ''
   followLatest.value = true
   await nextTick()
@@ -274,6 +285,7 @@ async function deleteChat() {
         @rename="openRename"
         @delete="openDelete"
       />
+      <ThinkingLevel v-model="thinkingLevel" />
     </aside>
     <section
       class="ai-workspace__thread"
@@ -301,6 +313,20 @@ async function deleteChat() {
           </div>
         </div>
         <div class="assistant-header__actions">
+          <button
+            v-if="compact || historyHidden"
+            type="button"
+            class="assistant-icon-button"
+            :aria-label="t('ai_thinking_level')"
+            :title="t('ai_thinking_level')"
+            :aria-expanded="thinkingOpen"
+            @click="thinkingOpen = true"
+          >
+            <DesignIcon
+              name="sliders"
+              :size="18"
+            />
+          </button>
           <button
             v-if="active"
             type="button"
@@ -452,7 +478,7 @@ async function deleteChat() {
               <div class="assistant-message__identity">
                 <AssistantPresence
                   v-if="message.role === 'assistant'"
-                  :busy="message.streaming"
+                  :busy="message.streaming || revealingId === message.id"
                 /><span
                   v-else
                   class="assistant-message__user"
@@ -494,13 +520,17 @@ async function deleteChat() {
                   :size="19"
                 /><p>{{ message.content }}</p>
               </div>
-              <MarkdownMessage
+              <ProgressiveReply
                 v-else
                 :content="message.content"
+                :animate="shouldReveal(message)"
                 class="assistant-message__answer"
+                @start="revealingId = message.id"
+                @finish="finishReply(message.id)"
+                @progress="followReply"
               />
               <div
-                v-if="!message.streaming"
+                v-if="!message.streaming && revealingId !== message.id"
                 class="assistant-message__actions"
               >
                 <button
@@ -538,7 +568,7 @@ async function deleteChat() {
               </div>
             </article>
             <div
-              v-if="!generating && messages.at(-1)?.role === 'assistant' && !messages.at(-1)?.error && !messages.at(-1)?.stopped"
+              v-if="!generating && !revealingId && messages.at(-1)?.role === 'assistant' && !messages.at(-1)?.error && !messages.at(-1)?.stopped"
               class="assistant-followups"
             >
               <span>{{ t('ai_workspace_explore_more') }}</span><button
@@ -558,6 +588,21 @@ async function deleteChat() {
       </div>
 
       <div class="assistant-compose">
+        <div
+          v-if="revealingId"
+          class="assistant-reveal-control"
+        >
+          <span><span aria-hidden="true" />{{ t('ai_reply_appearing') }}</span>
+          <button
+            type="button"
+            @click="finishReply(revealingId)"
+          >
+            {{ t('ai_show_full_answer') }}<DesignIcon
+              name="chevdown"
+              :size="14"
+            />
+          </button>
+        </div>
         <button
           v-if="!followLatest && messages.length"
           type="button"
@@ -687,6 +732,17 @@ async function deleteChat() {
         @new="newChat"
         @rename="openRename"
         @delete="openDelete"
+      />
+    </Modal>
+    <Modal
+      :open="thinkingOpen"
+      :title="t('ai_thinking_level')"
+      :width="400"
+      @close="thinkingOpen = false"
+    >
+      <ThinkingLevel
+        v-model="thinkingLevel"
+        in-dialog
       />
     </Modal>
     <Modal

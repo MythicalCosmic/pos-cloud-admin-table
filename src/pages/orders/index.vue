@@ -6,7 +6,14 @@ import Badge from '@/components/design/Badge.vue'
 import Button from '@/components/design/Button.vue'
 import DataTable, { type DataTableColumn } from '@/components/design/DataTable.vue'
 import DesignIcon from '@/components/design/DesignIcon.vue'
-import IconAction from '@/components/design/IconAction.vue'
+import OrderActions from '@/components/orders/OrderActions.vue'
+import OrderTickets from '@/components/orders/OrderTickets.vue'
+import Pagination from '@/components/design/Pagination.vue'
+import BulkActionBar from '@/components/design/BulkActionBar.vue'
+import Checkbox from '@/components/design/Checkbox.vue'
+import Skeleton from '@/components/design/Skeleton.vue'
+import { fmtNum } from '@/components/design/utils/format'
+import '@styles/pages/orders.css'
 import MultiSelect from '@/components/design/MultiSelect.vue'
 import Input from '@/components/design/Input.vue'
 import Kpi from '@/components/design/Kpi.vue'
@@ -14,7 +21,8 @@ import Modal from '@/components/design/Modal.vue'
 import PageHeader from '@/components/design/PageHeader.vue'
 import Select from '@/components/design/Select.vue'
 import StateFill from '@/components/design/StateFill.vue'
-import DateRangePicker from '@/components/design/DateRangePicker.vue'
+import type { DateRangeValue } from '@/components/design/DateRangePicker.vue'
+import DashboardFilters from '@/components/dashboard/DashboardFilters.vue'
 import OrdersInsights from '@/components/design/OrdersInsights.vue'
 import PaymentBreakdown from '@/components/design/PaymentBreakdown.vue'
 import { buildCsv } from '@/utils/csv'
@@ -34,13 +42,17 @@ const orders = ref<any[]>([])
 const totalOrders = ref(0)
 const loading = ref(false)
 const stats = ref<any>(null)
+const ordersError = shallowRef<unknown>(null)
+const orderView = ref<'tickets' | 'table'>('tickets')
+const insightsOpen = ref(false)
+let loadedOrdersKey = ''
 
 const page = ref(1)
 const itemsPerPage = ref(10)
 const statusFilter = ref<string[]>([])
 const paymentFilter = ref<string | undefined>(undefined)
 const search = ref(String(route.query.id ?? route.query.search ?? ''))
-const dateRange = ref<{ from: string; to: string; preset?: string; fromTime?: string; toTime?: string }>({ from: '', to: '', preset: 'all' })
+const dateRange = ref<DateRangeValue>({ from: '', to: '', preset: 'all' })
 const dateFrom = computed({ get: () => dateRange.value.from, set: v => dateRange.value = { ...dateRange.value, from: v } })
 const dateTo = computed({ get: () => dateRange.value.to, set: v => dateRange.value = { ...dateRange.value, to: v } })
 
@@ -58,7 +70,7 @@ const filterPanelOpen = ref(false)
 
 const selected = ref<Set<number | string>>(new Set())
 
-const sortKey = ref<string>('id')
+const sortKey = ref<string>('at')
 const sortDir = ref<'asc' | 'desc'>('desc')
 
 // Per-row + bulk loading state to prevent duplicate POSTs
@@ -123,6 +135,7 @@ async function loadOrders() {
   const requestId = ++ordersRequestId
 
   loading.value = true
+  ordersError.value = null
   try {
     const params: any = { page: page.value, per_page: itemsPerPage.value }
     if (statusFilter.value.length)
@@ -145,6 +158,14 @@ async function loadOrders() {
       params.category_ids = categoryFilter.value.join(',')
     if (productFilter.value.length)
       params.product_ids = productFilter.value.join(',')
+    const key = JSON.stringify(params)
+    if (key !== loadedOrdersKey) {
+      orders.value = []
+      totalOrders.value = 0
+      selected.value = new Set()
+    }
+    loadedOrdersKey = key
+
     const res = await axios.get('/orders', { params })
     const d = res.data?.data
     if (requestId !== ordersRequestId)
@@ -154,13 +175,13 @@ async function loadOrders() {
       ...order,
       preparation: getOrderPreparation(order),
     }))
+    selected.value = new Set([...selected.value].filter(id => orders.value.some(order => order.id === id)))
     totalOrders.value = d?.pagination?.total_orders ?? orders.value.length
   }
-  catch {
+  catch (error) {
     if (requestId !== ordersRequestId)
       return
-    orders.value = []
-    totalOrders.value = 0
+    ordersError.value = error
     notify(t('Failed to load orders'), 'error')
   }
   finally {
@@ -292,7 +313,7 @@ watch(
 
 // ---- actions ----
 async function markPaid(order: any) {
-  if (actingOnId.value === order.id)
+  if (actingOnId.value !== null)
     return
   actingOnId.value = order.id
   try {
@@ -309,7 +330,7 @@ async function markPaid(order: any) {
 }
 
 async function cancelOrder(order: any) {
-  if (actingOnId.value === order.id)
+  if (actingOnId.value !== null)
     return
   actingOnId.value = order.id
   try {
@@ -328,7 +349,7 @@ async function cancelOrder(order: any) {
 // Advance an OPEN / PREPARING order to READY (kitchen/counter hand-off).
 // Non-destructive, so it fires directly with the same per-row guard — no modal.
 async function markReady(order: any) {
-  if (actingOnId.value === order.id)
+  if (actingOnId.value !== null)
     return
   actingOnId.value = order.id
   try {
@@ -347,7 +368,7 @@ async function markReady(order: any) {
 // Reverse an accidental payment (returns the cash leg to the drawer, restores
 // stock server-side). Financially sensitive → routed through the confirm modal.
 async function unpayOrder(order: any) {
-  if (actingOnId.value === order.id)
+  if (actingOnId.value !== null)
     return
   actingOnId.value = order.id
   try {
@@ -533,6 +554,34 @@ function productLabel(id: string) {
   return productOptions.value.find(o => o.value === id)?.label ?? id
 }
 
+const ticketSortOptions = computed(() => [
+  { value: 'at:desc', label: t('orders_sort_newest') },
+  { value: 'at:asc', label: t('orders_sort_oldest') },
+  { value: 'total:desc', label: t('orders_sort_highest') },
+  { value: 'total:asc', label: t('orders_sort_lowest') },
+])
+
+const ticketSort = computed({
+  get: () => `${sortKey.value}:${sortDir.value}`,
+  set: (value: string) => {
+    const [key, direction] = value.split(':')
+
+    sortKey.value = key; sortDir.value = direction === 'asc' ? 'asc' : 'desc'
+  },
+})
+
+const allVisibleSelected = computed(() => orders.value.length > 0 && orders.value.every(order => selected.value.has(order.id)))
+function selectVisible(checked: boolean) { selected.value = checked ? new Set(orders.value.map(order => order.id)) : new Set() }
+async function refreshOrders() {
+  if (loading.value)
+    return
+  await Promise.all([loadOrders(), loadStats()])
+}
+function statValue(key: string, fallback?: string) {
+  const value = stats.value?.[key] ?? (fallback ? stats.value?.status_counts?.[fallback] : null)
+  return (value === null || value === undefined || value === '' || !Number.isFinite(Number(value))) ? null : Number(value)
+}
+
 // ---- formatters ----
 function infoOf(o: any) {
   const ph = (o.phone_number && o.phone_number !== '+998') ? o.phone_number : null
@@ -644,11 +693,37 @@ function onPaymentToggle(p: string) {
 </script>
 
 <template>
-  <div class="page">
+  <div class="page orders-workspace">
     <!-- Page header -->
     <PageHeader
       :title="t('Orders')"
       :subtitle="t('Track, settle and reconcile every order')"
+    >
+      <template #actions>
+        <Button
+          variant="secondary"
+          icon="refresh"
+          :loading="loading"
+          :disabled="loading"
+          @click="refreshOrders"
+        >
+          {{ t('Refresh') }}
+        </Button>
+        <Button
+          variant="secondary"
+          icon="chart"
+          :aria-expanded="insightsOpen"
+          @click="insightsOpen = !insightsOpen"
+        >
+          {{ t('orders_insights') }}
+        </Button>
+      </template>
+    </PageHeader>
+
+    <DashboardFilters
+      v-model="dateRange"
+      class="orders-date-filters"
+      include-all
     />
 
     <!-- KPI strip -->
@@ -656,44 +731,61 @@ function onPaymentToggle(p: string) {
       class="grid cols-4 kpi-grid"
       style="margin-bottom: var(--sp-5);"
     >
-      <Kpi
-        :data="{
-          label: t('Total'),
-          icon: 'receipt',
-          tone: 'primary',
-          value: stats ? (stats.total_orders ?? 0) : null,
-        }"
-      />
-      <Kpi
-        :data="{
-          label: t('Preparing'),
-          icon: 'clock',
-          tone: 'warning',
-          value: stats ? (stats.preparing_orders ?? 0) : null,
-        }"
-      />
-      <Kpi
-        :data="{
-          label: t('Ready'),
-          icon: 'check',
-          tone: 'success',
-          value: stats ? (stats.ready_orders ?? 0) : null,
-        }"
-      />
-      <Kpi
-        :data="{
-          label: t('Revenue'),
-          icon: 'dollar',
-          tone: 'info',
-          money: true,
-          value: stats ? (stats.total_revenue ?? 0) : null,
-        }"
-      />
+      <template v-if="loading && !stats">
+        <div
+          v-for="metric in 4"
+          :key="metric"
+          class="kpi orders-metric-skeleton"
+        >
+          <Skeleton
+            :h="12"
+            w="45%"
+          /><Skeleton
+            :h="32"
+            w="70%"
+          />
+        </div>
+      </template>
+      <template v-else>
+        <Kpi
+          :data="{
+            label: t('Total'),
+            icon: 'receipt',
+            tone: 'primary',
+            value: statValue('total_orders'),
+          }"
+        />
+        <Kpi
+          :data="{
+            label: t('Preparing'),
+            icon: 'clock',
+            tone: 'warning',
+            value: statValue('preparing_orders', 'PREPARING'),
+          }"
+        />
+        <Kpi
+          :data="{
+            label: t('Ready'),
+            icon: 'check',
+            tone: 'success',
+            value: statValue('ready_orders', 'READY'),
+          }"
+        />
+        <Kpi
+          :data="{
+            label: t('Revenue'),
+            icon: 'dollar',
+            tone: 'info',
+            money: true,
+            value: statValue('total_revenue'),
+          }"
+        />
+      </template>
     </div>
 
     <!-- Insights strip (additive port from v3) -->
     <OrdersInsights
-      v-if="!loading && orders.length"
+      v-if="insightsOpen && stats"
       :orders="orders"
       :status="statusFilter"
       :payment="paymentFilter"
@@ -705,8 +797,61 @@ function onPaymentToggle(p: string) {
       @payment="onPaymentToggle"
     />
 
-    <!-- Main table card -->
-    <div class="card">
+    <section
+      class="orders-register"
+      :aria-label="t('Orders')"
+    >
+      <div class="orders-register__head">
+        <div class="orders-register__title">
+          <h2>{{ t('orders_register') }}</h2><span>{{ (loading || ordersError) && !orders.length ? '—' : fmtNum(totalOrders) }} {{ t('orders') }}</span>
+        </div>
+        <div
+          class="orders-register__views"
+          :aria-label="t('orders_view')"
+        >
+          <button
+            type="button"
+            :aria-pressed="orderView === 'tickets'"
+            @click="orderView = 'tickets'"
+          >
+            <DesignIcon
+              name="grid"
+              :size="16"
+            />{{ t('orders_tickets') }}
+          </button>
+          <button
+            type="button"
+            :aria-pressed="orderView === 'table'"
+            @click="orderView = 'table'"
+          >
+            <DesignIcon
+              name="list"
+              :size="16"
+            />{{ t('orders_table') }}
+          </button>
+        </div>
+      </div>
+      <div
+        class="orders-queues"
+        :aria-label="t('Status')"
+      >
+        <button
+          type="button"
+          :aria-pressed="!statusFilter.length"
+          @click="statusFilter = []"
+        >
+          {{ t('All orders') }}
+        </button>
+        <button
+          v-for="status in orderStatuses"
+          :key="status"
+          type="button"
+          :aria-pressed="statusFilter.length === 1 && statusFilter[0] === status"
+          @click="statusFilter = [status]"
+        >
+          {{ t(`order_status_${status}`) }}
+        </button>
+      </div>
       <!-- Toolbar -->
       <div
         class="toolbar orders-toolbar"
@@ -784,15 +929,6 @@ function onPaymentToggle(p: string) {
         class="filterstrip"
         :class="{ 'is-open': filterPanelOpen }"
       >
-        <div class="filterstrip__group">
-          <span class="filterstrip__lbl">{{ t('Period') }}</span>
-          <DateRangePicker
-            v-model="dateRange"
-            align="left"
-            :placeholder="t('All time')"
-          />
-        </div>
-
         <div class="filterstrip__group">
           <span class="filterstrip__lbl">{{ t('Payment') }}</span>
           <div class="segctl">
@@ -1006,8 +1142,148 @@ function onPaymentToggle(p: string) {
 
       <div class="card__divider" />
 
-      <!-- DataTable: sortable / selectable / expandable, server-paginated -->
+      <div
+        v-if="ordersError"
+        class="orders-load-error"
+        role="alert"
+      >
+        <DesignIcon name="alert" /><span>{{ t(orders.length ? 'orders_stale_error' : 'Failed to load orders') }}</span><Button
+          variant="secondary"
+          size="sm"
+          :disabled="loading"
+          @click="refreshOrders"
+        >
+          {{ t('Retry') }}
+        </Button>
+      </div>
+      <div
+        v-if="orderView === 'tickets'"
+        class="orders-board"
+        :aria-busy="loading"
+      >
+        <div class="orders-board__tools">
+          <label><Checkbox
+            :model-value="allVisibleSelected"
+            :indeterminate="selected.size > 0 && !allVisibleSelected"
+            :disabled="loading || bulking || !orders.length"
+            @update:model-value="selectVisible"
+          />{{ t('orders_select_page') }}</label>
+          <div class="orders-board__sort">
+            <span>{{ t('orders_sort_page') }}</span><Select
+              v-model="ticketSort"
+              :options="ticketSortOptions"
+              :aria-label="t('orders_sort_page')"
+            />
+          </div>
+        </div>
+        <div
+          v-if="loading && !orders.length"
+          class="orders-board__skeleton"
+        >
+          <div
+            v-for="item in 6"
+            :key="item"
+          >
+            <Skeleton
+              :h="22"
+              w="58%"
+            /><Skeleton
+              :h="12"
+              w="75%"
+            /><Skeleton
+              :h="12"
+              w="90%"
+            /><Skeleton
+              :h="12"
+              w="60%"
+            /><Skeleton
+              :h="34"
+              w="70%"
+            /><Skeleton
+              :h="38"
+              w="100%"
+            />
+          </div>
+        </div>
+        <OrderTickets
+          v-else-if="orders.length"
+          :rows="sortedOrders"
+          :selection="selected"
+          :busy="bulking || actingOnId !== null || loading"
+          @selection="onDtSelection"
+        >
+          <template #actions="{ row: o }">
+            <OrderActions
+              :order="o"
+              :busy="actingOnId !== null || bulking || loading"
+              @ready="markReady(o)"
+              @pay="openConfirm('pay-one', o)"
+              @reverse="openConfirm('unpay-one', o)"
+              @cancel="openConfirm('cancel-one', o)"
+            />
+          </template>
+        </OrderTickets>
+        <StateFill
+          v-else-if="!ordersError"
+          icon="receipt"
+          :title="noResultsMsg"
+          :sub="noResultsSub"
+        >
+          <Button
+            v-if="hasFilters"
+            variant="secondary"
+            @click="clearAll"
+          >
+            {{ t('Clear filters') }}
+          </Button>
+        </StateFill>
+        <Pagination
+          v-if="totalOrders > 0"
+          :page="page"
+          :per-page="itemsPerPage"
+          :pages="Math.max(1, Math.ceil(totalOrders / itemsPerPage))"
+          :total="totalOrders"
+          :per-page-options="[10, 25, 50, 100]"
+          @page="page = $event"
+          @per-page="itemsPerPage = $event; page = 1"
+        />
+        <BulkActionBar
+          :count="selected.size"
+          @clear="selected = new Set()"
+        >
+          <Button
+            variant="secondary"
+            size="sm"
+            icon="dollar"
+            :loading="bulking"
+            :disabled="bulking || actingOnId !== null"
+            @click="openConfirm('pay-bulk')"
+          >
+            {{ t('Mark paid') }}
+          </Button>
+          <Button
+            variant="danger-soft"
+            size="sm"
+            icon="close"
+            :loading="bulking"
+            :disabled="bulking || actingOnId !== null"
+            @click="openConfirm('cancel-bulk')"
+          >
+            {{ t('Cancel') }}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            icon="download"
+            @click="onBulkExport"
+          >
+            {{ t('Export') }}
+          </Button>
+        </BulkActionBar>
+      </div>
+      <!-- The register keeps every existing column and sorting/expansion action. -->
       <DataTable
+        v-if="orderView === 'table'"
         :columns="columns"
         :rows="sortedOrders"
         row-key="id"
@@ -1150,37 +1426,13 @@ function onPaymentToggle(p: string) {
 
         <!-- Inline row actions -->
         <template #row-actions="{ row: o }">
-          <IconAction
-            v-if="(o.status === 'OPEN' || o.status === 'PREPARING')"
-            icon="check"
-            tone="warning"
-            :title="t('Mark ready')"
-            :disabled="actingOnId === o.id"
-            @click="markReady(o)"
-          />
-          <IconAction
-            v-if="!o.is_paid && o.status !== 'CANCELED'"
-            icon="dollar"
-            tone="success"
-            :title="t('Pay')"
-            :disabled="actingOnId === o.id"
-            @click="openConfirm('pay-one', o)"
-          />
-          <IconAction
-            v-if="o.is_paid && o.status !== 'CANCELED'"
-            icon="refresh"
-            tone="primary"
-            :title="t('Reverse payment')"
-            :disabled="actingOnId === o.id"
-            @click="openConfirm('unpay-one', o)"
-          />
-          <IconAction
-            v-if="o.status !== 'CANCELED' && o.status !== 'COMPLETED'"
-            icon="close"
-            tone="danger"
-            :title="t('Cancel')"
-            :disabled="actingOnId === o.id"
-            @click="openConfirm('cancel-one', o)"
+          <OrderActions
+            :order="o"
+            :busy="actingOnId !== null || bulking || loading"
+            @ready="markReady(o)"
+            @pay="openConfirm('pay-one', o)"
+            @reverse="openConfirm('unpay-one', o)"
+            @cancel="openConfirm('cancel-one', o)"
           />
         </template>
 
@@ -1235,6 +1487,7 @@ function onPaymentToggle(p: string) {
         <!-- Empty state -->
         <template #empty>
           <StateFill
+            v-if="!ordersError"
             icon="receipt"
             :title="noResultsMsg"
             :sub="noResultsSub"
@@ -1253,7 +1506,7 @@ function onPaymentToggle(p: string) {
           </StateFill>
         </template>
       </DataTable>
-    </div>
+    </section>
 
     <!-- Confirm action modal (cancel / mark paid, single or bulk) -->
     <Modal

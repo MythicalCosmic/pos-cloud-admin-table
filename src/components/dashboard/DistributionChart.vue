@@ -15,6 +15,7 @@ const props = withDefaults(defineProps<{
   limit?: number
   selectedIndex?: number | null
   exploreLabel?: string
+  percentPrecision?: number
 }>(), { unit: '', label: '', ranked: false, visual: 'strip', limit: 6 })
 
 const emit = defineEmits<{ (event: 'select', value: number | null): void }>()
@@ -38,7 +39,7 @@ const leadingIndex = computed(() => props.data.reduce((best, row, index, rows) =
 const emphasisIndex = computed(() => activeIndex.value ?? leadingIndex.value)
 const color = (index: number) => props.data[index]?.color || colors[index % colors.length]
 const share = (value: number) => total.value > 0 ? value / total.value * 100 : 0
-const percent = (value: number) => hasNegative.value ? '—' : fmtPct(share(value), 1)
+const percent = (value: number) => hasNegative.value ? '—' : fmtPct(share(value), props.percentPrecision ?? 1)
 const maxValue = computed(() => Math.max(1, ...props.data.map(row => Math.abs(row.value))))
 const ringDescription = computed(() => props.data.map(row => `${row.label}: ${fmtNum(row.value)} ${props.unit}`).join(', '))
 
@@ -67,7 +68,7 @@ const ringSegments = computed(() => {
       labelX: 110 + Math.cos(mid) * 77.5,
       labelY: 110 + Math.sin(mid) * 77.5,
       showLabel: angle > 0.45,
-      percent: fmtPct(row.value / positiveTotal.value * 100, 0),
+      percent: fmtPct(row.value / positiveTotal.value * 100, props.percentPrecision ?? 0),
     }]
   })
 })
@@ -193,7 +194,7 @@ watch(() => props.selectedIndex, value => {
           class="distribution__center"
           aria-hidden="true"
         >
-          <strong>{{ active && positiveTotal ? fmtPct(Math.max(0, active.value) / positiveTotal * 100, 1) : fmtAbbr(positiveTotal) }}</strong>
+          <strong>{{ active && positiveTotal ? fmtPct(Math.max(0, active.value) / positiveTotal * 100, percentPrecision ?? 1) : fmtAbbr(positiveTotal) }}</strong>
           <span>{{ active?.label || unit || label || t('Total') }}</span>
         </div>
       </div>
