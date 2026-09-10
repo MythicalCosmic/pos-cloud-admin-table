@@ -1,0 +1,169 @@
+/* ============================================================
+   ALPHA POS — DateRangePicker styles
+   ============================================================ */
+
+.drp { position: relative; display: inline-block; }
+
+/* trigger button */
+.drp-trigger {
+  display: inline-flex; align-items: center; gap: 9px;
+  height: 42px; padding: 0 12px; border-radius: var(--r-sm);
+  background: var(--surface); border: 1px solid var(--border-strong); color: var(--text);
+  font-family: inherit; font-size: var(--fs-body); font-weight: var(--fw-medium);
+  cursor: pointer; transition: border-color .14s, box-shadow .14s, background .14s;
+  white-space: nowrap;
+}
+.drp--sm .drp-trigger { height: 36px; }
+.drp-trigger:hover { border-color: var(--text-tertiary); }
+.drp-trigger.is-open { border-color: var(--primary); box-shadow: var(--shadow-focus); }
+.drp-trigger > .ic:first-child { color: var(--text-tertiary); flex: 0 0 17px; }
+.drp-trigger.has-value > .ic:first-child { color: var(--primary); }
+.drp-trigger__label { min-width: 0; }
+.drp-trigger__chev { color: var(--text-tertiary); margin-left: 2px; transition: transform .16s; }
+.drp-trigger.is-open .drp-trigger__chev { transform: rotate(180deg); }
+
+/* popover */
+.drp-pop {
+  position: absolute; top: calc(100% + 8px); left: 0; z-index: 200;
+  display: flex; background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg); overflow: hidden;
+  animation: drp-in .15s cubic-bezier(.2, .8, .2, 1);
+}
+.drp-pop--right { left: auto; right: 0; }
+/* When Teleported to <body>, the popover uses fixed positioning w/ inline
+   left/top from getBoundingClientRect. Override z-index so it paints above
+   sibling cards / any parent stacking context. */
+.drp-pop--fixed { position: fixed; top: auto; left: auto; z-index: 320; overflow-y: auto; }
+.drp-pop--fixed.drp-pop--right { left: auto; right: auto; }
+@keyframes drp-in { from { opacity: 0; transform: translateY(-6px); } }
+
+/* unified column layout (mode toggle on top) — fixed footprint so toggling Date/Time never resizes the popover */
+.drp-pop--col { flex-direction: column; width: min(480px, calc(100vw - 16px)); }
+.drp-modebar { padding: var(--sp-3) var(--sp-3) 0; }
+.drp-body { display: flex; width: 100%; min-height: 384px; }
+
+/* time-of-day panel */
+.drp-time { padding: var(--sp-4); width: 100%; min-height: 384px; display: flex; flex-direction: column; }
+.drp-time__customRow { margin-top: auto; }
+.drp-time__label { font-size: var(--fs-label); font-weight: var(--fw-semibold); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--text-tertiary); margin-bottom: var(--sp-3); }
+.drp-time__chips { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.drp-timechip {
+  height: 40px; border-radius: var(--r-sm); border: 1px solid var(--border-strong); background: var(--surface);
+  color: var(--text); font-family: inherit; font-size: var(--fs-sm); font-weight: var(--fw-medium); cursor: pointer;
+  transition: background .13s, border-color .13s, color .13s;
+}
+.drp-timechip:hover { border-color: var(--text-tertiary); background: var(--surface-2); }
+.drp-timechip.is-active { background: var(--primary-weak); border-color: var(--primary-border); color: var(--primary); font-weight: var(--fw-semibold); }
+.drp-time__custom { margin-top: var(--sp-4); }
+.drp-time__customlabel { display: block; font-size: var(--fs-label); font-weight: var(--fw-semibold); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 8px; }
+
+/* presets rail */
+.drp-presets {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: var(--sp-3); width: 152px; flex: 0 0 152px;
+  border-right: 1px solid var(--border); background: var(--surface-2);
+}
+.drp-preset {
+  text-align: left; height: 34px; padding: 0 11px; border-radius: var(--r-sm);
+  border: none; background: transparent; color: var(--text-secondary);
+  font-family: inherit; font-size: var(--fs-sm); font-weight: var(--fw-medium);
+  cursor: pointer; transition: background .12s, color .12s; white-space: nowrap;
+}
+.drp-preset:hover { background: var(--surface); color: var(--text); }
+.drp-preset.is-active { background: var(--primary-weak); color: var(--primary); font-weight: var(--fw-semibold); }
+
+/* calendar side */
+.drp-cal { padding: var(--sp-4); flex: 1; min-width: 0; }
+.drp-cal__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--sp-3); }
+.drp-cal__titles { display: flex; flex: 1; justify-content: center; }
+.drp-cal__titles span { font-size: var(--fs-h3); font-weight: var(--fw-semibold); letter-spacing: -0.01em; color: var(--text); text-align: center; }
+.drp-nav {
+  width: 32px; height: 32px; flex: 0 0 32px; border-radius: var(--r-sm);
+  border: 1px solid var(--border); background: var(--surface); color: var(--text-secondary);
+  display: grid; place-items: center; cursor: pointer; transition: background .13s, border-color .13s, color .13s;
+}
+.drp-nav:hover { background: var(--surface-2); color: var(--text); border-color: var(--border-strong); }
+.drp-nav:disabled { opacity: .45; cursor: not-allowed; }
+.drp-nav:focus-visible,
+.drp-cell:focus-visible,
+.drp-preset:focus-visible,
+.drp-timechip:focus-visible { outline: none; box-shadow: var(--shadow-focus); z-index: 2; }
+
+.drp-months { display: flex; gap: var(--sp-5); }
+.drp-month { width: 100%; }
+
+.drp-wd { display: grid; grid-template-columns: repeat(7, 1fr); margin-bottom: 6px; }
+.drp-wd span { text-align: center; font-size: var(--fs-micro); font-weight: var(--fw-semibold); letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--text-tertiary); padding: 4px 0; }
+
+.drp-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
+.drp-cell {
+  position: relative; height: 38px; border: none; background: transparent;
+  font-family: var(--font-mono); font-size: var(--fs-sm); font-weight: var(--fw-medium); color: var(--text);
+  cursor: pointer; display: grid; place-items: center; padding: 0;
+}
+.drp-cell.is-empty { cursor: default; }
+.drp-cell .drp-num {
+  width: 32px; height: 32px; border-radius: var(--r-sm); display: grid; place-items: center;
+  position: relative; z-index: 1; transition: background .12s, color .12s;
+}
+.drp-cell:not(.is-disabled):not(.is-edge):hover .drp-num { background: var(--surface-inset); }
+.drp-cell.is-today .drp-num { box-shadow: inset 0 0 0 1.5px var(--border-strong); }
+.drp-cell.is-today.is-edge .drp-num { box-shadow: none; }
+
+/* in-range band */
+.drp-cell.in-range::before {
+  content: ""; position: absolute; inset: 3px 0; background: var(--primary-weak); z-index: 0;
+}
+.drp-cell.in-range .drp-num { color: var(--primary); border-radius: 0; }
+[data-theme="dark"] .drp-cell.in-range .drp-num { color: var(--primary-hover); }
+
+/* range endpoints — fill the half toward the band */
+.drp-cell.is-start::before,
+.drp-cell.is-end::before {
+  content: ""; position: absolute; inset: 3px 0; background: var(--primary-weak); z-index: 0;
+}
+.drp-cell.is-start::before { left: 50%; }
+.drp-cell.is-end::before { right: 50%; }
+.drp-cell.is-single::before { display: none; }
+
+.drp-cell.is-edge .drp-num { background: var(--primary); color: var(--on-primary); font-weight: var(--fw-bold); box-shadow: var(--shadow-xs); }
+.drp-cell.is-edge:hover .drp-num { background: var(--primary-hover); }
+
+.drp-cell.is-disabled { color: var(--text-disabled); cursor: not-allowed; }
+.drp-cell.is-disabled:hover .drp-num { background: transparent; }
+
+/* footer */
+.drp-foot {
+  display: grid; grid-template-columns: minmax(0, 1fr); align-items: center;
+  margin-top: var(--sp-3); padding-top: var(--sp-3); border-top: 1px solid var(--border); gap: var(--sp-3);
+}
+.drp-foot__draft { font-size: var(--fs-sm); color: var(--text-secondary); font-weight: var(--fw-medium); font-variant-numeric: tabular-nums; }
+.drp-foot__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: var(--sp-2); }
+.drp-clear { border: none; background: transparent; color: var(--text-secondary); font-family: inherit; font-size: var(--fs-sm); font-weight: var(--fw-medium); cursor: pointer; padding: 0 8px; height: 32px; border-radius: var(--r-xs); }
+.drp-clear:hover { color: var(--error); background: var(--error-weak); }
+
+/* mobile: single month, drawer-ish width */
+@media (max-width: 768px) {
+  .drp-pop { flex-direction: column; position: fixed; }
+  .drp-pop.drp-pop--fixed { right: auto; bottom: auto; }
+  .drp-pop--right { left: var(--sp-3); right: var(--sp-3); }
+  .drp-body { flex-direction: column; min-height: 0; flex: none; }
+  .drp-presets { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; flex: none; border-right: none; border-bottom: 1px solid var(--border); }
+  .drp-preset { min-width: 0; height: auto; min-height: 44px; text-align: center; white-space: normal; }
+  .drp-cal { flex: none; width: 100%; }
+  .drp-cal__titles span:first-child { width: 100%; }
+  .drp-months { display: block; }
+  .drp-month { width: 100%; }
+  .drp-nav { width: 44px; height: 44px; flex-basis: 44px; }
+  .drp-cell { height: 44px; }
+  .drp-modebar .seg__btn { min-height: 44px; }
+  .drp-foot__actions > button { min-height: 44px; }
+  .drp-foot { align-items: flex-start; flex-wrap: wrap; }
+  .drp-foot__actions { margin-left: auto; flex-wrap: wrap; justify-content: flex-end; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drp-pop { animation: none; }
+  .drp-trigger, .drp-trigger__chev, .drp-nav, .drp-timechip, .drp-preset, .drp-num { transition: none; }
+}

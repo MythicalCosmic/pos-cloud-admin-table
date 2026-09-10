@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=alpha-3" />
+  <link rel="alternate icon" href="/favicon.ico?v=alpha-3" sizes="16x16 32x32 48x48" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content" />
+  <meta name="theme-color" content="#f4f7fc" />
+  <title>Alpha POS</title>
+  <style id="alpha-palette-tokens">__ALPHA_PALETTE_STYLES__</style>
+  <script>
+    // Resolve appearance before the first paint, even when storage is unavailable.
+    (function () {
+      var theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      var locale = 'uz';
+      var palette = 'blue';
+      var backgrounds = __ALPHA_PALETTE_BACKGROUNDS__;
+      try {
+        var saved = localStorage.getItem('alphapos-theme');
+        if (saved === 'dark' || saved === 'light') theme = saved;
+        var savedPalette = localStorage.getItem('alphapos-palette');
+        if (Object.prototype.hasOwnProperty.call(backgrounds, savedPalette)) palette = savedPalette;
+        var savedLocale = localStorage.getItem('appLocale');
+        if (['uz', 'ru', 'en'].indexOf(savedLocale) !== -1) locale = savedLocale;
+      } catch (error) {}
+      document.documentElement.setAttribute('data-theme', theme);
+      document.documentElement.setAttribute('data-palette', palette);
+      document.documentElement.style.colorScheme = theme;
+      document.documentElement.lang = locale;
+      document.querySelector('meta[name="theme-color"]').content = backgrounds[palette][theme];
+    })();
+  </script>
+  <link rel="stylesheet" href="/loader.css" />
+  <link rel="stylesheet" href="/fonts.css" />
+</head>
+
+<body>
+  <!-- THESIS: Five continuous report chapters pair directly explorable charts with compact, exact-value ledgers.
+  OWN-WORLD: Legacy-inspired navy and blue and six light/dark palettes; Hanken Grotesk, tabular JetBrains figures, fine rules, 14px surfaces and custom controls.
+  STORY: Keep familiar controls and totals, explore a trend, select its drivers, then inspect orders and detailed reports.
+  FIRST VIEWPORT: Preserve the existing header, today count, date controls, navigator and four opening cards. Below them, trend left, compact payment and category analysis right, and a full-width order ledger. Phones stack these with touch and keyboard exploration.
+  FORM: Report chapter bands, grounded candidate 5, seed 3d3e4b25. User delegated comp A with the preserved-header/cards constraint.
+  FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md -->
+  <div id="app" aria-busy="true" inert></div>
+  <div id="app-loader" class="app-loader">
+    <div class="app-loader__content">
+      <div class="app-loader__emblem" aria-hidden="true">
+        <div class="app-loader__halo"></div>
+        <svg class="app-loader__outline" viewBox="0 0 88 88" fill="none">
+          <rect class="app-loader__outline-track" x="2" y="2" width="84" height="84" rx="27" />
+          <rect class="app-loader__outline-trace" x="2" y="2" width="84" height="84" rx="27" pathLength="100" />
+        </svg>
+        <div class="app-loader__mark">
+          <svg viewBox="0 0 32 32" fill="none">
+            <path d="m8 25 8-19 8 19M11 19h10" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </div>
+      </div>
+      <p class="app-loader__brand">Alpha POS</p>
+      <p id="app-loader-status" class="app-loader__status" role="status" aria-live="polite" aria-atomic="true"></p>
+      <div class="app-loader__track" aria-hidden="true"><span></span></div>
+      <div class="app-loader__recovery" hidden>
+        <p id="app-loader-help"></p>
+        <button id="app-loader-reload" type="button"></button>
+      </div>
+    </div>
+  </div>
+  <noscript>
+    <style>.app-loader, #app { display: none; }</style>
+    <div class="app-loader-noscript">
+      <strong>Alpha POS</strong>
+      <p lang="uz">Alpha POS’ni ochish uchun JavaScript’ni yoqing.</p>
+      <p lang="ru">Включите JavaScript, чтобы открыть Alpha POS.</p>
+      <p lang="en">Enable JavaScript to open Alpha POS.</p>
+    </div>
+  </noscript>
+  <script>
+    (function () {
+      var messages = __ALPHA_STARTUP_MESSAGES__;
+      var copy = messages[document.documentElement.lang] || messages.uz;
+      var loader = document.getElementById('app-loader');
+      var status = document.getElementById('app-loader-status');
+      var recovery = loader.querySelector('.app-loader__recovery');
+      var reload = document.getElementById('app-loader-reload');
+      var finished = false;
+      status.textContent = copy.app_loader_loading;
+      document.getElementById('app-loader-help').textContent = copy.app_loader_help;
+      reload.textContent = copy.app_loader_reload;
+      reload.addEventListener('click', function () { window.location.reload(); });
+
+      function showRecovery(failed) {
+        if (finished) return;
+        status.textContent = failed ? copy.app_loader_error : copy.app_loader_slow;
+        recovery.hidden = false;
+        if (failed) loader.classList.add('has-error');
+      }
+
+      var slowTimer = window.setTimeout(function () { showRecovery(false); }, 12000);
+      function onFailure() {
+        window.clearTimeout(slowTimer);
+        showRecovery(true);
+      }
+      function onScriptError(event) {
+        if (event.target && event.target.tagName === 'SCRIPT' && event.target.type === 'module') onFailure();
+      }
+      function onReady() {
+        finished = true;
+        window.clearTimeout(slowTimer);
+        window.removeEventListener('error', onScriptError, true);
+        window.removeEventListener('vite:preloadError', onFailure);
+        document.removeEventListener('alpha:load-error', onFailure);
+        var app = document.getElementById('app');
+        app.removeAttribute('aria-busy');
+        app.removeAttribute('inert');
+        if (loader.contains(document.activeElement)) app.setAttribute('tabindex', '-1');
+        if (loader.contains(document.activeElement)) app.focus({ preventScroll: true });
+        loader.setAttribute('aria-hidden', 'true');
+        loader.inert = true;
+        loader.classList.add('is-leaving');
+        loader.addEventListener('transitionend', function (event) {
+          if (event.target === loader) loader.remove();
+        });
+        window.setTimeout(function () { loader.remove(); }, 320);
+      }
+      document.addEventListener('alpha:ready', onReady, { once: true });
+      document.addEventListener('alpha:load-error', onFailure);
+      window.addEventListener('error', onScriptError, true);
+      window.addEventListener('vite:preloadError', onFailure);
+    })();
+  </script>
+  <script id="app-entry" type="module" src="/src/main.ts"></script>
+</body>
+
+</html>

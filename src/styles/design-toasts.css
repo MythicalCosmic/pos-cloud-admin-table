@@ -1,0 +1,166 @@
+/* Sonner owns stacking, dismissal, pause-on-hover, and swipe gestures. */
+.alpha-toaster[data-sonner-toaster] {
+  --width: 420px !important;
+  --toast-surface: var(--surface);
+  --toast-text: var(--text);
+  --toast-muted: var(--text-secondary);
+  --toast-border: var(--border);
+  --toast-accent: var(--primary);
+  --toast-tint: var(--primary-weak);
+
+  z-index: 3000;
+  font-family: var(--font-sans);
+}
+
+.alpha-toaster .alpha-toast[data-styled="true"] {
+  display: grid;
+  align-items: start;
+  border: 1px solid var(--toast-border);
+  border-radius: 16px;
+  background: var(--toast-surface);
+  border-inline-start: 3px solid var(--toast-accent);
+  box-shadow: 0 12px 40px #00000012, 0 3px 10px #00000008;
+  color: var(--toast-text);
+  gap: 4px 12px;
+  grid-template-columns: 32px minmax(0, 1fr);
+  padding-block: 18px;
+  padding-inline: 18px 48px;
+  transition: transform 360ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 260ms ease-out, block-size 260ms ease-out;
+}
+
+.alpha-toaster .alpha-toast[data-type="error"] {
+  --toast-accent: var(--error-strong);
+  --toast-tint: var(--error-weak);
+}
+
+.alpha-toaster .alpha-toast[data-type="warning"] {
+  --toast-accent: var(--warning-strong);
+  --toast-tint: var(--warning-weak);
+}
+
+.alpha-toaster .alpha-toast[data-type="info"] {
+  --toast-accent: var(--info-strong);
+  --toast-tint: var(--info-weak);
+}
+
+.alpha-toaster .alpha-toast[data-type="success"] {
+  --toast-accent: var(--success-strong);
+  --toast-tint: var(--success-weak);
+}
+
+.alpha-toaster .alpha-toast[data-mounted="false"] {
+  opacity: 0;
+  transform: translate3d(32px, -10px, 0) scale(0.98);
+}
+
+.alpha-toaster .alpha-toast[data-removed="true"][data-swipe-out="false"] {
+  opacity: 0;
+  transform: translate3d(18px, calc(var(--offset) - 6px), 0);
+  transition-duration: 180ms;
+}
+
+.alpha-toaster .alpha-toast[data-swiping="true"] {
+  transition: none;
+}
+
+.alpha-toaster .alpha-toast [data-icon] {
+  justify-content: center;
+  border-radius: 10px;
+  margin: 0;
+  background: var(--toast-tint);
+  block-size: 32px;
+  color: var(--toast-accent);
+  inline-size: 32px;
+}
+
+.alpha-toaster .alpha-toast [data-content] {
+  gap: 4px;
+  grid-column: 2;
+  min-inline-size: 0;
+}
+
+.alpha-toaster .alpha-toast [data-title] {
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
+.alpha-toaster .alpha-toast [data-description] {
+  color: var(--toast-muted);
+  font-size: 13px;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+.alpha-toaster[data-sonner-toaster] .alpha-toast[data-styled="true"] [data-close-button] {
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  block-size: 36px;
+  color: var(--toast-muted);
+  inline-size: 36px;
+  inset-block-start: 6px;
+  inset-inline: auto 6px;
+  transform: none;
+  transition: background 160ms ease-out, color 160ms ease-out;
+}
+
+.alpha-toaster[data-sonner-toaster] .alpha-toast[data-styled="true"] [data-close-button]:hover {
+  background: var(--toast-tint);
+  color: var(--toast-text);
+}
+
+.alpha-toaster .alpha-toast [data-button] {
+  border-radius: 8px;
+  background: var(--toast-tint);
+  block-size: auto;
+  color: var(--toast-accent);
+  grid-column: 2;
+  justify-self: start;
+  margin-block: 6px 0;
+  margin-inline: 0;
+  min-block-size: 36px;
+  padding-block: 7px;
+  padding-inline: 14px;
+  white-space: normal;
+}
+
+.alpha-toaster .alpha-toast:focus-visible,
+.alpha-toaster .alpha-toast [data-button]:focus-visible,
+.alpha-toaster[data-sonner-toaster] .alpha-toast[data-styled="true"] [data-close-button]:focus-visible {
+  outline: 2px solid var(--toast-accent);
+  outline-offset: 3px;
+}
+
+@media (max-width: 600px) {
+  .alpha-toaster[data-sonner-toaster] {
+    inline-size: calc(100% - 24px);
+  }
+
+  .alpha-toaster .alpha-toast[data-styled="true"] {
+    gap: 4px 10px;
+    inline-size: 100%;
+    padding-block: 16px;
+    padding-inline: 14px 48px;
+  }
+
+  .alpha-toaster[data-sonner-toaster] .alpha-toast[data-styled="true"] [data-close-button] {
+    block-size: 44px;
+    inline-size: 44px;
+    inset-block-start: 2px;
+    inset-inline-end: 2px;
+  }
+
+  .alpha-toaster .alpha-toast [data-button] {
+    min-block-size: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .alpha-toaster[data-sonner-toaster],
+  .alpha-toaster .alpha-toast,
+  .alpha-toaster .alpha-toast * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

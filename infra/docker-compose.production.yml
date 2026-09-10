@@ -1,0 +1,20 @@
+services:
+  admin-panel:
+    image: ${PANEL_IMAGE:?Set PANEL_IMAGE to the release image tag}
+    container_name: alpha-pos-admin
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${ADMIN_PORT:-8081}:80"
+    networks:
+      edge:
+        aliases:
+          - alpha-pos-admin
+      backend: {}
+
+networks:
+  edge:
+    external: true
+    name: ${EDGE_NETWORK:-edge}
+  backend:
+    external: true
+    name: ${BACKEND_NETWORK:-alpha_pos_server_default}

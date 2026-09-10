@@ -1,0 +1,189 @@
+/* ============================================================
+   ALPHA POS — dashboards styling
+   Ported from .tmp-handoff-v3/.../styles/dashboards.css for the
+   Operations / Live dash and sibling dashboards (executive, sales,
+   products, staff). Wired via styles.scss.
+   ============================================================ */
+
+/* hero kpi (live counters strip) */
+.herokpi {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg);
+  padding: var(--sp-5); box-shadow: var(--shadow-xs); transition: box-shadow .18s, transform .18s, border-color .18s;
+}
+.herokpi:hover { box-shadow: var(--shadow-md); transform: translateY(-3px); border-color: var(--border-strong); }
+.herokpi__top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+.herokpi__label { font-size: var(--fs-sm); color: var(--text-secondary); font-weight: var(--fw-medium); }
+.herokpi__icon { width: 32px; height: 32px; border-radius: var(--r-sm); display: grid; place-items: center; flex: 0 0 32px; }
+.herokpi__icon.t-primary { background: var(--primary-weak); color: var(--primary); }
+.herokpi__icon.t-success { background: var(--success-weak); color: var(--success); }
+.herokpi__icon.t-warning { background: var(--warning-weak); color: var(--warning); }
+.herokpi__icon.t-info    { background: var(--info-weak); color: var(--info); }
+.herokpi__icon.t-error   { background: var(--error-weak); color: var(--error); }
+.herokpi__value { font-family: var(--font-mono); font-size: 26px; line-height: 1.1; font-weight: var(--fw-bold); letter-spacing: -0.03em; color: var(--text); }
+.herokpi__unit  { font-size: 12px; color: var(--text-tertiary); font-weight: 500; font-family: var(--font-sans); margin-left: 5px; }
+.herokpi__foot  { display: flex; align-items: center; gap: 9px; margin-top: 12px; min-height: 30px; }
+.herokpi__sub   { font-size: 12px; color: var(--text-tertiary); }
+
+/* card head with right-aligned status */
+.card__head.between { justify-content: space-between; }
+
+/* table occupancy grid */
+.tablegrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.tablecell {
+  aspect-ratio: 1.3; border-radius: var(--r-md); border: 1.5px solid var(--border);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  position: relative; transition: transform .14s; cursor: default;
+}
+.tablecell:hover { transform: scale(1.04); }
+.tablecell__n { font-family: var(--font-mono); font-weight: 700; font-size: 15px; }
+.tablecell__m { font-size: 10px; }
+.tablecell.s-free     { background: var(--surface-2); border-style: dashed; color: var(--text-tertiary); }
+.tablecell.s-seated   { background: var(--success-weak); border-color: var(--success-border); color: var(--success-strong); }
+.tablecell.s-reserved { background: var(--warning-weak); border-color: var(--warning-border); color: var(--warning-strong); }
+.tablecell.s-cleaning { background: var(--info-weak); border-color: var(--info-border); color: var(--info-strong); }
+
+/* dashboard tab switcher */
+.dashtabs { display: flex; gap: 4px; padding: 4px; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-md); overflow-x: auto; }
+.dashtab {
+  display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 16px;
+  border: none; background: transparent; color: var(--text-secondary); cursor: pointer;
+  font-family: inherit; font-size: var(--fs-sm); font-weight: var(--fw-semibold); white-space: nowrap;
+  border-radius: var(--r-sm); transition: all .15s cubic-bezier(.2,.8,.2,1);
+}
+.dashtab:hover { color: var(--text); background: var(--surface); }
+.dashtab.is-active { background: var(--surface); color: var(--primary); box-shadow: var(--shadow-sm); }
+.dashtab .ic { flex: 0 0 auto; }
+
+/* dashboard hub — freshness + auto-refresh + error bar */
+.dash-fresh {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: var(--fs-micro); color: var(--text-tertiary);
+  white-space: nowrap; font-variant-numeric: tabular-nums;
+}
+.dash-fresh .ic { color: var(--text-tertiary); }
+.btn.dash-auto.is-on { color: var(--success-strong); border-color: var(--success-border); background: var(--success-weak); }
+
+.dash-errbar {
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: 11px 14px; margin-bottom: var(--sp-3);
+  background: var(--error-weak); border: 1px solid var(--error-border);
+  border-radius: var(--r-md); color: var(--error-strong);
+}
+.dash-errbar > .ic { flex: 0 0 auto; }
+.dash-errbar__body { flex: 1; min-width: 0; }
+.dash-errbar__title { font-weight: var(--fw-semibold); font-size: var(--fs-sm); }
+.dash-errbar__msg { font-size: var(--fs-micro); opacity: .85; }
+.dash-errbar__x {
+  flex: 0 0 auto; border: none; background: transparent; color: inherit; cursor: pointer;
+  display: grid; place-items: center; padding: 4px; border-radius: var(--r-sm); opacity: .7;
+  transition: opacity .13s, background .13s;
+}
+.dash-errbar__x:hover { opacity: 1; background: var(--surface-2); }
+@media (max-width: 640px) {
+  .dash-fresh { order: 3; width: 100%; }
+}
+
+/* live feed */
+.feed-dot { width: 9px; height: 9px; border-radius: 99px; flex: 0 0 9px; }
+.feed-dot.t-warning { background: var(--warning); box-shadow: 0 0 0 3px var(--warning-weak); }
+.feed-dot.t-success { background: var(--success); box-shadow: 0 0 0 3px var(--success-weak); }
+.feed-dot.t-neutral { background: var(--text-tertiary); }
+@media (prefers-reduced-motion: no-preference) {
+  .feed-dot.t-warning { animation: feed-pulse 1.8s ease-in-out infinite; }
+  .feed-row--new { animation: feed-in .5s cubic-bezier(.2,.8,.2,1); }
+}
+@keyframes feed-pulse { 50% { box-shadow: 0 0 0 6px transparent; } }
+@keyframes feed-in { from { opacity: 0; transform: translateY(-8px); background: var(--primary-weak); } }
+
+/* leaderboard rows */
+.lb-row { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.lb-row:last-child { border-bottom: none; }
+.lb-rank { width: 26px; height: 26px; border-radius: 99px; display: grid; place-items: center; font-family: var(--font-mono); font-weight: 700; font-size: 13px; flex: 0 0 26px; background: var(--neutral-weak); color: var(--text-secondary); }
+.lb-rank.is-1 { background: var(--warning-weak); color: var(--warning-strong); }
+.lb-rank.is-2 { background: var(--neutral-weak); color: var(--text-secondary); }
+.lb-rank.is-3 { background: var(--warning-weak); color: var(--warning-strong); opacity: .7; }
+.lb-bar { height: 8px; border-radius: 99px; background: var(--chart-track); overflow: hidden; margin-top: 5px; }
+.lb-bar > div { height: 100%; border-radius: 99px; background: var(--chart-revenue); transition: width .7s cubic-bezier(.2,.8,.2,1); }
+
+/* sparkline table */
+.sparktable td { vertical-align: middle; }
+
+/* interactive status distribution bar */
+.distbar { display: flex; height: 14px; border-radius: var(--r-pill); overflow: hidden; background: var(--chart-track); gap: 2px; }
+.distbar__seg { height: 100%; cursor: pointer; transition: opacity .15s, filter .15s; min-width: 4px; }
+.distbar__seg:hover { filter: brightness(1.08); }
+.distbar__seg:first-child { border-radius: var(--r-pill) 0 0 var(--r-pill); }
+.distbar__seg:last-child { border-radius: 0 var(--r-pill) var(--r-pill) 0; }
+.distbar__seg.is-dim { opacity: .32; }
+.distlegend {
+  display: inline-flex; align-items: center; gap: 7px; border: none; background: transparent;
+  cursor: pointer; font-size: var(--fs-sm); color: var(--text-secondary); font-weight: var(--fw-medium);
+  padding: 4px 8px; border-radius: var(--r-sm); transition: background .13s, color .13s;
+}
+.distlegend:hover { background: var(--surface-2); color: var(--text); }
+.distlegend.is-active { background: var(--primary-weak); color: var(--primary); }
+.distlegend b { font-weight: var(--fw-bold); color: var(--text); }
+.distlegend.is-active b { color: var(--primary); }
+
+/* ---------- Affinity card (frequently bought together) ---------- */
+.viewtoggle { display: inline-flex; padding: 3px; gap: 2px; background: var(--surface-inset); border-radius: var(--r-sm); border: 1px solid var(--border); }
+.viewtoggle__btn { width: 32px; height: 28px; border: none; background: transparent; color: var(--text-tertiary); border-radius: 6px; cursor: pointer; display: grid; place-items: center; transition: all .13s; }
+.viewtoggle__btn:hover { color: var(--text); background: var(--surface-2); }
+.viewtoggle__btn.is-active { background: var(--surface); color: var(--primary); box-shadow: var(--shadow-xs); }
+
+.affinity-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--sp-6); align-items: start; }
+.affinity-viz { min-width: 0; }
+.affinity-list { min-width: 0; border-left: 1px solid var(--border); padding-left: var(--sp-5); }
+.afflist__row { display: flex; align-items: center; gap: 9px; width: 100%; padding: 7px 9px; border: none; background: transparent; border-radius: var(--r-sm); cursor: pointer; text-align: left; transition: background .12s; }
+.afflist__row:hover { background: var(--surface-2); }
+.afflist__row.is-active { background: var(--primary-weak); }
+.afflist__name { flex: 1; min-width: 0; font-size: 13px; font-weight: 500; color: var(--text); line-height: 1.5; overflow-wrap: anywhere; }
+.afflist__index { flex: 0 0 16px; font: 11px var(--font-mono); color: var(--text-secondary); }
+.afflist__count { font-size: 12px; font-weight: 700; color: var(--text-secondary); }
+.afflist__row.is-active .afflist__count { color: var(--primary); }
+
+/* affinity drill-down panels */
+.afflist__go { color: var(--text-tertiary); opacity: 0; margin-left: 2px; transition: opacity .12s; }
+.afflist__row:hover .afflist__go { opacity: 1; }
+.affcrumb { display: inline-flex; align-items: center; gap: 3px; border: none; background: transparent; color: var(--primary); font-size: var(--fs-sm); font-weight: var(--fw-semibold); cursor: pointer; padding: 0; }
+.affcrumb:hover { text-decoration: underline; }
+.affdot { width: 28px; height: 28px; border-radius: var(--r-sm); flex: 0 0 28px; }
+.affstats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.affstat { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 10px; text-align: center; }
+.affstat__v { font-size: 17px; font-weight: 700; letter-spacing: -0.02em; }
+.affstat__l { font-size: 10.5px; color: var(--text-tertiary); margin-top: 2px; line-height: 1.2; }
+.affbar { flex: 1; height: 6px; border-radius: 99px; background: var(--chart-track); overflow: hidden; min-width: 30px; }
+.affbar--lg { height: 9px; display: block; }
+.affbar__fill { display: block; height: 100%; border-radius: 99px; background: var(--c4); transition: width .5s cubic-bezier(.2,.8,.2,1); }
+.affpairhead { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.affchip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border: 1px solid var(--border-strong); background: var(--surface); border-radius: var(--r-pill); font-size: 12.5px; font-weight: 600; color: var(--text); cursor: pointer; transition: all .13s; }
+.affchip:hover { border-color: var(--primary); color: var(--primary); }
+.affconf { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-md); padding: 12px 14px; }
+.affsuggest { display: flex; align-items: flex-start; gap: 9px; margin-top: 14px; padding: 11px 13px; border-radius: var(--r-md); font-size: 12.5px; line-height: 1.45; }
+.affsuggest.is-good { background: var(--success-weak); border: 1px solid var(--success-border); color: var(--success-strong); }
+.affsuggest.is-soft { background: var(--info-weak); border: 1px solid var(--info-border); color: var(--info-strong); }
+.affsuggest .ic { flex: 0 0 16px; margin-top: 1px; }
+.pairrow { display: block; width: 100%; text-align: left; border: none; background: transparent; padding: 7px 8px; border-radius: var(--r-sm); cursor: pointer; transition: background .12s, opacity .15s; }
+.pairrow:hover { background: var(--surface-2); }
+.pairrow.is-active { background: var(--primary-weak); }
+
+/* payment breakdown (order detail) */
+.paybreak { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); padding: var(--sp-4); }
+.paybreak__bar { display: flex; height: 12px; border-radius: var(--r-pill); overflow: hidden; background: var(--chart-track); gap: 2px; }
+.paybreak__seg { height: 100%; min-width: 4px; transition: filter .13s; }
+.paybreak__seg:hover { filter: brightness(1.08); }
+
+/* responsive */
+@media (max-width: 1100px) {
+  .grid[style*="repeat(5"] { grid-template-columns: repeat(2, 1fr) !important; }
+  .tablegrid { grid-template-columns: repeat(4, 1fr); }
+}
+@media (max-width: 920px) {
+  .affinity-body { grid-template-columns: minmax(0, 1fr); }
+  .affinity-list { border-left: none; border-top: 1px solid var(--border); padding-left: 0; padding-top: var(--sp-4); }
+}
+@media (max-width: 768px) {
+  .grid[style*="repeat(5"], .grid[style*="repeat(3"] { grid-template-columns: 1fr 1fr !important; }
+  .tablegrid { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .dashtab span { display: inline; }
+}

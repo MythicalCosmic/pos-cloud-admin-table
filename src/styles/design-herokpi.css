@@ -1,0 +1,71 @@
+/* ============================================================
+   HeroKpi — large dashboard KPI tile with sparkline footer.
+   Port of v3 handoff `pages/dash/Shared.jsx` HeroKpi block.
+   Tone classes (.t-primary/.t-success/.t-warning/.t-error) are
+   shared with .kpi__icon — see design-shell.css ~line 787.
+   ============================================================ */
+.herokpi {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: var(--sp-3) var(--sp-4);
+  box-shadow: var(--shadow-xs);
+  transition: box-shadow .16s, border-color .16s;
+  position: relative;
+  overflow: hidden;
+}
+.herokpi:hover {
+  box-shadow: var(--shadow-sm);
+  border-color: var(--border-strong);
+}
+.herokpi__top {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-2);
+}
+.herokpi__label {
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+  font-weight: var(--fw-medium);
+  flex: 1;
+  min-width: 0;
+}
+.herokpi__icon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-sm);
+  display: grid;
+  place-items: center;
+  flex: 0 0 32px;
+}
+.herokpi__icon.t-primary { background: var(--primary-weak); color: var(--primary); }
+.herokpi__icon.t-success { background: var(--success-weak); color: var(--success); }
+.herokpi__icon.t-warning { background: var(--warning-weak); color: var(--warning); }
+.herokpi__icon.t-error   { background: var(--error-weak); color: var(--error); }
+.herokpi__value {
+  font-family: var(--font-mono);
+  font-size: var(--fs-kpi);
+  line-height: var(--lh-kpi);
+  font-weight: var(--fw-bold);
+  letter-spacing: -0.03em;
+  color: var(--text);
+}
+.herokpi__unit {
+  font-size: var(--fs-sm);
+  color: var(--text-tertiary);
+  font-weight: var(--fw-medium);
+  font-family: var(--font-sans);
+  margin-left: 4px;
+}
+.herokpi__foot {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: 6px;
+  min-height: 24px;
+}
+.herokpi__sub {
+  font-size: var(--fs-sm);
+  color: var(--text-tertiary);
+}

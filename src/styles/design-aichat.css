@@ -1,0 +1,64 @@
+
+/* The page owns its workspace styles. This shared indicator stays available
+   in the topbar while an AI request continues on another route. */
+.ai-pill {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--primary-border);
+  border-radius: var(--r-pill);
+  background: var(--primary-weak);
+  block-size: 34px;
+  color: var(--primary);
+  cursor: pointer;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  gap: 8px;
+  padding-block: 0;
+  padding-inline: 12px;
+  transition: background 160ms;
+}
+
+.ai-pill:hover {
+  background: var(--primary-weak-2);
+}
+
+.typing {
+  display: inline-flex;
+  align-items: center;
+  block-size: 18px;
+  gap: 4px;
+}
+
+.typing span {
+  display: inline-block;
+  border-radius: 99px;
+  background: currentcolor;
+  block-size: 5px;
+  inline-size: 5px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+.typing span {
+    animation: ai-bounce 1.2s ease-in-out infinite;
+}
+
+.typing span:nth-child(2) {
+    animation-delay: 160ms;
+}
+
+.typing span:nth-child(3) {
+    animation-delay: 320ms;
+}
+}
+
+@keyframes ai-bounce {
+0%, 80%, 100% {
+    opacity: .4;
+    transform: translateY(0);
+}
+
+40% {
+    opacity: 1;
+    transform: translateY(-3px);
+}
+}

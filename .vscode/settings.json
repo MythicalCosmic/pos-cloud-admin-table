@@ -1,0 +1,30 @@
+{
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "javascript.updateImportsOnFileMove.enabled": "always",
+  "[javascript][typescript][vue]": {
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+  },
+  "[css][scss]": {
+    "editor.defaultFormatter": "stylelint.vscode-stylelint"
+  },
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.fixAll.stylelint": "explicit"
+  },
+  "eslint.format.enable": true,
+  "stylelint.validate": [
+    "css",
+    "scss",
+    "vue"
+  ],
+  "files.exclude": {
+    "**/*.tsbuildinfo": true,
+    "src/@iconify/*.js": true
+  },
+  "search.exclude": {
+    "dist": true,
+    "src/types/generated": true,
+    "src/@iconify/*.js": true,
+    "yarn.lock": true
+  }
+}

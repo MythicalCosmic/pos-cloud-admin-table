@@ -1,0 +1,54 @@
+/* ============================================================
+   Dashboard — Products & Menu performance
+   Page-specific styles for src/pages/dash/products.vue
+   ============================================================ */
+
+/* Sparkline-row table: keep numeric/spark cells compact */
+.sparktable .num.mono { font-family: var(--font-mono); font-feature-settings: "tnum" 1; }
+.sparktable .cell-strong { font-weight: var(--fw-semibold); }
+.sparktable td,
+.sparktable th { vertical-align: middle; }
+.sparktable .col-spark { width: 110px; }
+.sparktable .col-units { width: 80px; }
+.sparktable .col-delta { width: 80px; }
+
+/* Treemap + donut 2-col layout, collapses on mobile via grid utility */
+.dashprod-grid--mix { grid-template-columns: 1.6fr 1fr; }
+.dashprod-grid--pareto { grid-template-columns: 1fr 1fr; }
+/* Prevent wide chart cards from blowing out grid tracks below their min-content */
+.dashprod-grid--mix > *,
+.dashprod-grid--pareto > * { min-width: 0; }
+@media (max-width: 1100px) {
+  .dashprod-grid--mix,
+  .dashprod-grid--pareto { grid-template-columns: 1fr; }
+}
+
+/* Skeleton helpers for this page */
+.dashprod-sk__row {
+  height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--border);
+}
+.dashprod-sk__row:last-child { border-bottom: none; }
+.dashprod-sk .sk-box {
+  background: rgba(var(--v-theme-on-surface), 0.08);
+  animation: sk-pulse 1.5s ease-in-out infinite;
+  border-radius: 4px;
+}
+.dashprod-sk__chart {
+  height: 100%;
+  min-height: 220px;
+  background: rgba(var(--v-theme-on-surface), 0.05);
+  border-radius: 8px;
+  animation: sk-pulse 1.5s ease-in-out infinite;
+}
+@keyframes sk-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+/* Reuse the page-wide table-wrap convention so sparktable scrolls horizontally on narrow viewports */
+.dashprod-tablewrap { width: 100%; overflow-x: auto; }

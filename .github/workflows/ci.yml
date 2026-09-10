@@ -1,0 +1,99 @@
+name: CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+jobs:
+  lint-and-build:
+    name: Cash position lint + Typecheck + Contract tests + Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: yarn
+
+      - name: Install dependencies
+        run: |
+          corepack enable
+          yarn install --frozen-lockfile
+
+      - name: Lint cash-position integration
+        run: >-
+          yarn eslint
+          src/pages/money-control/index.vue
+          src/services/moneyControlApi.ts
+          src/types/moneyControl.ts
+          -c .eslintrc.js
+          --ext .ts,.vue
+          --max-warnings 0
+
+      - name: Typecheck
+        run: yarn typecheck
+
+      - name: Contract tests
+        run: node --test tests/contract/*.test.cjs
+
+      - name: Build
+        run: yarn build
+        env:
+          # Use relative paths in build; the deployment env should set this.
+          VITE_API_HOST: ''
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 7
+
+  # Smoke test is opt-in via the workflow_dispatch trigger because it needs
+  # a real backend. Once we have a staging backend reachable from GitHub-hosted
+  # runners (or a docker-compose setup), promote this to run on every PR.
+  smoke:
+    name: Smoke (Playwright)
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: yarn
+
+      - name: Install dependencies
+        run: |
+          corepack enable
+          yarn install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: yarn smoke:install
+
+      - name: Run smoke tests
+        run: yarn smoke
+        env:
+          PW_BASE_URL: ${{ secrets.PW_BASE_URL }}
+          PW_EMAIL: ${{ secrets.PW_EMAIL }}
+          PW_PASSWORD: ${{ secrets.PW_PASSWORD }}
+          PW_NO_SERVER: '1' # Skip local dev server; PW_BASE_URL points at staging.
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14

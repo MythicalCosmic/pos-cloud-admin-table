@@ -1,0 +1,392 @@
+/* ============================================================
+   ALPHA POS — Design overrides
+   Layered ON TOP of Sneat / Vuetify defaults to bring the existing
+   shell + components in line with the design handoff bundle.
+
+   These rules use higher specificity (e.g. .layout-vertical-nav
+   ...) so they take precedence without touching framework internals.
+
+   Token sources: src/styles/tokens.css + src/plugins/vuetify/theme.ts
+   ============================================================ */
+
+/* ---------- Body type ---------- */
+body {
+  font-family: var(--font-sans);
+  letter-spacing: 0;
+}
+
+.text-mono,
+.font-mono {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum" 1;
+  letter-spacing: -0.01em;
+}
+
+.text-num,
+.num-tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Page header (used by re-skinned pages) ---------- */
+.page-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-block-end: 24px;
+  flex-wrap: wrap;
+
+  &__title {
+    font-size: var(--fs-h1);
+    line-height: var(--lh-h1);
+    font-weight: var(--fw-bold);
+    letter-spacing: -0.02em;
+    margin: 0;
+    color: rgb(var(--v-theme-on-surface));
+  }
+
+  &__subtitle {
+    color: rgb(var(--v-theme-text-secondary));
+    font-size: var(--fs-sm);
+    margin-block-start: 4px;
+  }
+
+  &__actions {
+    margin-inline-start: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+}
+
+/* ---------- Sidebar nav items ---------- */
+.layout-vertical-nav {
+  background: rgb(var(--v-theme-surface)) !important;
+  border-inline-end: 1px solid rgb(var(--v-theme-border));
+  box-shadow: none !important;
+
+  .nav-header {
+    border-block-end: 1px solid rgb(var(--v-theme-border));
+  }
+
+  .nav-section-title {
+    .title-text {
+      font-size: var(--fs-micro);
+      font-weight: var(--fw-semibold);
+      letter-spacing: var(--tracking-label);
+      text-transform: uppercase;
+      color: rgb(var(--v-theme-text-tertiary));
+    }
+  }
+
+  .nav-link a {
+    border-radius: var(--r-sm);
+    color: rgb(var(--v-theme-text-secondary));
+    font-weight: var(--fw-medium);
+    font-size: var(--fs-body);
+    padding-block: 9px;
+    padding-inline: 12px;
+    transition: background .14s ease, color .14s ease;
+    position: relative;
+
+    &:hover {
+      background: rgb(var(--v-theme-surface-2));
+      color: rgb(var(--v-theme-on-surface));
+    }
+
+    &.router-link-active {
+      background: rgb(var(--v-theme-primary-weak));
+      color: rgb(var(--v-theme-primary));
+      font-weight: var(--fw-semibold);
+
+      &::before {
+        content: "";
+        position: absolute;
+        inset-inline-start: -12px;
+        inset-block-start: 50%;
+        transform: translateY(-50%);
+        inline-size: 3px;
+        block-size: 20px;
+        border-radius: 3px;
+        background: rgb(var(--v-theme-primary));
+      }
+    }
+  }
+
+  .nav-item-icon {
+    color: inherit;
+  }
+
+  .nav-item-badge {
+    background: rgb(var(--v-theme-neutral-weak));
+    color: rgb(var(--v-theme-text-secondary));
+    border-radius: var(--r-pill);
+    padding: 1px 7px;
+    font-size: var(--fs-micro);
+    font-weight: var(--fw-semibold);
+  }
+
+  .router-link-active .nav-item-badge {
+    background: rgb(var(--v-theme-primary-weak-2));
+    color: rgb(var(--v-theme-primary));
+  }
+}
+
+/* ---------- Topbar ----------
+   Sneat's vertical-nav layout puts the visible surface on the INNER
+   `.navbar-content-container` (the outer `.layout-navbar` is a sticky
+   wrapper that holds floating-mode margin/padding around it). Paint the
+   inner only — painting the outer leaks the surface into the gap above
+   the navbar, which shows as a misplaced band.
+*/
+.layout-navbar {
+  background: transparent !important;
+  box-shadow: none !important;
+
+  .navbar-content-container {
+    block-size: var(--topbar-h);
+    background: rgb(var(--v-theme-surface));
+    border-block-end: 1px solid rgb(var(--v-theme-border));
+  }
+}
+
+/* Sneat's vertical-nav layout uses a "nav-header::after" decorative
+   circle that bridges the sidebar to the navbar. With our new tokens it
+   sits behind the navbar and shows up as a light bump. Hide it. */
+.layout-vertical-nav .nav-header::after {
+  display: none !important;
+}
+
+/* ---------- Cards: lift to token shape ---------- */
+.v-card {
+  border-radius: var(--r-lg);
+  border: 1px solid rgb(var(--v-theme-border));
+  box-shadow: var(--shadow-xs) !important;
+  background-color: rgb(var(--v-theme-surface));
+
+  &.v-card--variant-tonal,
+  &.v-card--variant-flat {
+    border: none;
+  }
+
+  &.no-border {
+    border: none;
+  }
+}
+
+/* ---------- Buttons ---------- */
+.v-btn {
+  border-radius: var(--r-sm);
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0;
+  text-transform: none;
+
+  &.v-btn--variant-flat.v-btn--block,
+  &.v-btn--variant-elevated {
+    box-shadow: none !important;
+  }
+}
+
+/* ---------- Form controls ---------- */
+.v-text-field.v-input,
+.v-select.v-input,
+.v-autocomplete.v-input,
+.v-combobox.v-input,
+.v-textarea.v-input,
+.v-file-input.v-input {
+  .v-field--variant-outlined .v-field__outline__start,
+  .v-field--variant-outlined .v-field__outline__end,
+  .v-field--variant-outlined .v-field__outline__notch::before,
+  .v-field--variant-outlined .v-field__outline__notch::after {
+    border-color: rgb(var(--v-theme-border-strong));
+  }
+
+  .v-field--variant-outlined {
+    border-radius: var(--r-sm);
+  }
+
+  .v-field--focused .v-field__outline__start,
+  .v-field--focused .v-field__outline__end,
+  .v-field--focused .v-field__outline__notch::before,
+  .v-field--focused .v-field__outline__notch::after {
+    border-color: rgb(var(--v-theme-primary));
+  }
+}
+
+/* ---------- Tables ---------- */
+.v-data-table,
+.v-data-table-server {
+  background: transparent;
+
+  .v-data-table__th,
+  thead th {
+    background: rgb(var(--v-theme-surface-2)) !important;
+    color: rgb(var(--v-theme-text-secondary)) !important;
+    font-size: var(--fs-label) !important;
+    font-weight: var(--fw-semibold) !important;
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    border-block-end: 1px solid rgb(var(--v-theme-border)) !important;
+    height: 44px !important;
+  }
+
+  tbody tr {
+    transition: background .12s;
+  }
+
+  tbody tr:hover {
+    background: rgb(var(--v-theme-surface-2)) !important;
+  }
+
+  tbody td {
+    border-block-end: 1px solid rgb(var(--v-theme-border)) !important;
+    color: rgb(var(--v-theme-on-surface)) !important;
+    padding-block: 14px !important;
+  }
+
+  tbody tr:last-child td {
+    border-block-end: none !important;
+  }
+}
+
+/* ---------- Chips (status pill style) ---------- */
+.v-chip.status-pill {
+  border-radius: var(--r-xs);
+  height: 22px;
+  font-size: var(--fs-label);
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.01em;
+  padding-inline: 9px;
+  border: 1px solid transparent;
+}
+
+/* ---------- KPI card pattern ---------- */
+.kpi-card {
+  background: rgb(var(--v-theme-surface));
+  border: 1px solid rgb(var(--v-theme-border));
+  border-radius: var(--r-lg);
+  padding: var(--sp-5);
+  box-shadow: var(--shadow-xs);
+  transition: box-shadow .16s, border-color .16s;
+  position: relative;
+  overflow: hidden;
+
+  &:hover {
+    box-shadow: var(--shadow-sm);
+    border-color: rgb(var(--v-theme-border-strong));
+  }
+
+  &__top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-block-end: 16px;
+  }
+
+  &__icon {
+    inline-size: 38px;
+    block-size: 38px;
+    border-radius: var(--r-sm);
+    display: grid;
+    place-items: center;
+    flex: 0 0 38px;
+
+    &.t-primary { background: rgb(var(--v-theme-primary-weak)); color: rgb(var(--v-theme-primary)); }
+    &.t-success { background: rgb(var(--v-theme-success-weak)); color: rgb(var(--v-theme-success)); }
+    &.t-warning { background: rgb(var(--v-theme-warning-weak)); color: rgb(var(--v-theme-warning)); }
+    &.t-error   { background: rgb(var(--v-theme-error-weak));   color: rgb(var(--v-theme-error)); }
+    &.t-info    { background: rgb(var(--v-theme-info-weak));    color: rgb(var(--v-theme-info)); }
+    &.t-neutral { background: rgb(var(--v-theme-neutral-weak)); color: rgb(var(--v-theme-text-secondary)); }
+  }
+
+  &__label {
+    font-size: var(--fs-sm);
+    color: rgb(var(--v-theme-text-secondary));
+    font-weight: var(--fw-medium);
+  }
+
+  &__value {
+    font-family: var(--font-mono);
+    font-size: var(--fs-kpi);
+    line-height: var(--lh-kpi);
+    font-weight: var(--fw-bold);
+    letter-spacing: -0.03em;
+    color: rgb(var(--v-theme-on-surface));
+  }
+
+  &__unit {
+    font-size: var(--fs-sm);
+    color: rgb(var(--v-theme-text-tertiary));
+    font-weight: var(--fw-medium);
+    font-family: var(--font-sans);
+    margin-inline-start: 4px;
+  }
+
+  &__foot {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-block-start: 8px;
+  }
+
+  &__sub {
+    font-size: var(--fs-sm);
+    color: rgb(var(--v-theme-text-tertiary));
+  }
+}
+
+/* Delta chip — see src/components/design/Delta.vue for the canonical
+   scoped styles. The global rule lives only here for old pages that still
+   render .delta directly (no component). New code should import Delta.vue. */
+
+/* ---------- Filter chip row ---------- */
+.filter-chips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 6px 0 10px;
+  border-radius: var(--r-pill);
+  background: rgb(var(--v-theme-primary-weak));
+  color: rgb(var(--v-theme-primary));
+  border: 1px solid rgb(var(--v-theme-primary-border));
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+
+  b {
+    font-weight: var(--fw-semibold);
+  }
+}
+
+/* ---------- Page padding ---------- */
+.layout-page-content {
+  padding-block: var(--sp-5);
+  padding-inline: var(--sp-5);
+
+  @media (min-width: 1264px) {
+    padding-block: var(--sp-6);
+    padding-inline: var(--sp-7);
+  }
+}
+
+/* ---------- Avatar (primary-weak) ---------- */
+.v-avatar.avatar-primary-weak {
+  background: rgb(var(--v-theme-primary-weak)) !important;
+  color: rgb(var(--v-theme-primary)) !important;
+}
+
+/* ---------- Subtle muted text utilities ---------- */
+.text-muted { color: rgb(var(--v-theme-text-secondary)) !important; }
+.text-tertiary { color: rgb(var(--v-theme-text-tertiary)) !important; }
+.text-strong { color: rgb(var(--v-theme-on-surface)) !important; }
+
+/* ---------- Border / divider tokens ---------- */
+.v-divider {
+  border-color: rgb(var(--v-theme-border)) !important;
+}

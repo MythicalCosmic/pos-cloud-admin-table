@@ -1,0 +1,59 @@
+# Dependencies and generated output
+node_modules/
+/dist/
+/dist-ssr/
+/.yarn/
+*.tsbuildinfo
+src/@iconify/*.js
+
+# Local environment and tool state
+.env
+.env.local
+.env.*.local
+*.local
+/.claude/
+/.playwright-mcp/
+/.cache/
+.eslintcache
+.stylelintcache
+
+# Logs and test artifacts
+logs/
+*.log
+/coverage/
+/.nyc_output/
+/playwright-report/
+/test-results/
+/playwright/.cache/
+
+# Archives and temporary design exports belong outside the repository
+/.tmp-*/
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.7z
+*.rar
+/package-lock.json
+/bun.lock
+/bun.lockb
+/pnpm-lock.yaml
+
+# Operating-system and editor state
+.DS_Store
+Thumbs.db
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# Ad-hoc screenshots
+/.impeccable/mocks/
+/*.png
+/*.jpeg
+/*.jpg

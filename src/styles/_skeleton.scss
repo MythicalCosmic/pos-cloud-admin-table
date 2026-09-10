@@ -1,0 +1,24 @@
+.sk-row {
+  height: 52px;
+}
+
+.sk-cell {
+  padding: 0 16px;
+}
+
+.sk-box {
+  display: block;
+  background: rgba(var(--v-theme-on-surface), 0.08);
+  animation: sk-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes sk-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.4;
+  }
+}

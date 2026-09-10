@@ -1,0 +1,95 @@
+/* ============================================================
+   ALPHA POS — Staff & Shifts dashboard styles
+   Ported alongside src/pages/dash/staff.vue.
+   ============================================================ */
+
+/* Leaderboard row */
+.lb-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgb(var(--v-theme-border));
+}
+.lb-row:last-child { border-bottom: 0; }
+
+.lb-rank {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum" 1;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgb(var(--v-theme-neutral-weak));
+  color: rgb(var(--v-theme-text-secondary));
+}
+/* Light-mode rank colors. The hex values fail WCAG AA on dark surfaces,
+   so [data-theme=dark] overrides below lighten them for ~4.5:1 contrast. */
+.lb-rank.is-1 {
+  background: rgba(255, 199, 0, 0.18);
+  color: #b58100;
+}
+.lb-rank.is-2 {
+  background: rgba(165, 168, 173, 0.22);
+  color: #6f7178;
+}
+.lb-rank.is-3 {
+  background: rgba(176, 116, 70, 0.22);
+  color: #8a4b1f;
+}
+[data-theme="dark"] .lb-rank.is-1 { color: #FFD27A; background: rgba(255, 199, 0, 0.22); }
+[data-theme="dark"] .lb-rank.is-2 { color: #C9CCD1; background: rgba(165, 168, 173, 0.26); }
+[data-theme="dark"] .lb-rank.is-3 { color: #E0B58A; background: rgba(176, 116, 70, 0.26); }
+
+.lb-bar {
+  position: relative;
+  margin-top: 6px;
+  height: 6px;
+  border-radius: 3px;
+  background: rgb(var(--v-theme-neutral-weak));
+  overflow: hidden;
+}
+.lb-bar > div {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--c1), var(--c2));
+  transition: width .42s ease;
+}
+
+/* Layout shells for the staff page */
+.staff-dash {
+  display: block;
+}
+.staff-dash .grid {
+  display: grid;
+  gap: var(--sp-6);
+}
+.staff-hero {
+  grid-template-columns: repeat(4, 1fr);
+}
+.staff-row-1 {
+  grid-template-columns: 1.2fr 1fr;
+}
+.staff-row-2 {
+  grid-template-columns: 1fr 1fr;
+}
+/* Prevent wide chart cards from blowing out grid tracks */
+.staff-hero > *,
+.staff-row-1 > *,
+.staff-row-2 > * { min-width: 0; }
+
+@media (max-width: 1100px) {
+  .staff-hero { grid-template-columns: repeat(2, 1fr); }
+  .staff-row-1,
+  .staff-row-2 { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px) {
+  .staff-hero { grid-template-columns: 1fr; }
+}
