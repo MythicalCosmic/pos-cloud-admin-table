@@ -113,7 +113,13 @@ The reading path is headline totals, trend and recent orders, sales and costs,
 menu behavior, staff performance, and service. Navigation uses section links,
 section headings, 1–5 shortcuts, and an active-section indicator. Jumping focuses
 the destination without unmounting content. Chart metric and comparison choices
-survive refresh. Headline CSV export preserves the existing contract. The main
+survive refresh. Dashboard Export offers the backend's complete product-performance
+report as Excel, PDF or CSV for the applied business dates, with its 07:00–03:00
+scope shown before download. Exact-time selections display a clear scope notice.
+A separate Dashboard snapshot CSV preserves the loaded totals, payments,
+returned products/categories and recent orders with the exact reporting window;
+missing values remain blank. Each report format has independent loading/error
+feedback, and the menu fits above phone navigation with keyboard support. The main
 series also has a keyboard-accessible exact-value table; chart-adjacent keys,
 visible rankings and records provide touch alternatives.
 

@@ -1,4 +1,5 @@
 import { type Page, expect, test } from '@playwright/test'
+import { readFile } from 'node:fs/promises'
 import { alphaPaletteTokens } from '../../src/config/palettes'
 
 // Deterministic fixtures are confined to tests; the application always uses the API.
@@ -31,6 +32,7 @@ interface FixtureState {
   paretoTotal?: number
   paretoShares?: boolean
   productCount?: number
+  role?: string
 }
 
 function salesFixture(state: FixtureState) {
@@ -131,9 +133,9 @@ async function setup(page: Page, state: FixtureState = {}, locale = 'en', theme 
     if (!localStorage.getItem('alphapos-theme')) localStorage.setItem('alphapos-theme', initial.theme)
     localStorage.setItem('alphapos-dashview', 'exec')
     localStorage.setItem('accessToken', JSON.stringify('dashboard-design-test-token'))
-    localStorage.setItem('userData', JSON.stringify({ id: 9, name: 'Design review', role: 'ADMIN', permissions: ['*'] }))
+    localStorage.setItem('userData', JSON.stringify({ id: 9, name: 'Design review', role: initial.role, permissions: ['*'] }))
     localStorage.setItem('userAbilities', JSON.stringify([{ action: 'manage', subject: 'all' }]))
-  }, { locale, theme })
+  }, { locale, theme, role: state.role ?? 'ADMIN' })
 
   const calls: URL[] = []
 
@@ -208,6 +210,215 @@ async function expectReadableChartLabels(page: Page) {
   }))).toEqual([])
 }
 
+interface ExportState { gate?: Promise<void>; error?: boolean }
+async function mockReportExports(page: Page, state: ExportState = {}) {
+  const calls: URL[] = []
+  await page.route('**/api/admins/reports/product-performance/export?**', async route => {
+    const url = new URL(route.request().url())
+    const format = url.searchParams.get('format')!
+    calls.push(url)
+    if (format === 'xlsx' && state.gate)
+      await state.gate
+    if (state.error) {
+      await route.fulfill({ status: 413, json: { success: false, code: 'REPORT_TOO_LARGE', message: 'Choose a shorter period' } })
+      return
+    }
+    await route.fulfill({
+      contentType: format === 'csv' ? 'text/csv' : format === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      headers: { 'Content-Disposition': `attachment; filename="fallback.${format}"; filename*=UTF-8''Sales%20%E2%80%94%20${url.searchParams.get('from')}.${format}`, 'X-Report-Cost-Complete': 'true', 'X-Export-Count': '185' },
+      body: `Product,Revenue\nALL PRODUCTS,185\nTOTAL,123456.78\n`,
+    })
+  })
+  return calls
+}
+
+test('dashboard exports all report formats for the applied dates and a useful exact snapshot', async ({ page }) => {
+  const calls = await setup(page)
+  const exports = await mockReportExports(page)
+  await page.goto('/')
+  await expect(page.getByRole('button', { name: 'Refresh', exact: true })).toBeEnabled()
+  const range = calls.filter(url => url.pathname.endsWith('/dashboard')).at(-1)!
+  await page.getByRole('button', { name: 'Export', exact: true }).click()
+  const menu = page.getByRole('menu', { name: 'Export', exact: true })
+  await expect(menu).toContainText('Product performance')
+  await expect(menu).toContainText('07:00–03:00 next day')
+  for (const [format, label] of [['xlsx', 'XLSX Excel'], ['pdf', 'PDF PDF'], ['csv', 'CSV CSV']]) {
+    const pending = page.waitForEvent('download')
+    await menu.getByRole('menuitem', { name: label, exact: true }).click()
+    const file = await pending
+    expect(file.suggestedFilename()).toBe(`Sales — ${range.searchParams.get('from')}.${format}`)
+    expect(await readFile((await file.path())!, 'utf8')).toContain('ALL PRODUCTS,185')
+    await expect(menu.getByRole('menuitem', { name: label, exact: true })).toBeEnabled()
+  }
+  expect(exports).toHaveLength(3)
+  for (const url of exports) {
+    expect(Object.fromEntries(url.searchParams)).toMatchObject({ preset: 'custom', from: range.searchParams.get('from'), to: range.searchParams.get('to'), sort: 'highest_revenue' })
+    expect(url.searchParams.has('page')).toBe(false)
+    expect(url.searchParams.has('per_page')).toBe(false)
+    expect(url.searchParams.has('from_at')).toBe(false)
+  }
+  const pending = page.waitForEvent('download')
+  await menu.getByRole('menuitem', { name: 'Dashboard snapshot CSV', exact: true }).click()
+  const file = await pending
+  const csv = await readFile((await file.path())!, 'utf8')
+  expect(csv).toContain(`"Revenue","${revenue}"`)
+  expect(csv).toContain(`"Orders","${orders}"`)
+  expect(csv).toContain(`"Cash","${revenue * 0.5}"`)
+  expect(csv).toContain('"Основные блюда и фирменные предложения ресторана"')
+  expect(csv).toContain('"1042","Hall","READY","245000"')
+  expect(csv).toContain('Asia/Tashkent')
+  expect(csv).not.toContain('[object Object]')
+  await expect(menu).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Export', exact: true })).toBeFocused()
+})
+
+test('dashboard exports keep other formats usable during generation and report errors support retry', async ({ page }) => {
+  test.setTimeout(30_000)
+  await setup(page)
+  let release!: () => void
+  const state: ExportState = { gate: new Promise<void>(resolve => { release = resolve }) }
+  const calls = await mockReportExports(page, state)
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Export', exact: true }).click()
+  const menu = page.getByRole('menu', { name: 'Export', exact: true })
+  const excel = menu.getByRole('menuitem', { name: 'XLSX Excel', exact: true })
+  const pdf = menu.getByRole('menuitem', { name: 'PDF PDF', exact: true })
+  const excelDownload = page.waitForEvent('download', { predicate: download => download.suggestedFilename().endsWith('.xlsx'), timeout: 10_000 })
+  try {
+    await excel.click()
+    await expect(excel).toBeDisabled()
+    await expect(pdf).toBeEnabled()
+    await expect(pdf).toBeFocused()
+    // Native disabled controls and the handler guard both prevent duplicate requests.
+    await excel.evaluate((button: HTMLButtonElement) => button.click())
+    await expect.poll(() => calls.filter(url => url.searchParams.get('format') === 'xlsx').length).toBe(1)
+    const pdfDownload = page.waitForEvent('download', { predicate: download => download.suggestedFilename().endsWith('.pdf'), timeout: 10_000 })
+    await pdf.click()
+    await pdfDownload
+    release()
+    await excelDownload
+    await expect(excel).toBeEnabled()
+    state.error = true
+    await menu.getByRole('menuitem', { name: 'CSV CSV', exact: true }).click()
+    await expect(page.locator('[data-sonner-toaster]')).toContainText('This report is too large')
+    await expect(menu.getByRole('menuitem', { name: 'CSV CSV', exact: true })).toBeEnabled()
+    state.error = false
+    const retry = page.waitForEvent('download')
+    await menu.getByRole('menuitem', { name: 'CSV CSV', exact: true }).click()
+    await retry
+  }
+  finally { release() }
+})
+
+test('dashboard exports disclose business-day scope and preserve the overnight snapshot interval', async ({ page }) => {
+  await setup(page)
+  const calls = await mockReportExports(page)
+  await page.goto('/')
+  await expect(page.getByRole('button', { name: 'Refresh', exact: true })).toBeEnabled()
+  await chooseDateTime(page, 'Start date', '2026-08-05', '22:00')
+  await chooseDateTime(page, 'End date', '2026-08-05', '02:00')
+  await page.locator('.date-fields').getByRole('button', { name: 'Apply', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Refresh', exact: true })).toBeEnabled()
+  await page.getByRole('button', { name: 'Export', exact: true }).click()
+  const menu = page.getByRole('menu', { name: 'Export', exact: true })
+  await expect(menu).toContainText('Reports use full business days, without your selected hours')
+  const report = page.waitForEvent('download')
+  await menu.getByRole('menuitem', { name: 'CSV CSV', exact: true }).click()
+  await report
+  expect(Object.fromEntries(calls[0].searchParams)).toEqual({ preset: 'custom', from: '2026-08-05', to: '2026-08-05', sort: 'highest_revenue', format: 'csv' })
+  const pending = page.waitForEvent('download')
+  await menu.getByRole('menuitem', { name: 'Dashboard snapshot CSV', exact: true }).click()
+  const file = await pending
+  expect(file.suggestedFilename()).toBe('dashboard-2026-08-05-2026-08-05-2200-0200.csv')
+  const csv = await readFile((await file.path())!, 'utf8')
+  expect(csv).toContain('2026-08-05T22:00:00+05:00')
+  expect(csv).toContain('2026-08-06T02:00:00+05:00')
+})
+
+test('dashboard exports distinguish a failed snapshot from real zero activity', async ({ page }) => {
+  const state: FixtureState = { fail: true }
+  await setup(page, state)
+  await mockReportExports(page)
+  await page.goto('/')
+  await expect(page.getByRole('button', { name: 'Refresh', exact: true })).toBeEnabled()
+  await page.getByRole('button', { name: 'Export', exact: true }).click()
+  const menu = page.getByRole('menu', { name: 'Export', exact: true })
+  await expect(menu.getByRole('menuitem', { name: 'Dashboard snapshot CSV', exact: true })).toBeDisabled()
+  await expect(menu).toContainText('Snapshot unavailable')
+  const report = page.waitForEvent('download')
+  await menu.getByRole('menuitem', { name: 'XLSX Excel', exact: true }).click()
+  await report
+  await page.keyboard.press('Escape')
+  state.fail = false
+  state.empty = true
+  await page.getByRole('button', { name: 'Refresh', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Refresh', exact: true })).toBeEnabled()
+  await page.getByRole('button', { name: 'Export', exact: true }).click()
+  const pending = page.waitForEvent('download')
+  await menu.getByRole('menuitem', { name: 'Dashboard snapshot CSV', exact: true }).click()
+  const file = await pending
+  expect(await readFile((await file.path())!, 'utf8')).toContain('"Revenue","0"')
+})
+
+test('dashboard exports preserve report role restrictions', async ({ page }) => {
+  await setup(page, { role: 'CASHIER' })
+  await page.goto('/')
+  await expect(page.getByRole('button', { name: 'Refresh', exact: true })).toBeEnabled()
+  await page.getByRole('button', { name: 'Export', exact: true }).click()
+  const menu = page.getByRole('menu', { name: 'Export', exact: true })
+  await expect(menu.getByRole('menuitem')).toHaveCount(1)
+  await expect(menu.getByRole('menuitem', { name: 'Dashboard snapshot CSV', exact: true })).toBeEnabled()
+})
+
+for (const locale of ['en', 'ru', 'uz']) {
+  for (const viewport of [{ width: 1440, height: 1000, theme: 'dark' }, { width: 390, height: 844, theme: 'light' }]) {
+    test(`dashboard exports menu keyboard and layout ${locale} ${viewport.theme} ${viewport.width}`, async ({ page }) => {
+      await page.setViewportSize(viewport)
+      await page.emulateMedia({ reducedMotion: 'reduce' })
+      await setup(page, {}, locale, viewport.theme)
+      await page.goto('/')
+      const trigger = page.locator('.dashboard-export > button')
+      await trigger.click()
+      const menu = page.locator('.dashboard-export [role="menu"]')
+      await expect(menu.getByRole('menuitem').first()).toBeFocused()
+      await page.keyboard.press('End')
+      await expect(menu.getByRole('menuitem').last()).toBeFocused()
+      await page.keyboard.press('Home')
+      await expect(menu.getByRole('menuitem').first()).toBeFocused()
+      const geometry = await menu.evaluate(el => ({ left: el.getBoundingClientRect().left, right: el.getBoundingClientRect().right, bottom: el.getBoundingClientRect().bottom, width: el.clientWidth, scroll: el.scrollWidth }))
+      expect(geometry.left).toBeGreaterThanOrEqual(0)
+      expect(geometry.right).toBeLessThanOrEqual(viewport.width)
+      expect(geometry.bottom).toBeLessThanOrEqual(viewport.height)
+      expect(geometry.scroll).toBeLessThanOrEqual(geometry.width)
+      await page.screenshot({ path: `/tmp/alpha-dashboard-export/menu-${locale}-${viewport.theme}-${viewport.width}.png` })
+      await page.keyboard.press('Escape')
+      await expect(menu).toHaveCount(0)
+      await expect(trigger).toBeFocused()
+      await trigger.click()
+      await page.locator('.dashboard-header h1').click()
+      await expect(menu).toHaveCount(0)
+
+      // A narrow, short phone still exposes the exact-time notice and footer;
+      // the menu itself scrolls above the fixed bottom navigation.
+      if (viewport.width === 390) {
+        await page.setViewportSize({ width: 1440, height: 1000 })
+        await page.locator('.date-fields__timebar button').filter({ hasText: locale === 'en' ? 'Working hours' : locale === 'ru' ? 'Рабочие часы' : 'Ish soatlari' }).click()
+        await page.locator('.date-fields__apply').click()
+        await expect(page.locator('.dashboard-header__actions > button')).toBeEnabled()
+        await page.setViewportSize({ width: 320, height: 640 })
+        await trigger.click()
+        await expect(menu.locator('.dashboard-export__notice')).toBeVisible()
+        await page.keyboard.press('End')
+        await expect(menu.getByRole('menuitem').last()).toBeFocused()
+        const bottom = await menu.evaluate(el => el.getBoundingClientRect().bottom)
+        const barTop = await page.locator('.mobile-tabbar').evaluate(el => el.getBoundingClientRect().top)
+        expect(bottom).toBeLessThanOrEqual(barTop)
+        await page.screenshot({ path: `/tmp/alpha-dashboard-export/menu-${locale}-time-320.png` })
+      }
+    })
+  }
+}
+
 test('overview preserves API totals, comparison, metric switching, refresh, and CSV export', async ({ page }) => {
   const calls = await setup(page)
 
@@ -260,6 +471,7 @@ test('overview preserves API totals, comparison, metric switching, refresh, and 
   const download = page.waitForEvent('download')
 
   await page.getByRole('button', { name: 'Export', exact: true }).click()
+  await page.getByRole('menuitem', { name: 'Dashboard snapshot CSV', exact: true }).click()
   expect((await download).suggestedFilename()).toMatch(/^dashboard-.*\.csv$/)
 
   const ranges = calls.filter(url => url.pathname.endsWith('/dashboard'))

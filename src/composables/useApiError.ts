@@ -29,6 +29,7 @@ const KNOWN_ERRORS: Record<string, string> = {
   'Expected JSON object': 'err_invalid_json',
   'Network Error': 'err_network_unavailable',
   'Invalid product performance response': 'report_invalid_response',
+  'Invalid report download': 'report_invalid_download',
 }
 
 // Stable `code` field — backend's licensing endpoints ship this. Prefer

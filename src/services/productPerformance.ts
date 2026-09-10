@@ -89,6 +89,8 @@ export async function exportProductPerformance(filters: ProductReportFilters, fo
     const blob = response.data as Blob
     if (blob.type.includes('json'))
       throw new ProductReportResponseError({ status: response.status, data: blob })
+    if (!blob.size || blob.type.includes('text/html'))
+      throw new Error('Invalid report download')
     const header = (key: string) => response.headers[key] == null ? null : String(response.headers[key])
     const complete = header('x-report-cost-complete')
     return {

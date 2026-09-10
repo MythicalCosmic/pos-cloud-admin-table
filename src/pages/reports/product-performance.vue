@@ -15,6 +15,7 @@ import ProductReportExport from '@/components/reports/ProductReportExport.vue'
 import ProductPerformanceTable from '@/components/reports/ProductPerformanceTable.vue'
 import { fmtDate, fmtDateTime, fmtMoney, fmtNum, fmtPct } from '@/components/design/utils/format'
 import { exportProductPerformance, fetchProductPerformance, reportRangeError } from '@/services/productPerformance'
+import { downloadBlob } from '@/utils/download'
 import { PRODUCT_REPORT_PRESETS, PRODUCT_REPORT_SORTS, type ProductPerformanceReport, type ProductPerformanceRow, type ProductReportAggregate, type ProductReportFilters, type ProductReportFormat, type ProductReportPreset } from '@/types/productPerformance'
 
 const { t } = useI18n({ useScope: 'global' })
@@ -209,18 +210,8 @@ async function download(format: ProductReportFormat) {
   exportsBusy.add(format)
   try {
     const file = await exportProductPerformance({ ...applied.value }, format)
-    const url = URL.createObjectURL(file.blob)
-    const anchor = document.createElement('a')
 
-    anchor.href = url
-    anchor.download = file.filename
-    anchor.dataset.reportDownload = ''
-    document.body.appendChild(anchor)
-    anchor.click()
-    anchor.remove()
-
-    // Let the browser begin reading the object before releasing it.
-    window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+    downloadBlob(file.blob, file.filename)
     if (!disposed)
       notify(t('report_download_ready', { filename: file.filename }))
   }

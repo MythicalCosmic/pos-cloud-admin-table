@@ -87,6 +87,41 @@ test('a successful HTTP response carrying JSON error never becomes a downloaded 
   await assert.rejects(api.exportProductPerformance(filters, 'pdf'), error => error.response.data.code === 'REPORT_TOO_LARGE')
 })
 
+test('an empty response or HTML fallback is not treated as a successful report download', async () => {
+  for (const blob of [new Blob([]), new Blob(['<!doctype html><title>Sign in</title>'], { type: 'text/html' })]) {
+    const api = loadSource('services/productPerformance.ts', { get: async () => ({ status: 200, data: blob, headers: {} }) })
+    await assert.rejects(api.exportProductPerformance(filters, 'xlsx'), /Invalid report download/)
+  }
+})
+
+test('dashboard snapshot retains exact money, zero versus missing, all returned rows and the reporting window', () => {
+  const { dashboardSnapshotCsv } = loadSource('services/dashboardExport.ts')
+  const csv = dashboardSnapshotCsv({
+    revenue: '9007199254740993.12', orders: 0, paid_orders: 0,
+    payment_breakdown: { cash: '9007199254740993.12', card_detail: { HUMO: '0' } },
+    top_products: Array.from({ length: 12 }, (_, index) => ({ product_name: `Товар ${index + 1}`, quantity: index, revenue: '123.45' })),
+    category_stats: [{ category: 'Main, "special"\nmenu', revenue: '123.45' }],
+    live_order_feed: [{ id: 987, order_number: '42', display_id: 'old-42', total_amount: '123.45', status: 'READY' }],
+  }, { from: '2026-09-01', to: '2026-09-01', startAt: '2026-09-01T22:00:00+05:00', endAt: '2026-09-02T02:00:00+05:00', timezone: 'Asia/Tashkent', generatedAt: '2026-09-10T09:00:00Z' }, key => key)
+  assert.ok(csv.startsWith('\uFEFF'))
+  assert.ok(csv.includes('"Revenue","9007199254740993.12"'))
+  assert.ok(csv.includes('"Orders","0"'))
+  assert.ok(csv.includes('"Cancelled orders",""'))
+  assert.ok(csv.includes('"Товар 12","11","123.45"'))
+  assert.ok(csv.includes('"Main, ""special""\nmenu","","123.45"'))
+  assert.ok(csv.includes('"42","","READY","123.45",""'))
+  assert.ok(csv.includes('"report_exact_window","2026-09-01T22:00:00+05:00","2026-09-02T02:00:00+05:00"'))
+  assert.ok(!csv.includes('[object Object]'))
+})
+
+test('dashboard CSV neutralizes formula-like names without changing negative numeric amounts', () => {
+  const { dashboardSnapshotCsv } = loadSource('services/dashboardExport.ts')
+  const csv = dashboardSnapshotCsv({ revenue: '-123.45', top_products: ['=HYPERLINK("https://example.test")', '+1+2', '@SUM(A1)', '  =1+1', '-1+2'].map(product_name => ({ product_name, quantity: 1, revenue: '-123.45' })) }, { from: '', to: '', timezone: 'Asia/Tashkent', generatedAt: '' }, key => key)
+  assert.ok(csv.includes('"Revenue","-123.45"'))
+  for (const prefix of ['=HYPERLINK', '+1+2', '@SUM', '  =1+1', '-1+2'])
+    assert.ok(csv.includes(`"'${prefix}`))
+})
+
 test('shared exact money formatting preserves cents, weighted prices and unsafe-sized integers', () => {
   const { fmtMoney } = loadSource('components/design/utils/format.ts')
   assert.equal(fmtMoney('9007199254740993.12', { exact: true }), '9\u202f007\u202f199\u202f254\u202f740\u202f993.12')

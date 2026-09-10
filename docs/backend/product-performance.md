@@ -68,10 +68,21 @@ use Content-Disposition's UTF-8 filename when supplied, then its plain filename,
 then a format fallback. Path/control characters are excluded from filenames.
 Object URLs are released after the browser starts the download.
 
+The dashboard header uses the same export service for ADMIN/MANAGER sessions.
+It sends `preset=custom`, the applied business dates and `sort=highest_revenue`;
+it does not copy dashboard time parameters into the date-only report contract.
+The menu identifies Product performance, the dates and the 07:00–03:00 business
+window. Exact-time/working-hour selections show an explicit scope notice.
+Dashboard snapshot CSV is a separate local download of the loaded dashboard
+totals and returned lists; it preserves the exact interval, keeps missing values
+blank, and is unavailable when that snapshot failed to load. Backend report
+downloads remain usable when an unrelated dashboard section fails.
+
 The service retains X-Export-Count, X-Report-From, X-Report-To, and
 X-Report-Cost-Complete metadata. Blob-encoded error envelopes are decoded before
 display. Stable range/filter/format/size/authentication/permission errors have
 Uzbek, Russian and English messages. Existing global 401 handling remains active.
+Empty files and HTML fallback responses are rejected instead of downloaded.
 
 ## Verification
 

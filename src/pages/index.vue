@@ -15,6 +15,7 @@ import type { DateRangeValue } from '@/components/design/DateRangePicker.vue'
 import DashboardFilters from '@/components/dashboard/DashboardFilters.vue'
 import DashboardDirectory from '@/components/dashboard/DashboardDirectory.vue'
 import TodayOrdersCard from '@/components/dashboard/TodayOrdersCard.vue'
+import DashboardExport from '@/components/dashboard/DashboardExport.vue'
 import { fmtDateTime } from '@/components/design/utils/format'
 import { cx } from '@/components/design/utils'
 import { useDashboardData } from '@/composables/useDashboardData'
@@ -23,7 +24,6 @@ import { businessPreset } from '@/composables/useBusinessDay'
 const { t } = useI18n({ useScope: 'global' })
 
 const {
-  shared: sharedDash,
   loading: sharedLoading,
   error: sharedError,
   lastFetchedAt,
@@ -325,51 +325,6 @@ async function refresh() {
     localLoading.value = false
   }
 }
-
-// CSV export of the current dashboard's headline metrics. Writes a UTF-8 BOM so
-// Excel on Russian / Uzbek Windows opens the file with the correct encoding.
-// One row per metric — keeps the file readable when copy-pasted into a chat.
-function headlineRows(d: any): [string, unknown][] {
-  return [
-    [t('Generated'), fmtDateTime(new Date())],
-    [t('Range'), d.range ? `${d.range.from ?? ''} → ${d.range.to ?? ''}` : t('Today')],
-    [t('View'), t('Dashboards')],
-    [t('Revenue'), d.revenue ?? d.today?.revenue ?? ''],
-    [t('Orders'), d.orders ?? d.today?.orders ?? ''],
-    [t('Paid orders'), d.paid_orders ?? d.today?.paid_orders ?? ''],
-    [t('Cancelled orders'), d.cancelled ?? d.today?.cancelled ?? ''],
-    [t('Units sold'), d.units_sold ?? d.today?.units_sold ?? ''],
-  ]
-}
-
-function exportCsv() {
-  const d = sharedDash.value as any
-  if (!d) {
-    toast.warning(t('Nothing to export yet'), { description: t('Wait for the dashboard to load first') })
-    return
-  }
-
-  const rows = headlineRows(d)
-  const breakdown = d.payment_breakdown ?? d.payment_breakdown_today ?? {}
-  for (const [k, v] of Object.entries(breakdown).filter(([, value]) => typeof value !== 'object'))
-    rows.push([`${t('Payment')} · ${k}`, v as any])
-  const tops = d.top_products ?? d.top_products_today ?? []
-  for (const tp of (tops as any[]).slice(0, 10))
-    rows.push([`${t('Top product')} · ${tp.product_name ?? tp.name ?? ''}`, tp.revenue ?? tp.quantity ?? ''])
-  const csv = `\uFEFF${rows.map(r => `"${String(r[0]).replace(/"/g, '""')}","${String(r[1] ?? '').replace(/"/g, '""')}"`).join('\n')}\n`
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  const stamp = new Date().toISOString().slice(0, 10)
-
-  a.href = url
-  a.download = `dashboard-${stamp}.csv`
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-  URL.revokeObjectURL(url)
-  toast.success(t('Exported'), { description: `dashboard-${stamp}.csv` })
-}
 </script>
 
 <template>
@@ -404,15 +359,7 @@ function exportCsv() {
           >
             {{ t('Refresh') }}
           </Button>
-          <Button
-            variant="primary"
-            icon="download"
-            :disabled="loading"
-            :aria-label="t('Export')"
-            @click="exportCsv"
-          >
-            {{ t('Export') }}
-          </Button>
+          <DashboardExport />
         </div>
       </div>
     </header>
