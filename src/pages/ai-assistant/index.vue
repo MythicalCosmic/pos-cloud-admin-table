@@ -33,6 +33,7 @@ const historyOpen = ref(false)
 const historyHidden = ref(false)
 const thinkingOpen = ref(false)
 const thinkingLevel = ref(0)
+const AI_MESSAGE_MAX_LENGTH = 10_000
 const draft = ref('')
 const answerStyle = ref('auto')
 const answerStyles = computed(() => ['auto', 'brief', 'actions'].map(value => ({ value, label: t(`ai_answer_${value}`) })))
@@ -645,6 +646,7 @@ async function deleteChat() {
             ref="textareaRef"
             v-model="draft"
             rows="2"
+            :maxlength="AI_MESSAGE_MAX_LENGTH"
             :placeholder="t('ai_workspace_placeholder')"
             :aria-describedby="historyFailed ? undefined : 'assistant-composer-hint'"
             @keydown="onComposerKey"
