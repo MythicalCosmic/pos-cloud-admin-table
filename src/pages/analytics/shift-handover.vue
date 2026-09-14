@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
 import Input from '@/components/design/Input.vue'
 import PageHeader from '@/components/design/PageHeader.vue'
 /* ============================================================
@@ -376,7 +377,7 @@ function shiftDurationLabel(): string {
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <!-- ===== Page head ===== -->
     <PageHeader :title="t('Shift Handover Report')" :subtitle="t('Per-shift performance, payments and punctuality')">
 <template #actions><div class="field shift-handover__shift-field">
@@ -1222,15 +1223,10 @@ function shiftDurationLabel(): string {
     <VSnackbar v-model="snackbar" :color="snackbarColor" :timeout="3000">
       {{ snackbarMsg }}
     </VSnackbar>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>
-/* Animated HBar fill width */
-.hbar-fill {
-  transition: width .55s cubic-bezier(.2, .8, .3, 1);
-}
-
 .receipt-modal__meta {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

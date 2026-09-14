@@ -7,9 +7,9 @@ related_targets: ["src/components/ai/ProgressiveReply.vue", "src/components/ai/T
 
 # AI conversation workspace
 
-Mode: Operate. The September 10 extension uses the approved soft dashboard surfaces and all six light/dark palettes, preserving Hanken Grotesk, JetBrains Mono and the existing conversation APIs.
+Mode: Operate. The September 13 finish refines the approved conversation workspace across all six light/dark palettes, preserving Hanken Grotesk, JetBrains Mono and the existing conversation APIs.
 
-Composition: a 232px desktop history column accompanies the scrollable thread and reachable composer. Compact layouts expose history and Thinking Level through dialogs. User questions align right; assistant replies use readable body text, compact identity/actions, structured Markdown and internally scrolling tables with right-aligned tabular numbers. Prompt cards, message surfaces, composer and charts share the established soft edges and low elevation.
+Composition: a 232px desktop history column accompanies the scrollable thread and reachable composer. Compact layouts expose history and Thinking Level through dialogs. User questions align right; assistant replies use readable body text, compact identity/actions, structured Markdown and internally scrolling tables with right-aligned tabular numbers. A more defined outer frame contains soft message and chart surfaces; prompt cards use thin semantic accents, the history control has a quiet primary treatment and the active composer gains a clear focus ring.
 
 Reply presentation: the existing `/ai/query/` request still returns completed JSON. The store keeps the complete response unchanged while ProgressiveReply reveals the newest live reply at word and Markdown boundaries. This is not backend token streaming. Reveal runs over 650–6000ms at 40ms intervals, with a visible Show full answer action. Reduced motion, hidden documents and answers over 60,000 characters show immediately. Existing history is displayed complete. The thread follows the latest only while the reader is following; scrolling upward preserves position and offers Jump to latest. Copy/export retain full content.
 

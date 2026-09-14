@@ -182,13 +182,15 @@ watch(() => props.rows, rows => {
 
 <style scoped>
 .order-tickets { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 14px; align-items: stretch; }
-.order-ticket { --ticket-accent: var(--text-secondary); display: flex; flex-direction: column; min-width: 0; color: var(--text); border: 1px solid var(--orders-edge, var(--border)); border-radius: 16px; background: var(--surface); overflow: hidden; box-shadow: var(--orders-shadow); transition: border-color 160ms, box-shadow 160ms; }
-.order-ticket[data-status="PREPARING"] { --ticket-accent: var(--c4); }
+.order-ticket { --ticket-accent: var(--text-secondary); position: relative; display: flex; flex-direction: column; min-width: 0; color: var(--text); border: 1px solid var(--orders-edge, var(--border)); border-radius: 18px; background: var(--surface); overflow: hidden; box-shadow: var(--orders-shadow); transition: border-color 180ms var(--work-ease, ease), box-shadow 180ms var(--work-ease, ease), transform 180ms var(--work-ease, ease); }
+.order-ticket::before { position: absolute; z-index: 1; inset: 0 0 auto; block-size: 3px; background: var(--ticket-accent); content: ""; opacity: .85; }
+.order-ticket:hover { border-color: color-mix(in srgb, var(--ticket-accent) 38%, var(--orders-edge, var(--border))); box-shadow: var(--work-shadow-hover, var(--orders-shadow)); transform: translateY(-2px); }
+.order-ticket[data-status="PREPARING"] { --ticket-accent: var(--warning); }
 .order-ticket[data-status="READY"] { --ticket-accent: var(--success); }
 .order-ticket[data-status="COMPLETED"] { --ticket-accent: var(--primary); }
 .order-ticket[data-status="CANCELED"] { --ticket-accent: var(--error); }
-.order-ticket.is-selected { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary); }
-.order-ticket__head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 16px; background: color-mix(in srgb, var(--ticket-accent) 5%, var(--surface)); }
+.order-ticket.is-selected { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-ring); }
+.order-ticket__head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 18px 16px 15px; background: color-mix(in srgb, var(--ticket-accent) 7%, var(--surface)); }
 .order-ticket__head label { display: flex; align-items: center; gap: 10px; min-width: 0; cursor: pointer; }
 .order-ticket__head strong { font-size: 19px; font-weight: 600; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .order-ticket__context { display: flex; justify-content: space-between; gap: 8px; padding: 12px 16px 0; font-size: 10px; color: var(--text-secondary); flex-wrap: wrap; }
@@ -199,12 +201,12 @@ watch(() => props.rows, rows => {
 .order-ticket__quantity { flex-shrink: 0; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
 .order-ticket__items > button { justify-self: start; color: var(--primary); font-size: 11px; padding: 3px 0; }
 .order-ticket__muted { font-size: 12px; color: var(--text-secondary); }
-.order-ticket__settlement { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 16px; border-top: 1px dashed var(--border); }
+.order-ticket__settlement { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 15px 16px; border-top: 1px dashed var(--border); background: color-mix(in srgb, var(--surface) 96%, var(--ticket-accent)); }
 .order-ticket__settlement > div { display: grid; gap: 5px; min-width: 0; }
 .order-ticket__settlement > div > span { font-size: 10px; color: var(--text-secondary); }
 .order-ticket__settlement strong { font: 600 24px/1.2 var(--font-sans); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .order-ticket__prep { min-height: 36px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 0 16px 12px; font-size: 10px; color: var(--text-secondary); }
-.order-ticket__foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--border); }
+.order-ticket__foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--border); background: var(--work-soft, var(--surface-2)); }
 .order-ticket__details { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 8px; border-radius: 8px; font-size: 12px; font-weight: 500; }
 .order-ticket__details:hover { background: var(--surface-2); }
 .order-ticket__expanded { padding: 20px 0 0; border-top: 1px solid var(--border); background: transparent; }
@@ -217,12 +219,12 @@ watch(() => props.rows, rows => {
 .order-ticket__lines small { display: block; margin-top: 4px; color: var(--text-secondary); font-size: 10px; }
 .order-ticket__lines strong { flex-shrink: 0; font-size: 11px; font-weight: 500; font-variant-numeric: tabular-nums; }
 .order-ticket button:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
-.order-detail-sheet__summary { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 18px; }
+.order-detail-sheet__summary { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 18px; padding: 16px; border: 1px solid var(--primary-border); border-radius: 15px; background: var(--primary-weak); }
 .order-detail-sheet__summary > div { display: flex; gap: 6px; flex-wrap: wrap; }
 .order-detail-sheet__summary > div:first-child { display: grid; gap: 6px; }
 .order-detail-sheet__summary > div > span:not(.badge) { font-size: 11px; color: var(--text-secondary); }
 .order-detail-sheet__summary strong { font-size: 27px; font-weight: 600; font-variant-numeric: tabular-nums; }
 @media (max-width: 1250px) { .order-tickets { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 650px) { .order-tickets { grid-template-columns: minmax(0, 1fr); gap: 12px; } .order-ticket__items { min-height: 0; } .order-ticket__details { min-height: 44px; } }
-@media (prefers-reduced-motion: reduce) { .order-ticket { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .order-ticket { transition: none; } .order-ticket:hover { transform: none; } }
 </style>

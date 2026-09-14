@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
+
 /* ============================================================
    NOTIFICATION QUEUE — pending Telegram notifications
    Backend:
@@ -364,7 +367,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <!-- Header -->
     <PageHeader
       :title="t('notif_queue_title')"
@@ -412,7 +415,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
          Queue list
          ====================================================== -->
     <Card>
-      <div
+      <WorkspaceToolbar
         class="toolbar nq-toolbar"
         style="flex-wrap:wrap;gap:12px;"
       >
@@ -435,12 +438,15 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
           class="row"
           style="gap:10px;align-items:center;flex-wrap:wrap;"
         >
-          <Switch v-model="targetedOnly" />
+          <Switch
+            v-model="targetedOnly"
+            :aria-label="t('notif_queue_filter_targeted')"
+          />
           <span style="font-size:14px;color:var(--text-secondary);">
             {{ t('notif_queue_filter_targeted') }}
           </span>
         </div>
-      </div>
+      </WorkspaceToolbar>
 
       <div
         v-if="activeFilters.length > 0"
@@ -644,14 +650,6 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
         </Field>
       </div>
 
-      <template #footer>
-        <Button
-          variant="ghost"
-          @click="closeView"
-        >
-          {{ t('Close') }}
-        </Button>
-      </template>
     </Modal>
 
     <!-- ======================================================
@@ -756,7 +754,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
     >
       {{ snackbarMsg }}
     </VSnackbar>
-  </div>
+  </WorkspacePage>
 </template>
 
 <route lang="yaml">

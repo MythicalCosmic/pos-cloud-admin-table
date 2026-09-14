@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
 import api from '@/plugins/axios'
 import PageHeader from '@/components/design/PageHeader.vue'
 import Field from '@/components/design/Field.vue'
@@ -238,7 +239,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="page product-performance-page">
+  <WorkspacePage class="page product-performance-page">
     <PageHeader
       :title="t('report_title')"
       :subtitle="t('report_subtitle')"
@@ -574,7 +575,7 @@ onBeforeUnmount(() => {
         </details>
       </template>
     </template>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>

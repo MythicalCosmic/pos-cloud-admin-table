@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
 import Textarea from '@/components/design/Textarea.vue'
 /* ============================================================
    HR EVENTS — Employment milestones (promotions, warnings,
@@ -79,6 +81,7 @@ const form = ref({
 })
 
 const errors = ref<Record<string, string>>({})
+const createFormEl = ref<HTMLFormElement | null>(null)
 
 // ============================================================
 // Tone mapping — gives the badge column a meaningful colour cue.
@@ -253,7 +256,10 @@ function validateCreate(): boolean {
 
 async function submitCreate() {
   if (!validateCreate()) {
-    notify(t('Please fill all required fields'), 'error')
+    await nextTick()
+    createFormEl.value
+      ?.querySelector<HTMLElement>('[aria-invalid="true"]')
+      ?.focus()
     return
   }
   createBusy.value = true
@@ -366,7 +372,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <PageHeader
       :title="t('hr_events_title')"
       :subtitle="t('hr_events_subtitle')"
@@ -382,9 +388,9 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
       </template>
     </PageHeader>
 
-    <Card>
+    <Card class-name="workspace-register">
       <!-- Toolbar -->
-      <div class="toolbar hr-events-toolbar">
+      <WorkspaceToolbar class="toolbar hr-events-toolbar">
         <Input
           v-model="search"
           class="hr-events-toolbar__search"
@@ -405,7 +411,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
           :placeholder="t('hr_event_filter_type_all')"
           :options="eventTypeOptions"
         />
-      </div>
+      </WorkspaceToolbar>
 
       <!-- Active filter chips -->
       <div
@@ -558,7 +564,10 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
       class="hr-events-modal hr-events-modal--lg"
       @close="closeCreate"
     >
-      <form @submit.prevent="submitCreate">
+      <form
+        ref="createFormEl"
+        @submit.prevent="submitCreate"
+      >
         <div class="form-grid hr-events-form-grid">
           <Field
             :label="t('hr_event_field_employee')"
@@ -746,12 +755,6 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 
       <template #footer>
         <Button
-          variant="ghost"
-          @click="closeView"
-        >
-          {{ t('Close') }}
-        </Button>
-        <Button
           v-if="viewRow"
           variant="secondary"
           icon="clock"
@@ -855,16 +858,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
         </li>
       </ol>
 
-      <template #footer>
-        <Button
-          variant="ghost"
-          @click="closeTimeline"
-        >
-          {{ t('Close') }}
-        </Button>
-      </template>
     </Modal>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>

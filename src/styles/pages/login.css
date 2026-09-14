@@ -888,3 +888,27 @@
 [data-palette] .login-story .login-eyebrow,
 [data-palette] .login-story .login-story__description,
 [data-palette] .login-story__footer { color: var(--login-story-muted); }
+
+/* September operations identity: one connected workspace, an uninterrupted sign-in. */
+.login-page { padding: 28px; gap: 28px; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); }
+.login-story { border: 1px solid var(--login-line); border-radius: 18px; background: var(--surface); color: var(--login-ink); padding: 36px 40px; min-block-size: 700px; }
+.login-story::before { display: none; }
+.login-brand { font-size: 20px; letter-spacing: -.025em; }
+.login-brand__mark { background: var(--primary-weak); color: var(--primary); }
+.login-story__intro { margin-block: 52px 4px; }
+.login-story h2 { font-size: 38px; font-weight: 600; line-height: 1.2; letter-spacing: -.03em; }
+.login-story h2 span { color: var(--primary); }
+.login-story .login-story__description { color: var(--text-secondary); font-size: 14px; line-height: 1.7; max-inline-size: 40ch; }
+.login-story__footer { color: var(--text-secondary); border-color: var(--border); font-size: 11px; }
+.login-motion { color: var(--primary); border-color: var(--primary-border); }
+.login-panel { padding: 8px 40px; }
+.login-form-wrap { max-inline-size: 410px; padding-block: 48px; }
+.login-heading h1 { font-size: 34px; font-weight: 600; letter-spacing: -.03em; }
+.login-heading .login-heading__hint { font-size: 14px; }
+.login-workspace-icon { inline-size: 48px; block-size: 48px; border-radius: 13px; background: var(--primary-weak); color: var(--primary); box-shadow: none; }
+.login-input { border-radius: 11px; box-shadow: none; }
+.login-submit { border-radius: 11px; box-shadow: none; }
+.login-enter { animation: none; opacity: 1; transform: none; }
+@media (width <= 1000px) { .login-page { padding: 20px; gap: 20px; } .login-story { padding: 28px; } .login-panel { padding-inline: 20px; } .login-story h2 { font-size: 32px; } }
+@media (width <= 900px) { .login-page { grid-template-columns: minmax(0, 1fr); padding: 20px; gap: 24px; } .login-story { min-block-size: 0; border: 0; background: transparent; padding: 0; } .login-story__intro, .login-story__footer, .login-story .login-scene { display: none; } .login-brand { color: var(--text); } .login-panel { border: 1px solid var(--border); border-radius: 16px; padding: 20px; background: var(--surface); } .login-form-wrap { padding-block: 32px; } .login-heading h1 { font-size: 28px; } .login-panel__footer { padding-block: 14px 0; } }
+@media (width <= 420px) { .login-page { padding: 16px; gap: 20px; } .login-panel { padding: 18px; } .login-heading h1 { font-size: 26px; } .login-toolbar { gap: 10px; } }

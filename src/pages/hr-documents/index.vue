@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
 import Textarea from '@/components/design/Textarea.vue'
 /* ============================================================
    HR DOCUMENTS — employee documents (passports, contracts, certs)
@@ -405,7 +407,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <PageHeader
       :title="t('hr_documents_title')"
       :subtitle="t('hr_documents_subtitle')"
@@ -430,7 +432,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
 
     <!-- Toolbar + table -->
     <Card>
-      <div class="toolbar hr-docs-toolbar">
+      <WorkspaceToolbar class="toolbar hr-docs-toolbar">
         <div class="tb-search">
           <Input
             v-model="search"
@@ -455,7 +457,10 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
           />
         </div>
         <div class="tb-switch">
-          <Switch v-model="expiringOnly" />
+          <Switch
+            v-model="expiringOnly"
+            :aria-label="t('hr_documents_expiring_switch')"
+          />
           <span class="tertiary" style="font-size:13px;">{{ t('hr_documents_expiring_switch') }}</span>
         </div>
         <div
@@ -469,7 +474,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
             :placeholder="t('hr_documents_expiring_days')"
           />
         </div>
-      </div>
+      </WorkspaceToolbar>
 
       <!-- Filter chips -->
       <div
@@ -783,7 +788,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
     >
       {{ snackbarMsg }}
     </VSnackbar>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>

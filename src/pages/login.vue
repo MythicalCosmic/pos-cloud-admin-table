@@ -198,9 +198,6 @@ const login = async () => {
       </div>
 
       <div class="login-story__intro login-enter">
-        <p class="login-eyebrow">
-          {{ t('login_brand_eyebrow') }}
-        </p>
         <h2 id="login-story-title">
           {{ t('login_story_title') }}
           <span>{{ t('login_story_accent') }}</span>
@@ -281,13 +278,10 @@ const login = async () => {
             class="login-workspace-icon"
             aria-hidden="true"
           ><DesignIcon
-            name="store"
+            name="ws-settings"
             :size="24"
             :weight="1.6"
           /></span>
-          <p class="login-eyebrow">
-            {{ t('login_workspace_label') }}
-          </p>
           <h1 id="login-title">
             {{ t('login_welcome') }}
           </h1>

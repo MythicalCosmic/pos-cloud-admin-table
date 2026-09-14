@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
+
 /* ============================================================
    ALPHA POS — Stock Locations (extended)
    - Design-system primitives only (no Vuetify on the page itself)
@@ -493,7 +496,7 @@ function parentNameOf(row: any) {
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <!-- Page header -->
     <PageHeader
       :title="t('locations_ext_title')"
@@ -551,7 +554,7 @@ function parentNameOf(row: any) {
     <!-- Main table card -->
     <div class="card">
       <!-- Toolbar -->
-      <div class="toolbar toolbar--wrap">
+      <WorkspaceToolbar class="toolbar toolbar--wrap">
         <div class="grow toolbar__search">
           <Input
             v-model="search"
@@ -599,7 +602,7 @@ function parentNameOf(row: any) {
             {{ treeView ? t('btn_list_view') : t('btn_tree_view') }}
           </Button>
         </div>
-      </div>
+      </WorkspaceToolbar>
 
       <!-- Active filter chips -->
       <div v-if="hasFilters" class="toolbar" style="padding-top: 0;">
@@ -1042,7 +1045,7 @@ function parentNameOf(row: any) {
       </div>
 
     </Modal>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>

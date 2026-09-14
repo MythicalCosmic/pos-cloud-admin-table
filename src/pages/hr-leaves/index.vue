@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
 import { useActionDialog } from '@/composables/useActionDialog'
 
 /* ============================================================
@@ -367,7 +369,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <PageHeader
       :title="t('Leave Requests')"
       :subtitle="t('leave_subtitle')"
@@ -392,7 +394,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
     </PageHeader>
 
     <Card>
-      <div class="toolbar toolbar--wrap">
+      <WorkspaceToolbar class="toolbar toolbar--wrap">
         <div class="tb-filter">
           <Select
             v-model="employeeFilter"
@@ -431,7 +433,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
             :options="statusOptions"
           />
         </div>
-      </div>
+      </WorkspaceToolbar>
 
       <!-- Filter chips -->
       <div
@@ -659,7 +661,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
     >
       {{ snackbarMsg }}
     </VSnackbar>
-  </div>
+  </WorkspacePage>
 </template>
 
 <route lang="yaml">

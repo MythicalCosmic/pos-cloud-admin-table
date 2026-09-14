@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
 import Textarea from '@/components/design/Textarea.vue'
 /* ============================================================
    ALPHA POS — Stock / Variance Reason Codes
@@ -288,7 +290,7 @@ const countLabel = computed(() => t('variance_count_label', { n: total.value }))
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <PageHeader
       :title="t('variance_codes_title')"
       :subtitle="t('variance_codes_subtitle')"
@@ -315,7 +317,7 @@ const countLabel = computed(() => t('variance_count_label', { n: total.value }))
 
     <div class="card">
       <!-- Toolbar -->
-      <div class="toolbar" style="flex-wrap: wrap;">
+      <WorkspaceToolbar class="toolbar" style="flex-wrap: wrap;">
         <div class="grow toolbar-search">
           <Input
             v-model="search"
@@ -336,7 +338,7 @@ const countLabel = computed(() => t('variance_count_label', { n: total.value }))
         <div class="row toolbar-count" style="gap: 8px; margin-left: auto; font-size: 13px; color: var(--text-tertiary);">
           {{ countLabel }}
         </div>
-      </div>
+      </WorkspaceToolbar>
 
       <div class="card__divider" />
 
@@ -598,7 +600,7 @@ const countLabel = computed(() => t('variance_count_label', { n: total.value }))
     >
       {{ snackbarMsg }}
     </VSnackbar>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>

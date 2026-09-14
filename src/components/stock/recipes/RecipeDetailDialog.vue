@@ -301,9 +301,6 @@ function fmtQty(val: any): string {
     </template>
 
     <template #footer>
-      <Button variant="ghost" @click="visible = false">
-        {{ t('Close') }}
-      </Button>
       <Button
         variant="primary"
         icon="chevright"

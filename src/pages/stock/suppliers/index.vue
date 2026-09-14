@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
+
 /* ============================================================
    ALPHA POS - Stock Suppliers
    - Design-system primitives only (no Vuetify on the page itself)
@@ -750,7 +753,7 @@ function sourceLabel(src: string): string {
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <!-- Page header -->
     <PageHeader
       :title="t('Suppliers')"
@@ -771,7 +774,7 @@ function sourceLabel(src: string): string {
     <!-- Main table card -->
     <div class="card">
       <!-- Toolbar -->
-      <div class="toolbar toolbar--wrap">
+      <WorkspaceToolbar class="toolbar toolbar--wrap">
         <div class="grow toolbar__search">
           <Input
             v-model="search"
@@ -789,7 +792,7 @@ function sourceLabel(src: string): string {
             @update:model-value="(v: string) => activeFilter = v ? v : undefined"
           />
         </div>
-      </div>
+      </WorkspaceToolbar>
 
       <div class="card__divider" />
 
@@ -1442,7 +1445,7 @@ function sourceLabel(src: string): string {
       </div>
 
     </Modal>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>

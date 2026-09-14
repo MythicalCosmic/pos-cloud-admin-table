@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
+
 /* ============================================================
    SETTINGS — Roles & Permissions
    Editor matrix mapping roles -> permission catalog. ADMIN row
@@ -492,7 +495,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <!-- Page header -->
     <PageHeader
       :title="t('perm_page_title')"
@@ -562,7 +565,7 @@ onBeforeUnmount(() => {
 
     <!-- Toolbar + matrix table -->
     <Card>
-      <div class="toolbar">
+      <WorkspaceToolbar class="toolbar">
         <!-- Search -->
         <div style="flex:1;max-width:300px;">
           <Input
@@ -591,7 +594,7 @@ onBeforeUnmount(() => {
             :options="roleOptions"
           />
         </div>
-      </div>
+      </WorkspaceToolbar>
 
       <!-- Filter chips -->
       <div
@@ -1073,7 +1076,7 @@ onBeforeUnmount(() => {
     >
       {{ snackbarMsg }}
     </VSnackbar>
-  </div>
+  </WorkspacePage>
 </template>
 
 <route lang="yaml">

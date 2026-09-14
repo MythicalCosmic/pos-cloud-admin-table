@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
 import { useActionDialog } from '@/composables/useActionDialog'
 import { fmtNum } from '@/components/design/utils/format'
 import Input from '@/components/design/Input.vue'
@@ -11,12 +13,21 @@ import DesignIcon from '@/components/design/DesignIcon.vue'
 import Checkbox from '@/components/design/Checkbox.vue'
 import Kpi from '@/components/design/Kpi.vue'
 import Select from '@/components/design/Select.vue'
+import Modal from '@/components/design/Modal.vue'
+import Button from '@/components/design/Button.vue'
+import Badge from '@/components/design/Badge.vue'
+import IconAction from '@/components/design/IconAction.vue'
+import Segmented from '@/components/design/Segmented.vue'
+import Switch from '@/components/design/Switch.vue'
+import StateFill from '@/components/design/StateFill.vue'
+import Skeleton from '@/components/design/Skeleton.vue'
 
 const { confirmAction } = useActionDialog()
 const { t } = useI18n({ useScope: 'global' })
 
 // ---- state ----
 const products = ref<any[]>([])
+const catalogView = ref('cards')
 const totalProducts = ref(0)
 const loading = ref(false)
 const bulkBusy = ref(false)
@@ -224,23 +235,7 @@ onMounted(() => {
   loadProducts()
   loadCategories()
   loadStats()
-  window.addEventListener('keydown', onKeydown)
 })
-
-onBeforeUnmount(() => {
-  window.removeEventListener('keydown', onKeydown)
-})
-
-// Escape closes whichever modal is open (dirty-guard still applies to the
-// edit dialog; the delete confirm only closes when it isn't mid-request).
-function onKeydown(e: KeyboardEvent) {
-  if (e.key !== 'Escape')
-    return
-  if (deleteDialog.value && !deleteBusy.value)
-    deleteDialog.value = false
-  else if (dialogOpen.value)
-    tryCloseDialog()
-}
 
 watch(page, () => { selection.clear(); loadProducts() })
 watch(itemsPerPage, () => {
@@ -302,17 +297,11 @@ function togglePopularFirst() {
 const initialForm = ref({ name: '', description: '', price: 0, category_id: null as number | null, color: '' })
 const isDirty = computed(() => JSON.stringify(form.value) !== JSON.stringify(initialForm.value))
 
-function tryCloseDialog() {
-  if (isDirty.value) {
-    notify(t('Unsaved changes! Use the close button to discard.'), 'warning')
-
+async function tryCloseDialog() {
+  if (dialogLoading.value)
     return
-  }
-  dialogOpen.value = false
-}
-
-// The explicit close button discards the draft.
-function forceClose() {
+  if (isDirty.value && !await confirmAction({ title: t('workspace_discard_changes'), message: t('workspace_discard_changes_detail'), confirmLabel: t('workspace_discard'), danger: true }))
+    return
   dialogOpen.value = false
 }
 
@@ -341,6 +330,8 @@ function openEdit(product: any) {
 }
 
 async function saveProduct() {
+  if (dialogLoading.value)
+    return
   dialogLoading.value = true
   try {
     const payload = {
@@ -382,7 +373,11 @@ function confirmDelete(product: any) {
   })
 }
 
+const restoringProducts = ref(new Set<number>())
 async function restoreProduct(product: any) {
+  if (restoringProducts.value.has(product.id))
+    return
+  restoringProducts.value.add(product.id)
   try {
     await axios.post(`/products/${product.id}/restore`)
     notify(t('Product restored'))
@@ -392,10 +387,11 @@ async function restoreProduct(product: any) {
   catch (e: any) {
     notify(e?.response?.data?.message ?? t('Error restoring product'), 'error')
   }
+  finally { restoringProducts.value.delete(product.id) }
 }
 
 async function deleteProduct() {
-  if (!deletingProduct.value)
+  if (deleteBusy.value || !deletingProduct.value)
     return
   deleteBusy.value = true
   try {
@@ -567,7 +563,7 @@ function goPage(p: number | '…') {
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <!-- ============== HEAD ============== -->
     <PageHeader
       :title="t('Products')"
@@ -628,9 +624,9 @@ function goPage(p: number | '…') {
     </div>
 
     <!-- ============== CARD ============== -->
-    <div class="card">
+    <div class="card product-catalog">
       <!-- Toolbar -->
-      <div
+      <WorkspaceToolbar
         class="toolbar products-toolbar"
         style="flex-wrap:wrap;"
       >
@@ -677,32 +673,16 @@ function goPage(p: number | '…') {
           />
         </div>
 
-        <div
-          class="row"
-          style="gap:8px;cursor:pointer;align-items:center;"
-          :title="t('Show soft-deleted products')"
-          @click="includeDeleted = !includeDeleted"
-        >
-          <div
-            class="switch"
-            :class="{ 'is-on': includeDeleted }"
-          />
-          <span style="font-size:13px;">{{ t('Include deleted') }}</span>
-        </div>
-
-        <div
-          class="row"
-          style="gap:8px;cursor:pointer;align-items:center;"
-          :title="t('Order best-sellers first')"
-          @click="togglePopularFirst"
-        >
-          <div
-            class="switch"
-            :class="{ 'is-on': popularFirst }"
-          />
-          <span style="font-size:13px;">{{ t('Popular first') }}</span>
-        </div>
-      </div>
+        <label class="row product-filter-switch"><Switch
+          v-model="includeDeleted"
+          :aria-label="t('Include deleted')"
+        /><span>{{ t('Include deleted') }}</span></label>
+        <label class="row product-filter-switch"><Switch
+          :model-value="popularFirst"
+          :aria-label="t('Popular first')"
+          @update:model-value="togglePopularFirst"
+        /><span>{{ t('Popular first') }}</span></label>
+      </WorkspaceToolbar>
 
       <!-- Active filter chips -->
       <div
@@ -763,8 +743,160 @@ function goPage(p: number | '…') {
 
       <div class="card__divider" />
 
+      <div class="product-register-head">
+        <label class="product-register-head__select">
+          <Checkbox
+            :model-value="selection.allSelected.value"
+            :indeterminate="selection.someSelected.value"
+            :aria-label="t('Select all')"
+            @update:model-value="(v: boolean) => (v ? selection.selectAll() : selection.clear())"
+          />
+          <span>{{ t('Products') }}</span>
+          <span class="product-register-head__count">{{ loading && !products.length ? '—' : totalProducts }}</span>
+        </label>
+        <Segmented
+          v-model="catalogView"
+          :options="[{ value: 'cards', label: t('Cards'), icon: 'grid' }, { value: 'table', label: t('Table'), icon: 'list' }]"
+          :aria-label="t('View')"
+        />
+      </div>
+
+      <template v-if="catalogView === 'cards'">
+        <div
+          v-if="loading && !products.length"
+          class="product-board"
+          :aria-label="t('Loading')"
+          aria-busy="true"
+        >
+          <Skeleton
+            v-for="n in 6"
+            :key="n"
+            w="100%"
+            :h="230"
+          />
+        </div>
+        <div
+          v-else-if="products.length"
+          class="product-board"
+        >
+          <article
+            v-for="p in products"
+            :key="p.id"
+            class="product-tile"
+            :class="{ 'is-selected': selection.isSelected(p.id), 'is-deleted': p.is_deleted }"
+          >
+            <div class="product-tile__head">
+              <span class="product-tile__category"><span :style="{ background: categoryColorMap[p.category?.id] || 'var(--primary)' }" />{{ p.category?.name || '—' }}</span>
+              <Checkbox
+                :model-value="selection.isSelected(p.id)"
+                :aria-label="`${t('Select')}: ${p.name}`"
+                @click.stop="selection.toggle(p.id, $event)"
+                @keydown.space.prevent="selection.toggle(p.id)"
+                @keydown.enter.prevent="selection.toggle(p.id)"
+              />
+            </div>
+            <div class="product-tile__body">
+              <div class="product-tile__symbol">
+                <DesignIcon
+                  name="ws-product"
+                  :size="24"
+                  :weight="1.5"
+                />
+              </div>
+              <span
+                v-if="p.is_deleted"
+                class="product-tile__name"
+              >{{ p.name }}</span><button
+                v-else
+                class="product-tile__name"
+                type="button"
+                @click="openEdit(p)"
+              >
+                {{ p.name }}
+              </button>
+              <p v-if="p.description">
+                {{ p.description }}
+              </p>
+              <div
+                v-if="p.is_instant || p.is_deleted"
+                class="product-tile__badges"
+              >
+                <Badge
+                  v-if="p.is_instant"
+                  tone="warning"
+                >
+                  {{ t('product_is_instant_label') }}
+                </Badge><Badge
+                  v-if="p.is_deleted"
+                  tone="neutral"
+                >
+                  {{ t('Deleted') }}
+                </Badge>
+              </div>
+            </div>
+            <div class="product-tile__foot">
+              <strong>{{ formatCurrency(p.price) }} <small>{{ t('currency_short') }}</small></strong><div>
+                <IconAction
+                  v-if="p.is_deleted"
+                  :disabled="restoringProducts.has(p.id)"
+                  icon="restore"
+                  :title="t('Restore')"
+                  @click="restoreProduct(p)"
+                />
+                <template v-else>
+                  <IconAction
+                    icon="edit"
+                    :title="t('Edit')"
+                    @click="openEdit(p)"
+                  /><IconAction
+                    icon="trash"
+                    tone="danger"
+                    :title="t('Delete')"
+                    @click="confirmDelete(p)"
+                  />
+                </template>
+              </div>
+            </div>
+            <details class="product-tile__details">
+              <summary>
+                {{ t('Details') }}<DesignIcon
+                  name="chevdown"
+                  :size="14"
+                />
+              </summary><dl><div><dt>{{ t('ID') }}</dt><dd>#{{ p.id }}</dd></div><div><dt>{{ t('Created') }}</dt><dd>{{ formatDate(p.created_at) }}</dd></div><div><dt>{{ t('Updated') }}</dt><dd>{{ formatDate(p.updated_at) }}</dd></div></dl>
+            </details>
+          </article>
+        </div>
+        <StateFill
+          v-else
+          icon="ws-menu"
+          :title="activeFilters.length ? t('No products match your filters') : t('No products yet')"
+        >
+          <template #action>
+            <Button
+              v-if="activeFilters.length"
+              @click="clearAll"
+            >
+              {{ t('Clear all') }}
+            </Button><Button
+              v-else
+              variant="primary"
+              icon="plus"
+              @click="openCreate"
+            >
+              {{ t('Add Product') }}
+            </Button>
+          </template>
+        </StateFill>
+      </template>
+
       <!-- Table -->
-      <div class="tablewrap">
+      <div
+        v-else
+        class="tablewrap"
+        tabindex="0"
+        :aria-label="t('Table')"
+      >
         <table class="dtable">
           <thead>
             <tr>
@@ -1169,333 +1301,241 @@ function goPage(p: number | '…') {
     </div>
 
     <!-- ============== CREATE / EDIT MODAL ============== -->
-    <div
-      v-if="dialogOpen"
-      class="overlay"
-      @mousedown.self="tryCloseDialog"
+    <Modal
+      :open="dialogOpen"
+      :title="editingProduct ? t('Edit Product') : t('Add Product')"
+      :subtitle="editingProduct ? editingProduct.name : t('Catalog of products served at the POS')"
+      :width="560"
+      :busy="dialogLoading"
+      @close="tryCloseDialog"
     >
       <form
-        class="modal"
-        style="width:min(560px, 92vw); max-width:560px;"
+        id="product-editor"
         @submit.prevent="saveProduct"
       >
-        <div class="modal__head">
-          <div style="flex:1;min-width:0;">
-            <h2 class="modal__title">
-              {{ editingProduct ? t('Edit Product') : t('Add Product') }}
-            </h2>
-            <div class="modal__sub">
-              {{ editingProduct ? editingProduct.name : t('Catalog of products served at the POS') }}
+        <!-- POS Preview -->
+        <div class="pos-preview">
+          <span
+            class="field__label"
+            style="display:block;margin-bottom:8px;"
+          >{{ t('POS Preview') }}</span>
+          <div class="pos-preview__cards">
+            <div
+              class="pos-product-card"
+              :style="{ backgroundColor: previewColor }"
+            >
+              <div class="pos-product-card__name">
+                {{ form.name || t('Name') }}
+              </div>
+              <div class="pos-product-card__price">
+                {{ form.price ? `${formatCurrency(form.price)}\u202f${t('currency_short')}` : `0\u202f${t('currency_short')}` }}
+              </div>
+              <div
+                v-if="form.color"
+                class="pos-product-card__stripe"
+                :style="{ backgroundColor: form.color }"
+              />
             </div>
           </div>
-          <button
-            type="button"
-            class="iconaction"
-            :title="t('Close')"
-            @click="forceClose"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              width="18"
-              height="18"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <line
-                x1="18"
-                y1="6"
-                x2="6"
-                y2="18"
-              />
-              <line
-                x1="6"
-                y1="6"
-                x2="18"
-                y2="18"
-              />
-            </svg>
-          </button>
         </div>
 
-        <div class="modal__body">
-          <!-- POS Preview -->
-          <div class="pos-preview">
-            <span
-              class="field__label"
-              style="display:block;margin-bottom:8px;"
-            >{{ t('POS Preview') }}</span>
-            <div class="pos-preview__cards">
-              <div
-                class="pos-product-card"
-                :style="{ backgroundColor: previewColor }"
-              >
-                <div class="pos-product-card__name">
-                  {{ form.name || t('Name') }}
-                </div>
-                <div class="pos-product-card__price">
-                  {{ form.price ? `${formatCurrency(form.price)}\u202f${t('currency_short')}` : `0\u202f${t('currency_short')}` }}
-                </div>
-                <div
-                  v-if="form.color"
-                  class="pos-product-card__stripe"
-                  :style="{ backgroundColor: form.color }"
-                />
-              </div>
-            </div>
+        <div class="form-grid">
+          <div class="field span-2">
+            <label class="field__label">{{ t('Name') }}</label>
+            <Input
+              v-model="form.name"
+              :aria-label="t('Name')"
+              type="text"
+            />
           </div>
 
-          <div class="form-grid">
-            <div class="field span-2">
-              <label class="field__label">{{ t('Name') }}</label>
-              <Input
-                v-model="form.name"
-                type="text"
-              />
-            </div>
+          <div class="field span-2">
+            <label class="field__label">{{ t('Description') }}</label>
+            <Input
+              v-model="form.description"
+              :aria-label="t('Description')"
+              type="text"
+            />
+          </div>
 
-            <div class="field span-2">
-              <label class="field__label">{{ t('Description') }}</label>
-              <Input
-                v-model="form.description"
-                type="text"
+          <div class="field span-2">
+            <label class="field__label">{{ t('Instant — skip the kitchen / KDS') }}</label>
+            <label
+              class="row"
+              style="gap:12px;justify-content:space-between;cursor:pointer;"
+            >
+              <span
+                class="field__hint"
+                style="flex:1;"
+              >{{ t('Cold drinks, packaged items, etc. Skips PREPARING; never appears on chef display.') }}</span>
+              <Switch
+                v-model="form.is_instant"
+                :aria-label="t('Instant — skip the kitchen / KDS')"
               />
-            </div>
+            </label>
+          </div>
 
-            <div class="field span-2">
-              <label class="field__label">{{ t('Instant — skip the kitchen / KDS') }}</label>
-              <div
-                class="row"
-                style="gap:12px;justify-content:space-between;cursor:pointer;"
-                @click="form.is_instant = !form.is_instant"
+          <div class="field">
+            <label class="field__label">{{ t('Price') }}</label>
+            <Input
+              type="text"
+              inputmode="numeric"
+              :model-value="priceDisplay"
+              :aria-label="t('Price')"
+              @input="onPriceInput"
+            />
+          </div>
+
+          <div class="field">
+            <label class="field__label">{{ t('Category') }}</label>
+            <Select
+              :aria-label="t('Category')"
+              :model-value="form.category_id == null ? '' : String(form.category_id)"
+              :placeholder="t('Choose category')"
+              :options="categoryOptions.map(opt => ({ value: String(opt.value), label: opt.title }))"
+              @update:model-value="form.category_id = $event ? Number($event) : null"
+            />
+          </div>
+
+          <div class="field span-2">
+            <label class="field__label">{{ t('Product Color') }}</label>
+            <div class="char-colors">
+              <button
+                v-for="c in characteristicColors"
+                :key="c.key"
+                type="button"
+                class="char-dot"
+                :class="{ 'char-dot--active': form.color === c.hex }"
+                :style="{ backgroundColor: c.hex }"
+                :title="c.label"
+                @click="form.color = form.color === c.hex ? '' : c.hex"
+              />
+              <button
+                v-if="form.color"
+                type="button"
+                class="char-dot char-dot--clear"
+                :title="t('Clear')"
+                @click="form.color = ''"
               >
-                <span
-                  class="field__hint"
-                  style="flex:1;"
-                >{{ t('Cold drinks, packaged items, etc. Skips PREPARING; never appears on chef display.') }}</span>
-                <div
-                  class="switch"
-                  :class="{ 'is-on': form.is_instant }"
-                />
-              </div>
-            </div>
-
-            <div class="field">
-              <label class="field__label">{{ t('Price') }}</label>
-              <Input
-                type="text"
-                inputmode="numeric"
-                :model-value="priceDisplay"
-                @input="onPriceInput"
-              />
-            </div>
-
-            <div class="field">
-              <label class="field__label">{{ t('Category') }}</label>
-              <Select
-                :model-value="form.category_id == null ? '' : String(form.category_id)"
-                :placeholder="t('Choose category')"
-                :options="categoryOptions.map(opt => ({ value: String(opt.value), label: opt.title }))"
-                @update:model-value="form.category_id = $event ? Number($event) : null"
-              />
-            </div>
-
-            <div class="field span-2">
-              <label class="field__label">{{ t('Product Color') }}</label>
-              <div class="char-colors">
-                <button
-                  v-for="c in characteristicColors"
-                  :key="c.key"
-                  type="button"
-                  class="char-dot"
-                  :class="{ 'char-dot--active': form.color === c.hex }"
-                  :style="{ backgroundColor: c.hex }"
-                  :title="c.label"
-                  @click="form.color = form.color === c.hex ? '' : c.hex"
-                />
-                <button
-                  v-if="form.color"
-                  type="button"
-                  class="char-dot char-dot--clear"
-                  :title="t('Clear')"
-                  @click="form.color = ''"
+                <svg
+                  viewBox="0 0 24 24"
+                  width="14"
+                  height="14"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
                 >
-                  <svg
-                    viewBox="0 0 24 24"
-                    width="14"
-                    height="14"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2.5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <line
-                      x1="18"
-                      y1="6"
-                      x2="6"
-                      y2="18"
-                    />
-                    <line
-                      x1="6"
-                      y1="6"
-                      x2="18"
-                      y2="18"
-                    />
-                  </svg>
-                </button>
-              </div>
+                  <line
+                    x1="18"
+                    y1="6"
+                    x2="6"
+                    y2="18"
+                  />
+                  <line
+                    x1="6"
+                    y1="6"
+                    x2="18"
+                    y2="18"
+                  />
+                </svg>
+              </button>
             </div>
           </div>
-        </div>
-
-        <div class="modal__foot">
-          <button
-            type="submit"
-            class="btn btn--primary"
-            :class="{ 'is-loading': dialogLoading }"
-            :disabled="dialogLoading"
-          >
-            <svg
-              class="ic"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-            {{ t('Save') }}
-          </button>
         </div>
       </form>
-    </div>
+      <template #footer>
+        <Button
+          type="submit"
+          form="product-editor"
+          variant="primary"
+          icon="check"
+          :loading="dialogLoading"
+        >
+          {{ t('Save') }}
+        </Button>
+      </template>
+    </Modal>
 
     <!-- ============== DELETE CONFIRM MODAL ============== -->
-    <div
-      v-if="deleteDialog"
-      class="overlay"
-      @mousedown.self="() => { if (!deleteBusy) deleteDialog = false }"
+    <Modal
+      :open="deleteDialog"
+      :title="t('Delete Product')"
+      :width="440"
+      :busy="deleteBusy"
+      @close="deleteDialog = false"
     >
       <div
-        class="modal"
-        style="width:min(440px, 92vw); max-width:440px;"
+        class="row"
+        style="gap:14px;align-items:flex-start;"
       >
-        <div class="modal__head">
-          <div style="flex:1;min-width:0;">
-            <h2 class="modal__title">
-              {{ t('Delete Product') }}
-            </h2>
-          </div>
-          <button
-            class="iconaction"
-            :title="t('Close')"
-            :disabled="deleteBusy"
-            @click="deleteDialog = false"
+        <div
+          class="kpi__icon t-error"
+          style="width:44px;height:44px;flex:0 0 44px;"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="22"
+            height="22"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
           >
-            <svg
-              viewBox="0 0 24 24"
-              width="18"
-              height="18"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <line
-                x1="18"
-                y1="6"
-                x2="6"
-                y2="18"
-              />
-              <line
-                x1="6"
-                y1="6"
-                x2="18"
-                y2="18"
-              />
-            </svg>
-          </button>
+            <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
+            <line
+              x1="12"
+              y1="9"
+              x2="12"
+              y2="13"
+            />
+            <line
+              x1="12"
+              y1="17"
+              x2="12.01"
+              y2="17"
+            />
+          </svg>
         </div>
-
-        <div class="modal__body">
-          <div
-            class="row"
-            style="gap:14px;align-items:flex-start;"
+        <div>
+          <p style="margin:0;font-weight:600;">
+            {{ deletingProduct?.name }} {{ t('will be removed.') }}
+          </p>
+          <p
+            class="muted"
+            style="margin:6px 0 0;font-size:14px;"
           >
-            <div
-              class="kpi__icon t-error"
-              style="width:44px;height:44px;flex:0 0 44px;"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                width="22"
-                height="22"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
-                <line
-                  x1="12"
-                  y1="9"
-                  x2="12"
-                  y2="13"
-                />
-                <line
-                  x1="12"
-                  y1="17"
-                  x2="12.01"
-                  y2="17"
-                />
-              </svg>
-            </div>
-            <div>
-              <p style="margin:0;font-weight:600;">
-                {{ deletingProduct?.name }} {{ t('will be removed.') }}
-              </p>
-              <p
-                class="muted"
-                style="margin:6px 0 0;font-size:14px;"
-              >
-                {{ t('Are you sure you want to delete this product?') }}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div class="modal__foot">
-          <button
-            ref="deleteConfirmBtn"
-            class="btn btn--danger"
-            :class="{ 'is-loading': deleteBusy }"
-            :disabled="deleteBusy"
-            @click="deleteProduct"
-          >
-            <svg
-              class="ic"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <polyline points="3 6 5 6 21 6" />
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-            </svg>
-            {{ t('Delete') }}
-          </button>
+            {{ t('Are you sure you want to delete this product?') }}
+          </p>
         </div>
       </div>
-    </div>
+
+      <template #footer>
+        <button
+          ref="deleteConfirmBtn"
+          class="btn btn--danger"
+          :class="{ 'is-loading': deleteBusy }"
+          :disabled="deleteBusy"
+          @click="deleteProduct"
+        >
+          <svg
+            class="ic"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <polyline points="3 6 5 6 21 6" />
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+          </svg>
+          {{ t('Delete') }}
+        </button>
+      </template>
+    </Modal>
 
     <!-- Snackbar (Vuetify allowed off-page for global toast) -->
     <VSnackbar
@@ -1536,10 +1576,44 @@ function goPage(p: number | '…') {
         {{ t('Delete') }}
       </button>
     </BulkActionBar>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>
+.operations-workspace .product-catalog { border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.product-catalog > :deep(.workspace-tools) { border: 1px solid var(--work-line); border-radius: 12px; background: var(--surface); }
+.product-filter-switch { gap: 8px; font-size: 12px; cursor: pointer; }
+.product-register-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 16px 0; }
+.product-register-head__select { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; }
+.product-register-head__count { padding: 3px 7px; border-radius: 6px; font-size: 11px; font-variant-numeric: tabular-nums; background: var(--surface-2); color: var(--text-secondary); }
+.product-board { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; padding: 4px 0 20px; }
+.product-tile { display: flex; flex-direction: column; min-inline-size: 0; border: 1px solid var(--work-line); border-radius: 14px; background: var(--surface); transition: border-color 160ms ease, background 160ms ease; }
+.product-tile:hover { border-color: var(--border-strong); }
+.product-tile.is-selected { border-color: var(--primary); background: var(--work-soft); }
+.product-tile.is-deleted .product-tile__body { color: var(--text-secondary); }
+.product-tile__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border-block-end: 1px solid var(--work-line); }
+.product-tile__category { display: flex; align-items: center; gap: 7px; min-inline-size: 0; font-size: 11px; font-weight: 500; color: var(--text-secondary); overflow-wrap: anywhere; }
+.product-tile__category > span { inline-size: 7px; block-size: 7px; flex: 0 0 7px; border-radius: 2px; }
+.product-tile__body { flex: 1; padding: 20px 16px 24px; }
+.product-tile__symbol { color: var(--primary); margin-block-end: 16px; }
+.product-tile__name { display: block; max-inline-size: 100%; text-align: start; font-size: 17px; line-height: 1.4; font-weight: 600; letter-spacing: -.02em; overflow-wrap: anywhere; color: inherit; }
+.product-tile__name:hover { color: var(--primary); }
+.product-tile__body p { margin: 8px 0 0; font-size: 12px; line-height: 1.6; color: var(--text-secondary); overflow-wrap: anywhere; }
+.product-tile__badges { display: flex; flex-wrap: wrap; gap: 6px; margin-block-start: 12px; }
+.product-tile__foot { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 12px 16px; background: var(--work-soft); border-block: 1px solid var(--work-line); }
+.product-tile__foot > strong { font-size: 20px; line-height: 1.4; letter-spacing: -.02em; font-weight: 650; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.product-tile__foot small { color: var(--text-secondary); font-size: 11px; font-weight: 400; letter-spacing: 0; }
+.product-tile__foot > div { display: flex; gap: 6px; }
+.product-tile__details { padding: 0 16px; }
+.product-tile__details summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-block-size: 42px; color: var(--text-secondary); font-size: 11px; cursor: pointer; }
+.product-tile__details summary::-webkit-details-marker { display: none; }
+.product-tile__details[open] summary .ic { transform: rotate(180deg); }
+.product-tile__details dl { display: grid; gap: 10px; padding-block-end: 14px; }
+.product-tile__details dl > div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px; font-size: 11px; }
+.product-tile__details dt { color: var(--text-secondary); }
+.product-tile__details dd { margin: 0; font-variant-numeric: tabular-nums; }
+@media (width <= 700px) { .product-board { grid-template-columns: minmax(0, 1fr); padding: 0 0 14px; gap: 14px; } .product-register-head { padding: 14px 0; } .product-tile__name { font-size: 18px; } .product-tile__details summary { min-block-size: 44px; } .product-tile__foot :deep(.iconaction) { min-inline-size: 44px; min-block-size: 44px; } }
+
 /* ── POS Preview ── */
 .pos-preview {
   background: var(--surface-inset);
@@ -1626,22 +1700,26 @@ function goPage(p: number | '…') {
 /* ── Clickable "Deleted" KPI (shortcut to include-deleted view) ── */
 .products-kpi-click {
   cursor: pointer;
-  border-radius: var(--r-lg, 14px);
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  border-radius: 0;
+  overflow: hidden;
+  transition: background 0.16s ease, box-shadow 0.16s ease;
   outline: none;
 }
 
 .products-kpi-click:hover {
-  transform: translateY(-1px);
+  transform: none;
 }
 
 .products-kpi-click:focus-visible {
-  box-shadow: 0 0 0 2px var(--primary);
+  outline: 2px solid var(--primary);
+  outline-offset: -3px;
 }
 
 .products-kpi-click.is-active :deep(.kpi) {
-  border-color: var(--warning, #f0ad4e);
-  box-shadow: 0 0 0 1px var(--warning, #f0ad4e) inset;
+  border-color: transparent;
+  border-radius: 0;
+  background: var(--work-soft);
+  box-shadow: inset 0 0 0 1px var(--primary-border);
 }
 
 /* ── Responsive toolbar / modals ── */

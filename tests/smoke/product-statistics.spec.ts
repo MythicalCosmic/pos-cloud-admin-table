@@ -198,7 +198,7 @@ test.describe('product sales analytics', () => {
 
     const table = page.getByTestId('product-statistics-table')
 
-    expect(pagePadding).toEqual({ left: '16px', right: '16px' })
+    expect(pagePadding).toEqual({ left: '24px', right: '24px' })
     await expect(table).toContainText('Burger')
     await expect(table).toContainText('Pasta')
     await expect(page.locator('.kpi').filter({ hasText: 'Net product sales' })).toContainText(/95.*000.*UZS/)

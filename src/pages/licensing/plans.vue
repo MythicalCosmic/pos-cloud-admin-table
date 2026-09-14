@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
 import Textarea from '@/components/design/Textarea.vue'
 /* ============================================================
    LICENSING — PLANS
@@ -386,7 +388,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <!-- Header -->
     <PageHeader
       :title="t('license_plans_title')"
@@ -466,7 +468,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
          ============================================================ -->
     <Card v-if="tab === 'plans'">
       <!-- Toolbar -->
-      <div class="toolbar plans-toolbar">
+      <WorkspaceToolbar class="toolbar plans-toolbar">
         <Input
           v-model="search"
           class="plans-toolbar__search"
@@ -480,7 +482,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
           :placeholder="t('license_filter_period')"
           :options="periodOptions"
         />
-      </div>
+      </WorkspaceToolbar>
 
       <!-- Filter chips -->
       <div
@@ -853,7 +855,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
     >
       {{ snackbarMsg }}
     </VSnackbar>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>

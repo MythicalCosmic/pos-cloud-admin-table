@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
 import Button from '@/components/design/Button.vue'
 import DesignIcon from '@/components/design/DesignIcon.vue'
 import PageHeader from '@/components/design/PageHeader.vue'
@@ -53,7 +54,7 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="page license-status">
+  <WorkspacePage class="page license-status">
     <PageHeader
       :title="t('License Status')"
       :subtitle="t('license_status_subtitle')"
@@ -145,7 +146,7 @@ onMounted(load)
         /><p>{{ state.message }}</p>
       </div>
     </template>
-  </div>
+  </WorkspacePage>
 </template>
 
 <route lang="yaml">

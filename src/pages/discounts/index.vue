@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
 import { discountsApi as axios } from '@/plugins/axios'
 import Badge from '@/components/design/Badge.vue'
 import Button from '@/components/design/Button.vue'
@@ -359,7 +361,7 @@ function clearAllFilters() {
 </script>
 
 <template>
-  <div class="page discounts-page">
+  <WorkspacePage class="page discounts-page">
     <PageHeader
       :title="t('Discounts')"
       :subtitle="t('Promo codes subtitle')"
@@ -376,7 +378,7 @@ function clearAllFilters() {
     </PageHeader>
 
     <Card>
-      <div class="toolbar">
+      <WorkspaceToolbar class="toolbar">
         <div class="toolbar__search">
           <Input
             v-model="search"
@@ -418,7 +420,7 @@ function clearAllFilters() {
           :disabled="loading"
           @click="loadDiscounts"
         />
-      </div>
+      </WorkspaceToolbar>
 
       <DataTable
         :columns="columns"
@@ -782,7 +784,7 @@ function clearAllFilters() {
     >
       {{ snackbarMsg }}
     </VSnackbar>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>
@@ -844,7 +846,6 @@ function clearAllFilters() {
 .usage-bar__fill {
   height: 100%;
   border-radius: 99px;
-  transition: width 0.3s ease;
 }
 .usage-bar__fill.is-ok {
   background: rgb(var(--v-theme-success-strong));

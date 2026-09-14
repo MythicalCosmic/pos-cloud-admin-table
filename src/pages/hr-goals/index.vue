@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
 import Textarea from '@/components/design/Textarea.vue'
 /* ============================================================
    HR — Performance Goals
@@ -377,7 +378,7 @@ function progressOf(row: any): number {
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <!-- Page header -->
     <PageHeader
       :title="t('hr_goals_title')"
@@ -442,7 +443,6 @@ function progressOf(row: any): number {
                   height: '100%',
                   background: 'rgb(var(--v-theme-primary))',
                   borderRadius: '99px',
-                  transition: 'width 200ms ease',
                 }"
               />
             </div>
@@ -702,7 +702,6 @@ function progressOf(row: any): number {
                 height: '100%',
                 background: 'rgb(var(--v-theme-primary))',
                 borderRadius: '99px',
-                transition: 'width 200ms ease',
               }"
             />
           </div>
@@ -734,7 +733,7 @@ function progressOf(row: any): number {
       </template>
     </Modal>
 
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>

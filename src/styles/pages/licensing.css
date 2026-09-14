@@ -304,3 +304,21 @@
   flex: 1 1 300px;
   min-inline-size: 0;
 }
+
+/* Setup and entitlement share the operations workspace surface. */
+.license-setup { display: flex; flex-direction: column; padding: 32px; }
+.license-setup__layout { inline-size: min(100%, 1020px); grid-template-columns: minmax(0, 1fr) minmax(0, 460px); gap: 64px; margin-block: auto; padding-block: 64px; }
+.license-setup__intro h1 { font-size: 36px; font-weight: 600; letter-spacing: -.03em; line-height: 1.2; }
+.license-setup__intro p { font-size: 14px; line-height: 1.7; }
+.license-setup__steps { flex-direction: column; gap: 18px; margin-block-start: 32px; }
+.license-setup__steps span { font-size: 13px; }
+.license-setup__steps b { border-radius: 8px; }
+.license-setup__form { border-radius: 16px; padding: 30px; box-shadow: none; }
+.license-setup__form h2 { font-size: 22px; letter-spacing: -.025em; }
+.license-emblem { inline-size: 48px; block-size: 48px; border-radius: 13px; background: var(--primary-weak); }
+.license-status__hero { padding: 26px; border-radius: 16px; background: var(--surface); border: 1px solid var(--border); }
+.license-status__hero h2 { font-size: 24px; font-weight: 600; letter-spacing: -.025em; }
+.license-status__details { gap: 0; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); overflow: hidden; }
+.license-status__details > div { padding: 22px; border: 0; border-radius: 0; border-block-end: 1px solid var(--border); background: transparent; }
+@media (width <= 760px) { .license-setup { padding: 24px; } .license-setup__layout { grid-template-columns: minmax(0, 1fr); gap: 28px; padding-block: 40px; } .license-setup__intro h1 { font-size: 28px; } .license-setup__steps { flex-direction: row; flex-wrap: wrap; gap: 12px; } .license-setup__form { padding: 24px; } }
+@media (width <= 380px) { .license-setup { padding: 18px; } .license-setup__form { padding: 20px; } }

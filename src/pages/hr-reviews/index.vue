@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
 import Textarea from '@/components/design/Textarea.vue'
 /* ============================================================
    HR PERFORMANCE REVIEWS — list + create + edit + submit + ack
@@ -425,7 +427,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <PageHeader
       :title="t('Performance Reviews')"
       :subtitle="t('Manage employee performance reviews')"
@@ -443,7 +445,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
 
     <!-- Toolbar + table -->
     <Card>
-      <div class="toolbar reviews-toolbar">
+      <WorkspaceToolbar class="toolbar reviews-toolbar">
         <div class="reviews-toolbar__search">
           <Input
             v-model="employeeFilter"
@@ -460,7 +462,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
             :options="statusOptions"
           />
         </div>
-      </div>
+      </WorkspaceToolbar>
 
       <!-- Filter chips -->
       <div
@@ -963,14 +965,6 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
         </Field>
       </div>
 
-      <template #footer>
-        <Button
-          variant="ghost"
-          @click="closeView"
-        >
-          {{ t('Close') }}
-        </Button>
-      </template>
     </Modal>
 
     <!-- Toast (kept consistent with the rest of the rebuilt pages) -->
@@ -981,7 +975,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
     >
       {{ snackbarMsg }}
     </VSnackbar>
-  </div>
+  </WorkspacePage>
 </template>
 
 <route lang="yaml">

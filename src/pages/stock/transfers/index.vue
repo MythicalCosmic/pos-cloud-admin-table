@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
 import Textarea from '@/components/design/Textarea.vue'
 /* ============================================================
    ALPHA POS — Stock Transfers (Workflow)
@@ -804,7 +806,7 @@ const confirmTitle = computed(() => {
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <!-- Page header -->
     <PageHeader
       :title="t('transfers_ext_title')"
@@ -841,7 +843,7 @@ const confirmTitle = computed(() => {
 
     <!-- Filter card -->
     <div class="card">
-      <div class="toolbar" style="flex-wrap: wrap;">
+      <WorkspaceToolbar class="toolbar" style="flex-wrap: wrap;">
         <div class="filter-cell">
           <Select
             :model-value="statusFilter ?? ''"
@@ -890,7 +892,7 @@ const confirmTitle = computed(() => {
             {{ t('transfers_filter_all') }}
           </Button>
         </div>
-      </div>
+      </WorkspaceToolbar>
 
       <div class="card__divider" />
 
@@ -1372,7 +1374,7 @@ const confirmTitle = computed(() => {
     >
       {{ snackbarMsg }}
     </div>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>

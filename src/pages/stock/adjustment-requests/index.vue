@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
 import type { DataTableColumn } from '@/components/design/DataTable.vue'
 import Badge from '@/components/design/Badge.vue'
 import Button from '@/components/design/Button.vue'
@@ -408,7 +409,7 @@ async function submitReview() {
 </script>
 
 <template>
-  <div class="page adjustment-page">
+  <WorkspacePage class="page adjustment-page">
     <PageHeader
       :title="t('warehouse.adjustments.title')"
       :subtitle="t('warehouse.adjustments.subtitle')"
@@ -703,7 +704,7 @@ async function submitReview() {
         </Button>
       </template>
     </Modal>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>

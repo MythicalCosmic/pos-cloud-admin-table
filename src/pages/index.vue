@@ -333,11 +333,23 @@ async function refresh() {
     class="page dashboard-page"
   >
     <header class="dashboard-header">
-      <div class="dashboard-header__intro">
-        <h1 tabindex="-1">
-          {{ t('Dashboards') }}
-        </h1>
-        <p>{{ t('dash_full_subtitle') }}</p>
+      <div class="dashboard-header__identity">
+        <span
+          class="dashboard-header__symbol"
+          aria-hidden="true"
+        >
+          <DesignIcon
+            name="dashboard"
+            :size="26"
+            :weight="1.55"
+          />
+        </span>
+        <div class="dashboard-header__intro">
+          <h1 tabindex="-1">
+            {{ t('Dashboards') }}
+          </h1>
+          <p>{{ t('dash_full_subtitle') }}</p>
+        </div>
       </div>
       <TodayOrdersCard />
       <div class="dashboard-header__right">
@@ -433,10 +445,22 @@ async function refresh() {
       :aria-labelledby="`dashboard-title-${section.id}`"
     >
       <header class="dashboard-section__head">
-        <div>
-          <h2 :id="`dashboard-title-${section.id}`">
-            {{ t(section.labelKey) }}
-          </h2><p>{{ t(section.subtitleKey) }}</p>
+        <div class="dashboard-section__identity">
+          <span
+            class="dashboard-section__symbol"
+            aria-hidden="true"
+          >
+            <DesignIcon
+              :name="section.icon"
+              :size="19"
+              :weight="1.55"
+            />
+          </span>
+          <div>
+            <h2 :id="`dashboard-title-${section.id}`">
+              {{ t(section.labelKey) }}
+            </h2><p>{{ t(section.subtitleKey) }}</p>
+          </div>
         </div>
         <button
           class="dashboard-section__up"

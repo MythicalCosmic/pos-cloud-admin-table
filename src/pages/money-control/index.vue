@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
 import Badge from '@/components/design/Badge.vue'
 import Button from '@/components/design/Button.vue'
 import Card from '@/components/design/Card.vue'
@@ -673,7 +675,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="page money-control-page">
+  <WorkspacePage class="page money-control-page">
     <PageHeader
       :title="t('Money Control')"
       :subtitle="t('moneyControl.subtitle')"
@@ -692,7 +694,7 @@ onMounted(() => {
     </PageHeader>
 
     <Card class-name="control-card">
-      <div class="toolbar money-control-filters">
+      <WorkspaceToolbar class="toolbar money-control-filters">
         <Field :label="t('moneyControl.dateFrom')">
           <Input
             v-model="dateFrom"
@@ -734,7 +736,7 @@ onMounted(() => {
             role="status"
           >{{ t('moneyControl.locationLoadFailed') }}</span>
         </div>
-      </div>
+      </WorkspaceToolbar>
     </Card>
 
     <Card
@@ -1328,14 +1330,14 @@ onMounted(() => {
         </div>
       </div>
 
-      <div class="toolbar raw-materials-toolbar">
+      <WorkspaceToolbar class="toolbar raw-materials-toolbar">
         <Input
           v-model="search"
           icon="search"
           :placeholder="t('moneyControl.searchMaterials')"
           :aria-label="t('moneyControl.searchMaterials')"
         />
-      </div>
+      </WorkspaceToolbar>
       <div class="card__divider" />
 
       <DataTable
@@ -1605,7 +1607,7 @@ onMounted(() => {
         </Button>
       </template>
     </Modal>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
 import axios from '@/plugins/axios'
 import Badge from '@/components/design/Badge.vue'
 import Button from '@/components/design/Button.vue'
@@ -252,7 +254,7 @@ function exportCsv() {
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <PageHeader
       :title="t('Menu Engineering')"
       :subtitle="subtitle"
@@ -263,7 +265,7 @@ function exportCsv() {
       class="card"
       style="margin-bottom: var(--sp-5);"
     >
-      <div class="toolbar me-toolbar">
+      <WorkspaceToolbar class="toolbar me-toolbar">
         <Field
           :label="t('From')"
           class="me-field me-field--date"
@@ -354,7 +356,7 @@ function exportCsv() {
         >
           {{ t('Export CSV') }}
         </Button>
-      </div>
+      </WorkspaceToolbar>
     </div>
 
     <!--
@@ -520,7 +522,7 @@ function exportCsv() {
         </template>
       </DataTable>
     </div>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>

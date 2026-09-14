@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
 import Textarea from '@/components/design/Textarea.vue'
 /* ============================================================
    ALPHA POS — Stock Item drill-down
@@ -699,7 +701,7 @@ const levelsSkeletonRows = computed(() => 3)
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <!-- Page header -->
     <PageHeader
       :title="item?.name ? `${t('item_drill_title')} — ${item.name}` : t('item_drill_title')"
@@ -965,7 +967,7 @@ const levelsSkeletonRows = computed(() => 3)
 
     <!-- Movement history card -->
     <div class="card">
-      <div class="toolbar history-toolbar" style="border-bottom: 1px solid var(--border); flex-wrap: wrap;">
+      <WorkspaceToolbar class="toolbar history-toolbar" style="border-bottom: 1px solid var(--border); flex-wrap: wrap;">
         <div class="history-title" style="font-weight: var(--fw-semibold); font-size: var(--fs-md); margin-right: auto;">
           {{ t('item_drill_history') }}
         </div>
@@ -1006,7 +1008,7 @@ const levelsSkeletonRows = computed(() => 3)
         >
           {{ t('Refresh') }}
         </Button>
-      </div>
+      </WorkspaceToolbar>
 
       <!-- Active chips -->
       <StateFill
@@ -1390,7 +1392,7 @@ const levelsSkeletonRows = computed(() => 3)
         </Button>
       </template>
     </Modal>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>

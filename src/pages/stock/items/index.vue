@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
+
 /* ============================================================
    Stock Items — refactored to design primitives
    Preserves all axios calls, filters, refs, computeds.
@@ -302,7 +305,7 @@ const dtPagination = computed(() => ({
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <!-- Page header -->
     <PageHeader
       :title="t('items_page_title')"
@@ -369,7 +372,7 @@ const dtPagination = computed(() => ({
 
     <div class="card">
       <!-- Toolbar -->
-      <div class="toolbar items-toolbar">
+      <WorkspaceToolbar class="toolbar items-toolbar">
         <div class="grow tb-search">
           <Input
             v-model="search"
@@ -433,7 +436,7 @@ const dtPagination = computed(() => ({
           <Switch v-model="lowStockOnly" />
           <span class="tb-switch__label">{{ t('Low stock only') }}</span>
         </label>
-      </div>
+      </WorkspaceToolbar>
 
       <!-- Active filter chips -->
       <div v-if="hasFilters" class="toolbar" style="padding-top: 0;">
@@ -654,7 +657,7 @@ const dtPagination = computed(() => ({
 
     <!-- Camera-based EAN/UPC/QR scanner. Lazy-loads ~150kB ZXing on first open. -->
     <BarcodeScanner v-model:open="scanOpen" @decoded="onScanned" />
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>

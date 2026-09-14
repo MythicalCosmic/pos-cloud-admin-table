@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
+
 /* ============================================================
    HR CONTRACTS — employment contracts: draft, activate, renew, terminate.
    Plain HTML + design primitives. No Vuetify on this surface.
@@ -479,7 +482,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <PageHeader
       :title="t('Contracts')"
       :subtitle="t('contract_subtitle')"
@@ -505,7 +508,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
 
     <!-- Toolbar + table -->
     <Card>
-      <div class="toolbar toolbar--wrap">
+      <WorkspaceToolbar class="toolbar toolbar--wrap">
         <div class="tb-filter">
           <Select
             v-model="statusFilter"
@@ -534,7 +537,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
             {{ t('Expiring soon (30 days)') }}: {{ expiringCount }}
           </Badge>
         </div>
-      </div>
+      </WorkspaceToolbar>
 
       <!-- Filter chips -->
       <div
@@ -907,7 +910,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
     >
       {{ snackbarMsg }}
     </VSnackbar>
-  </div>
+  </WorkspacePage>
 </template>
 
 <route lang="yaml">

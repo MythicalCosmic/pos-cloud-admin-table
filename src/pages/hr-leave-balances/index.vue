@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
+
 /* ============================================================
    HR LEAVE BALANCES — per-employee annual quota tracking
    Read-only listing. Toolbar: employee (required) + year + Refresh
@@ -248,7 +251,7 @@ const activeFilters = computed(() => {
 </script>
 
 <template>
-  <div class="page lb-page">
+  <WorkspacePage class="page lb-page">
     <PageHeader
       :title="t('leave_balances_title')"
       :subtitle="t('leave_balances_subtitle')"
@@ -285,7 +288,7 @@ const activeFilters = computed(() => {
 
     <!-- Toolbar + table -->
     <Card>
-      <div class="toolbar lb-toolbar">
+      <WorkspaceToolbar class="toolbar lb-toolbar">
         <div class="lb-toolbar__employee">
           <Select
             v-model="employeeFilter"
@@ -303,7 +306,7 @@ const activeFilters = computed(() => {
             :options="yearOptions"
           />
         </div>
-      </div>
+      </WorkspaceToolbar>
 
       <!-- Filter chips -->
       <div
@@ -460,7 +463,7 @@ const activeFilters = computed(() => {
     >
       {{ snackbarMsg }}
     </VSnackbar>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>

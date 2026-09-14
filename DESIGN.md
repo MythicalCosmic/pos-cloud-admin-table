@@ -1,6 +1,6 @@
 ---
 name: Alpha POS
-description: Dense restaurant administration with six coordinated light and dark color palettes.
+description: Precision restaurant command surfaces and reporting with six coordinated light and dark color palettes.
 colors:
   blue-primary: "#2563EB"
   blue-hover: "#1D4ED8"
@@ -41,6 +41,8 @@ typography:
   dashboard-heading: { fontFamily: Hanken Grotesk, fontSize: 32px, fontWeight: 600, lineHeight: "1.2", letterSpacing: "-.03em" }
   dashboard-total: { fontFamily: Hanken Grotesk, fontSize: 29px, fontWeight: 600, lineHeight: "1.3" }
   dashboard-metric: { fontFamily: Hanken Grotesk, fontSize: 21px, fontWeight: 600, lineHeight: "1.3", letterSpacing: "-.025em" }
+  operations-heading: { fontFamily: Hanken Grotesk, fontSize: "clamp(30px, 2.6vw, 38px)", fontWeight: 700, lineHeight: "1.08", letterSpacing: "-.04em" }
+  operations-metric: { fontFamily: Hanken Grotesk, fontSize: 31px, fontWeight: 700, lineHeight: "1.18", letterSpacing: "-.04em" }
 rounded:
   xs: 6px
   sm: 8px
@@ -55,6 +57,12 @@ rounded:
   dashboard-control: 12px
   dashboard-activity: 12px
   workspace-card: 18px
+  operations-surface: 22px
+  operations-control: 13px
+  operations-compact: 16px
+  operations-identity: 26px
+  operations-dialog: 26px
+  operations-phone-sheet: "24px 24px 0 0"
 spacing:
   one: 4px
   two: 8px
@@ -69,24 +77,37 @@ components:
   button-secondary: { backgroundColor: "{colors.blue-surface}", textColor: "{colors.blue-ink}" }
   dashboard-card: { backgroundColor: "{colors.blue-surface}", textColor: "{colors.blue-ink}", rounded: "{rounded.dashboard-surface}", padding: "{spacing.five}" }
   dashboard-summary-card: { typography: "{typography.dashboard-total}", rounded: "{rounded.dashboard-surface}", padding: "18px" }
+  operations-button: { backgroundColor: "{colors.blue-primary}", textColor: "{colors.blue-surface}", rounded: "{rounded.operations-control}" }
+  operations-input: { backgroundColor: "{colors.blue-surface}", textColor: "{colors.blue-ink}", rounded: "{rounded.operations-control}" }
+  operations-card: { backgroundColor: "{colors.blue-surface}", textColor: "{colors.blue-ink}", rounded: "{rounded.operations-surface}" }
+  operations-metric: { typography: "{typography.operations-metric}", padding: "21px 22px" }
+  operations-metric-rail: { rounded: "{rounded.operations-surface}", padding: "1px" }
+  operations-identity: { typography: "{typography.operations-heading}", rounded: "{rounded.operations-identity}", padding: "28px 30px 24px" }
 ---
 
 ## Overview
 
-Alpha POS puts restaurant activity, reporting and daily work in one readable workspace.
-Its visual direction comes from the user's legacy admin reference and the earlier approved Forest theme.
-The dashboard's approved September 10 reference adds softly raised surfaces, lightly tinted summary cards,
-shaded rounded data marks and clearly separated ring sectors. These dashboard treatments use the existing
-identity, fonts and six palettes; other workspaces retain their established visual rules.
-Orders and the AI conversation extend these soft surfaces through ticket cards, shared analytical charts
-and readable replies, without introducing another palette or typeface.
-**Creative North Star: "Restaurant operations"** describes the product's existing purpose.
+**Creative North Star: "Precision command surface"**
+
+Alpha POS makes restaurant operations composed, tactile and fast. Integrated identity panels pair solid
+primary symbol tiles with clear titles, actions and related-route rails. Joined metrics show actual values
+above elevated registers and focused editing surfaces. Product and category catalogs, dining areas,
+warehouse tasks and settings retain layouts suited to their work within this shared hierarchy.
+
+The existing Blue and Forest identities, all six palettes and the established fonts remain shared.
+Dashboard retains its approved soft surfaces, tinted summaries, shaded data marks and separated ring sectors,
+now led by a framed identity panel and floating section navigator.
+Orders joins the operational command surface while retaining its ticket, table and detail workflows. AI
+retains its approved conversation layout with a more defined frame, prompt accents and focused composer.
+Operational styling remains an explicit page opt-in; Dashboard, AI and the shared shell keep their
+established compositions.
 
 **Key Characteristics:**
 
-- Full-width information and clear values.
-- Soft dashboard surfaces and shaded data marks.
-- Fine table rules and custom controls.
+- Integrated identity panels and connected task navigation.
+- Joined actual-value metric rails and elevated registers.
+- Expandable phone records, collapsible filters and bottom-sheet forms.
+- Refined Dashboard and AI compositions, with Orders in the operational hierarchy.
 - Restrained motion and visible keyboard focus.
 
 Implementation is authoritative. See [the detailed guide](docs/design-system.md), [tokens](src/styles/tokens.css),
@@ -99,7 +120,12 @@ with Light/Dark chosen independently. All six previews show their own colors in 
 `useAlphaTheme` synchronizes HTML attributes, browser chrome and Vuetify's existing light/dark themes.
 `src/config/palettes.ts` supplies first-paint CSS, loader colors, previews and the Vuetify color mirror;
 `src/styles/tokens.css` retains typography, spacing, radii and elevation. Login and toast surfaces follow
-the selected palette. Body/placeholder text and primary button labels meet 4.5:1 on tested surfaces.
+the selected palette. Maintain 4.5:1 contrast for body/placeholder text and primary button labels.
+Operational edges mix a small amount of text into the surface; quiet emphasis mixes primary into the surface.
+Primary-filled symbol tiles and active related-route links use the palette's on-primary text. Identity panels
+add a static primary wash and restrained dot texture; task-dialog headers remain neutral, with semantic color
+confined to the symbol and controls.
+Category swatches display the saved POS category color, with the category name alongside them.
 Semantic success, warning and error colors retain their meaning. Payment shares retain their tender colors;
 categorical rings use distinct palette series colors with exact-value legends. Dashboard time series shade
 the primary series from the fourth chart color into the primary accent, and use the expense color for expenses.
@@ -117,6 +143,9 @@ Hanken Grotesk carries headings, labels and prose. Dashboard headline totals, KP
 also use Hanken Grotesk with tabular figures; JetBrains Mono remains the exact-value and accounting-report face.
 Use existing UZS formatters and tabular figures. Shared type tokens establish the base scale; responsive
 headings and KPI figures also adapt their size and spacing to the available width.
+Operational headings and KPI totals use the dedicated Hanken roles above. Phone headings step down to
+25px, then 23px at the narrowest breakpoint; KPI values reduce to 23px, then 21px. Small uppercase KPI and
+table labels establish hierarchy while full field labels, descriptions and values remain readable.
 Long Uzbek, Russian and English labels must wrap or have an accessible full-value detail.
 Detailed report cards use compact titles and quieter period/scope text below them. Dashboard KPI cards retain
 tabular figures, with smaller sans-serif names when the value is a person or product. Staff radar axis labels
@@ -127,6 +156,21 @@ Orders also uses tabular Hanken KPI and ticket totals. Assistant replies keep re
 internally scrolling tables; numeric cells align right with tabular figures.
 
 ## Layout
+
+Operational pages opt in through WorkspacePage. An integrated identity panel places a semantic domain symbol
+and title beside the main action, with related routes in its lower rail. Related links honor route and warehouse
+permissions and keep the longest matching destination current. Actual-value KPI cells join with one-pixel
+separators inside a single rounded rail. Registers combine a tinted command bar, records and anchored
+pagination in a clipped work surface. Categories uses this framed directory; Products and dining-table grids
+retain their open domain layouts. Clipping completes a register's corners; it must not hide fields or actions.
+
+The shared operational page has 24px side padding on desktop, 14px at 700px and below, and 12px at 360px
+and below. On phones the action takes its own row, related navigation scrolls internally, summaries use
+two columns, and WorkspaceToolbar collapses filters behind a named toggle. Products puts its primary
+catalog count across the phone row. DataTable uses the same cell renderers in expandable phone records,
+preserving selection, actions and fields beyond the initial summary. Phone records are individually framed
+within the register. Record actions keep 44px targets; heading actions use 46px, filter toggles 48px, and
+dialog fields 50px minimum heights. Settings introductions stack above their editing rows at 1100px.
 
 The continuous dashboard orders Overview, Sales, Products, Staff and Operations; navigation jumps to sections.
 The renewed header, today's independent order count, interval controls and sticky section navigator lead into
@@ -153,51 +197,75 @@ domain sizing classes continue to work after teleporting.
 Custom Input/Textarea wrappers own layout classes and styles; exclude those two attributes from
 native field bindings so Vue does not merge a second control surface onto the input.
 
-Orders places the shared dashboard date fields above its KPIs. Its optional insights pair two large
-payment rings beneath a compact five-status strip. Equal ticket cards open details in a 640px desktop
-side panel or phone sheet, preserving the register's layout; the full table remains selectable.
+Orders uses an integrated identity panel and related catalog rail above the shared dashboard date fields.
+Four actual-value KPIs join into one tinted rail and lead into a single elevated register containing the
+status queue, filters, ticket/table switch and records. Optional insights pair two large payment rings
+beneath a compact five-status strip. Status-accented ticket cards open details in a 640px desktop side
+panel or phone sheet, preserving the register's layout; the full table remains selectable. Destructive
+and state-change confirmations use a semantic symbol, one clear action and the standard X close control.
 Phone pagination retains first/current/last pages plus previous/next arrows within the available width.
 The AI workspace keeps a 232px desktop history column, the scrollable thread and a reachable composer.
 Thinking Level sits below desktop history and in a shared-preference dialog on compact layouts.
 
-Product Performance uses the same compact report surfaces for its custom filter toolbar, six full-result
-metric cells and ledger. The metric rail moves from six to three columns at 1350px, then two at 700px.
+Product Performance uses the operational identity panel and work surfaces for its custom filter toolbar,
+joined six-cell full-result metric rail and ledger. The rail moves from six to three columns at 1350px, then two at 700px.
 On phones, search, sort and export each have a full row; the selected sort label wraps and its control
 grows vertically. Desktop product/category columns remain sticky while the ledger scrolls internally.
 Expandable phone records retain the same fields and cost evidence.
 
 ## Elevation & Depth
 
-Use tonal surfaces, one-pixel borders and the existing shadow vocabulary. Focus rings identify keyboard position.
-Hover and press feedback stay brief; pending animation conveys actual work. Respect reduced motion.
+Operational identity panels, metric rails and work surfaces use a fine edge and the two-part work shadow,
+with a darker shadow definition in dark mode. Joined KPI cells have no individual outer shadow; their hover
+uses a raised tint and inset edge. Primary buttons and symbols have restrained accent elevation. Fields
+use an inset edge at rest and a four-pixel primary focus ring. Task dialogs and teleported popovers use
+stronger overlay shadows; backdrop blur is limited to the dialog layer.
+
+Operational controls use 160ms feedback, table rows 150ms, metrics 180ms and dialog opacity/transform
+transitions 220ms. Buttons move slightly on hover/press; records do not repeat entrance choreography.
+Static CSS washes and local SVG symbols avoid a continuous rendering loop. Reduced motion removes
+operational transitions. The login station diagram's slow movement is pausable and reduced-motion aware.
+**The Surface Boundary Rule.** Keep operational depth scoped to WorkspacePage and its dialog/popover context;
+preserve the approved Dashboard and AI elevation.
+
 Dashboard cards use a fine edge mixed from text and surface, with a low two-part shadow
 (`0 2px 3px -2px #15162512, 0 8px 24px -18px #15162530`). KPI backgrounds tint one edge with a chart color
 and fade into the surface. Dashboard KPI hover retains its resting elevation. Shading belongs to chart marks
 and useful summary surfaces; it does not change an encoded value or introduce decorative data.
+The dashboard identity header and sticky directory use the same edge and shadow with a static primary wash;
+the header keeps export popovers visible outside its rounded boundary.
 Distribution sectors preview through opacity and a small outward translation; exact rows add a quiet tonal
 surface on hover and a primary border when selected. Time-series tools use short color transitions, with
 chart updates honoring reduced motion. Distribution bars update directly; kitchen bars use a brief width
 transition on the shared actual/target scale. The sidecar records system elevation and motion separately
 from the portable color, type and radius primitives.
-Orders and AI use the same low surface shadow through their own scoped aliases. New completed AI replies
-may reveal gradually at word and Markdown boundaries; the full response remains stored. Show full answer
+Orders applies the operational work shadow to its unified register while individual tickets retain a
+restrained status edge and shallow lift. AI keeps low inner surfaces inside a more defined outer frame, with
+thin semantic prompt accents and a stronger focus ring around the active composer. New
+completed AI replies may reveal gradually at word and Markdown boundaries; the full response remains stored. Show full answer
 ends the reveal, and reduced motion, a hidden document or a very large answer displays it immediately.
 The thread follows the latest reply only while the reader is following it.
 
 ## Shapes
 
-Use shared components for their complete shapes. The workspace-control and workspace-card roles preserve
-the established control and container silhouettes. Dashboard report cards, all chapter KPI cards, date fields
+Use shared components for their complete shapes. Operational work surfaces and metric rails use
+operations-surface, identity panels use operations-identity, and fields/buttons use operations-control.
+Joined metric cells remain square inside the clipped rail. Phone records and standalone metrics use
+operations-compact; phone registers use xl corners and the joined rail uses workspace-card corners.
+Operational dialogs use operations-dialog and become full-width sheets with the operations-phone-sheet
+top corners. Catalog cards and warehouse link groups retain lg corners; dining-table cards keep 13px corners.
+The workspace-control and workspace-card roles remain available to the retained surfaces and public/auth controls.
+Dashboard report cards, all chapter KPI cards, date fields
 and today's count use the dashboard-surface radius; dashboard action buttons and activity tiles use their
-smaller dashboard roles. Product Performance keeps the lg radius for reporting panels and metric-rail outlines,
-with square, border-separated cells inside its rail.
+smaller dashboard roles. Product Performance uses the operational work-surface and joined metric-rail family.
 Distribution rows use sm corners. Inset chart buttons use chart-control corners within chart-control-group
 surfaces; the larger Overview metric selector uses md corners. These observed overrides supplement the
 base radius tokens. Rounded SVG ring sectors are real annular paths with gaps and corners constrained by
 each actual share. Columns have softened ends; staff scatter marks are rounded squares. Tiny swatches,
-tracks, plot marks and focus outlines are chart geometry, not additional card or control radius roles.
-Orders tickets, KPIs and insight cards reuse the dashboard's softened surface radius. Its desktop detail
-panel uses the workspace-card radius and changes to the softened surface radius on phones. AI message,
+tracks, skeleton lines, plot marks and focus outlines are incidental geometry, not additional card or control radius roles.
+Orders KPIs use the joined operational rail, while tickets and insight cards retain softened corners inside
+the elevated register. Its desktop detail panel uses the workspace-card radius and changes to the softened
+surface radius on phones. AI message,
 composer and chart surfaces follow the same family; phone messages and prompt cards use lg corners.
 
 ## Components
@@ -205,6 +273,30 @@ composer and chart surfaces follow the same family; phone messages and prompt ca
 Reuse Alpha Button, Select, MultiSelect, FormInput, DateTimeField, Modal and DataTable.
 Each date endpoint combines a custom calendar and time control; validated drafts apply together.
 
+- WorkspaceHeader integrates a solid primary symbol tile, page identity, existing actions and related navigation.
+  Semantic route aliases use the existing local SVG artwork. WorkspaceToolbar labels the desktop command bar
+  and keeps filter contents mounted while collapsing them on phones. WorkspacePage provides the context used
+  by PageHeader, Kpi and DataTable; Modal also recognizes operational routes for globally hosted action dialogs.
+  Teleported dialogs and select/calendar popovers retain the same finish through their workspace context.
+- Products defaults to cards with category, full name, description, status, exact price, selection and actions.
+  Further source fields expand through Details. The complete table, filters, bulk actions and pagination
+  remain selectable. Create/edit uses the shared Modal and retains its POS preview and original fields.
+- Categories joins its command bar, inset card grid and pagination in one clipped register. Full names,
+  saved POS color swatches, status, product counts and edit/reorder actions remain available. Status controls
+  and reorder actions retain phone hit areas; dirty drafts require discard confirmation.
+- Places pairs a selectable dining-area directory with table cards. Area filtering, table search, actual status
+  counts, seat capacity, status changes and area/table actions remain available. The directory stacks above
+  the tables on compact layouts. Warehouse groups permitted links into purchasing, inventory and movement,
+  beside the existing receiving guide; it does not imply live stock totals.
+- Settings pairs a short section introduction with a single editing plane. Module switches align at the end
+  of separated label-and-description rows. Auth uses the connected station diagram beside sign-in on desktop;
+  phones prioritize the form. Public recovery states show the code, explanation and a clear route home.
+- Operational task dialogs use neutral headers, a semantic symbol, a concise title, X dismissal and a meaningful
+  action footer. Phone dialogs span the bottom edge, cap height at 94dvh and keep the footer above the safe area.
+  Form grids collapse to one column. Inline Field errors announce through role=alert; labels, hints and errors
+  are associated with controls, and invalid controls expose aria-invalid. Retained form adapters preserve
+  validation rules. Modal retains topmost-only focus containment, Escape handling, busy dismissal guards
+  and focus return. Validation remains inline; server failures retain their existing visible error feedback.
 - TimeSeriesExplorer uses the existing ECharts SVG renderer for gradient areas, shaded rounded columns
   and dark floating value tags. It retains exact point readouts.
   Pointer exploration, previous/next controls and Arrow/Home/End keys reach values. An explicit exploration
@@ -283,13 +375,16 @@ The Alpha monogram identifies favicon and startup state; locally bundled SVG ico
 
 ## Do's and Don'ts
 
-- Preserve fields, actions, permissions, translations, date semantics and backend contracts.
-- Keep loading, error, empty, stale and populated states distinct; keep all chart categories accessible.
-- Keep phone targets reachable and test full control visibility at 320px as well as 390px.
-- Keep chart share scope visible and every returned category, product and person reachable through exact-value controls.
-- Keep order-channel colors consistent and chart tags readable across all six light/dark palettes.
-- Keep preparation targets as markers on the actual-time scale, so overruns remain visible.
-- Keep accounting-report money exact and incomplete historical cost visible through warnings and unavailable-value dashes.
-- Do not invent live-looking totals or replace missing financial values with zero.
-- Do not turn a displayed subset into a period-wide denominator or normalized staff measures into performance scores.
-- Do not copy obsolete decorative eyebrows, oversized blank KPI stacks or clipped composer layouts.
+- Do preserve fields, actions, permissions, translations, date semantics and backend contracts.
+- Do keep loading, error, empty, stale and populated states distinct; keep all chart categories accessible.
+- Do retain every register field and action in phone records and details, with reachable 44px controls.
+- Do test full control visibility and long labels at 320px as well as 390px.
+- Do keep related-page navigation permission-filtered and operational styling explicitly scoped.
+- Do keep chart share scope visible and every returned category, product and person reachable through exact-value controls.
+- Do keep order-channel colors consistent and chart tags readable across all six light/dark palettes.
+- Do keep preparation targets as markers on the actual-time scale, so overruns remain visible.
+- Do keep accounting-report money exact and incomplete historical cost visible through warnings and unavailable-value dashes.
+- Don't invent live-looking totals or replace missing financial values with zero.
+- Don't turn a displayed subset into a period-wide denominator or normalized staff measures into performance scores.
+- Don't substitute colored dialog headers for semantic symbols, hide validation errors or repeat record entrances.
+- Don't copy obsolete decorative eyebrows, oversized blank KPI stacks or clipped composer layouts.

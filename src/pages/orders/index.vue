@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
 import { ORDER_STATUS_COLOR as statusColor } from '@/constants/statusColors'
 import axios from '@/plugins/axios'
 import { buildDateParams } from '@/composables/useBusinessDay'
@@ -80,6 +81,9 @@ const bulking = ref(false)
 // Destructive-action confirm dialogs
 type ConfirmKind = 'cancel-one' | 'cancel-bulk' | 'pay-one' | 'pay-bulk' | 'unpay-one'
 const confirmDialog = ref<{ kind: ConfirmKind; order?: any } | null>(null)
+const confirmIsCancel = computed(() => confirmDialog.value?.kind === 'cancel-one' || confirmDialog.value?.kind === 'cancel-bulk')
+const confirmTone = computed(() => confirmIsCancel.value ? 'danger' as const : confirmDialog.value?.kind === 'unpay-one' ? 'warning' as const : 'primary' as const)
+const confirmIcon = computed(() => confirmIsCancel.value ? 'close' : confirmDialog.value?.kind === 'unpay-one' ? 'restore' : 'checkcircle')
 function openConfirm(kind: ConfirmKind, order?: any) {
   confirmDialog.value = { kind, order }
 }
@@ -693,7 +697,7 @@ function onPaymentToggle(p: string) {
 </script>
 
 <template>
-  <div class="page orders-workspace">
+  <WorkspacePage class="orders-workspace">
     <!-- Page header -->
     <PageHeader
       :title="t('Orders')"
@@ -1513,6 +1517,8 @@ function onPaymentToggle(p: string) {
       :open="confirmDialog !== null"
       :width="440"
       class="confirm-modal"
+      :tone="confirmTone"
+      :icon="confirmIcon"
       :title="confirmDialog?.kind === 'cancel-one' ? t('Cancel this order?')
         : confirmDialog?.kind === 'cancel-bulk' ? t('Cancel selected orders?')
           : confirmDialog?.kind === 'pay-one' ? t('Mark this order as paid?')
@@ -1527,59 +1533,35 @@ function onPaymentToggle(p: string) {
     >
       <div
         v-if="confirmDialog"
-        class="row"
-        style="gap:14px;align-items:flex-start;"
+        class="order-confirm"
       >
-        <div
-          class="kpi__icon"
-          :class="(confirmDialog.kind === 'cancel-one' || confirmDialog.kind === 'cancel-bulk') ? 't-error'
-            : confirmDialog.kind === 'unpay-one' ? 't-warning' : 't-success'"
-          style="width:44px;height:44px;flex:0 0 44px;"
+        <p
+          v-if="confirmDialog.order"
+          class="order-confirm__identity num-tabular"
         >
-          <DesignIcon
-            name="alert"
-            :size="22"
-          />
-        </div>
-        <div>
-          <p
-            v-if="confirmDialog.order"
-            style="margin:0;font-weight:600;"
-          >
-            #{{ confirmDialog.order.order_number ?? confirmDialog.order.display_id ?? '—' }}
-            · {{ formatCurrency(confirmDialog.order.total_amount ?? 0) }}
-          </p>
-          <p
-            v-else
-            style="margin:0;font-weight:600;"
-          >
-            {{ t('{count} selected', { count: selected.size }) }}
-          </p>
-          <p
-            class="muted"
-            style="margin:6px 0 0;font-size:14px;"
-          >
-            <template v-if="confirmDialog.kind === 'cancel-one' || confirmDialog.kind === 'cancel-bulk'">
-              {{ t('Cancelling may require a refund and impact the customer.') }}
-            </template>
-            <template v-else-if="confirmDialog.kind === 'unpay-one'">
-              {{ t('The cash leg returns to the drawer and stock is restored.') }}
-            </template>
-            <template v-else>
-              {{ t('No refund flow will be triggered.') }}
-            </template>
-          </p>
-        </div>
+          #{{ confirmDialog.order.order_number ?? confirmDialog.order.display_id ?? '—' }}
+          · {{ formatCurrency(confirmDialog.order.total_amount ?? 0) }}
+        </p>
+        <p
+          v-else
+          class="order-confirm__identity num-tabular"
+        >
+          {{ t('{count} selected', { count: selected.size }) }}
+        </p>
+        <p class="order-confirm__message">
+          <template v-if="confirmDialog.kind === 'cancel-one' || confirmDialog.kind === 'cancel-bulk'">
+            {{ t('Cancelling may require a refund and impact the customer.') }}
+          </template>
+          <template v-else-if="confirmDialog.kind === 'unpay-one'">
+            {{ t('The cash leg returns to the drawer and stock is restored.') }}
+          </template>
+          <template v-else>
+            {{ t('No refund flow will be triggered.') }}
+          </template>
+        </p>
       </div>
 
       <template #footer>
-        <Button
-          variant="ghost"
-          :disabled="bulking || actingOnId !== null"
-          @click="closeConfirm"
-        >
-          {{ t('Close') }}
-        </Button>
         <Button
           v-if="confirmDialog?.kind === 'cancel-one'"
           variant="danger"
@@ -1627,7 +1609,7 @@ function onPaymentToggle(p: string) {
         </Button>
       </template>
     </Modal>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>
@@ -1646,6 +1628,10 @@ function onPaymentToggle(p: string) {
   display: flex;
   align-items: center;
 }
+
+.order-confirm { display: grid; gap: 10px; }
+.order-confirm__identity { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -.02em; }
+.order-confirm__message { margin: 0; padding: 14px 15px; border: 1px solid var(--work-line); border-radius: 13px; background: var(--work-soft); color: var(--text-secondary); font-size: 13px; line-height: 1.6; }
 
 /* Compact filter strip — segmented controls for date + payment */
 .filterstrip {

@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
+
 /* ============================================================
    STOCK ALERTS — alert rule configuration + live low-stock view
    Two sections behind a Segmented switch:
@@ -533,7 +536,7 @@ function shortageOf(row: any): number | null {
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <!-- Header -->
     <PageHeader
       :title="t('stock_alerts.title')"
@@ -582,7 +585,7 @@ function shortageOf(row: any): number | null {
          CONFIGS — alert rules
          ====================================================== -->
     <Card v-if="activeTab === 'configs'">
-      <div class="toolbar toolbar--wrap">
+      <WorkspaceToolbar class="toolbar toolbar--wrap">
         <div class="tb-search">
           <Input
             v-model="searchAlerts"
@@ -602,12 +605,15 @@ function shortageOf(row: any): number | null {
           class="row"
           style="gap:10px;align-items:center;"
         >
-          <Switch v-model="activeOnly" />
+          <Switch
+            v-model="activeOnly"
+            :aria-label="t('stock_alerts.filter.is_active')"
+          />
           <span style="font-size:14px;color:var(--text-secondary);">
             {{ t('stock_alerts.filter.is_active') }}
           </span>
         </div>
-      </div>
+      </WorkspaceToolbar>
 
       <div
         v-if="activeFiltersConfigs.length > 0"
@@ -740,7 +746,7 @@ function shortageOf(row: any): number | null {
          LOW STOCK — read-only live view
          ====================================================== -->
     <Card v-else>
-      <div class="toolbar toolbar--wrap">
+      <WorkspaceToolbar class="toolbar toolbar--wrap">
         <div class="tb-search">
           <Input
             v-model="searchLow"
@@ -756,7 +762,7 @@ function shortageOf(row: any): number | null {
             :options="locationOptions"
           />
         </div>
-      </div>
+      </WorkspaceToolbar>
 
       <div
         v-if="activeFiltersLow.length > 0"
@@ -1086,7 +1092,7 @@ function shortageOf(row: any): number | null {
     >
       {{ snackbarMsg }}
     </VSnackbar>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>

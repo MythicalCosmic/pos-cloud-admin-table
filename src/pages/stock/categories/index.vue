@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
+
 /* ============================================================
    ALPHA POS — Stock Categories
    Design-system primitives only (no Vuetify on the page itself)
@@ -239,7 +242,7 @@ function clearAll() {
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <!-- Page header -->
     <PageHeader
       :title="t('stock_categories_title')"
@@ -259,7 +262,7 @@ function clearAll() {
     <!-- Main card -->
     <div class="card">
       <!-- Toolbar (flex-wrap, collapses gracefully under 900px) -->
-      <div class="toolbar tb-wrap">
+      <WorkspaceToolbar class="toolbar tb-wrap">
         <div class="tb-search">
           <Input
             v-model="search"
@@ -291,7 +294,7 @@ function clearAll() {
           <Switch v-model="treeView" />
           <span>{{ t('Tree view') }}</span>
         </label>
-      </div>
+      </WorkspaceToolbar>
 
       <!-- Active filter chips -->
       <div v-if="hasFilters" class="toolbar" style="padding-top: 0;">
@@ -518,7 +521,7 @@ function clearAll() {
         </Button>
       </template>
     </Modal>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>

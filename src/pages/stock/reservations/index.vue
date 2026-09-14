@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
 import Textarea from '@/components/design/Textarea.vue'
 /* ============================================================
    ALPHA POS — Stock Reservations
@@ -373,7 +375,7 @@ function clearFilters() {
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <PageHeader
       :title="t('stock_reservations_title')"
       :subtitle="t('stock_reservations_subtitle')"
@@ -428,7 +430,7 @@ function clearFilters() {
     <!-- Main card -->
     <div class="card">
       <!-- Toolbar -->
-      <div class="toolbar res-toolbar">
+      <WorkspaceToolbar class="toolbar res-toolbar">
         <div class="grow tb-search">
           <Input
             v-model="search"
@@ -469,7 +471,7 @@ function clearFilters() {
           <Switch v-model="reservedOnly" />
           <span style="font-size:13px;">{{ t('filter_reserved_only') }}</span>
         </label>
-      </div>
+      </WorkspaceToolbar>
 
       <div class="card__divider" />
 
@@ -696,7 +698,7 @@ function clearFilters() {
         </Button>
       </template>
     </Modal>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>

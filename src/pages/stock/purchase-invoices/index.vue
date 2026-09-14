@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
 import type { DataTableColumn } from '@/components/design/DataTable.vue'
 import type { PurchaseInvoiceDetail, PurchaseInvoiceReceiveRequest } from '@/types/purchaseInvoice'
 import Badge from '@/components/design/Badge.vue'
@@ -1107,7 +1108,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="page purchase-invoices-page">
+  <WorkspacePage class="page purchase-invoices-page">
     <PageHeader
       :title="t('Purchase invoices')"
       :subtitle="t('Receive supplier products into stock from one invoice')"
@@ -1961,7 +1962,7 @@ onMounted(async () => {
         </Button>
       </template>
     </Modal>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>

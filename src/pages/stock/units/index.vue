@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
 import { stockApi as axios } from '@/plugins/axios'
 import Badge from '@/components/design/Badge.vue'
 import Button from '@/components/design/Button.vue'
@@ -31,9 +33,11 @@ const deleting = ref(false)
 const selectedItem = ref<any>(null)
 
 const unitTypes = ['WEIGHT', 'VOLUME', 'COUNT', 'LENGTH', 'TIME']
+
 const unitTypeItems = computed(() =>
   unitTypes.map(v => ({ value: v, label: t(`unit_type_${v}`) })),
 )
+
 const typeFilterOptions = computed(() => [
   { value: '', label: t('All Types') },
   ...unitTypeItems.value,
@@ -222,6 +226,7 @@ async function loadAllUnits() {
   try {
     const res = await axios.get('/units/', { params: { per_page: 500 } })
     const d = res.data?.data ?? res.data
+
     allUnits.value = d?.units ?? []
   }
   catch {
@@ -235,8 +240,10 @@ const convForm = ref({
   from_unit_id: '' as string,
   to_unit_id: '' as string,
 })
+
 const convErrors = ref<Record<string, string>>({})
 const converting = ref(false)
+
 const convResult = ref<{
   result: string
   details: {
@@ -275,9 +282,11 @@ const convTypeOptions = computed(() => [
 
 const convFromUnitOptions = computed(() => {
   const type = convForm.value.unit_type
+
   const list = type
     ? allUnits.value.filter(u => u.unit_type === type)
     : allUnits.value
+
   return list.map(u => ({
     value: String(u.id),
     label: `${u.name} (${u.short_name})`,
@@ -286,9 +295,11 @@ const convFromUnitOptions = computed(() => {
 
 const convToUnitOptions = computed(() => {
   const type = effectiveTypeFilter.value
+
   const list = type
     ? allUnits.value.filter(u => u.unit_type === type)
     : allUnits.value
+
   return list.map(u => ({
     value: String(u.id),
     label: `${u.name} (${u.short_name})`,
@@ -299,7 +310,7 @@ const fromUnitObj = computed(() => allUnits.value.find(u => String(u.id) === Str
 const toUnitObj = computed(() => allUnits.value.find(u => String(u.id) === String(convForm.value.to_unit_id)) ?? null)
 
 // clear to_unit if it no longer fits the from_unit type
-watch(() => convForm.value.from_unit_id, (newId) => {
+watch(() => convForm.value.from_unit_id, newId => {
   if (!newId) {
     convForm.value.to_unit_id = ''
     return
@@ -313,7 +324,7 @@ watch(() => convForm.value.from_unit_id, (newId) => {
 })
 
 // when unit_type filter changes, drop selections that don't match
-watch(() => convForm.value.unit_type, (newType) => {
+watch(() => convForm.value.unit_type, newType => {
   if (!newType)
     return
   const from = allUnits.value.find(u => String(u.id) === String(convForm.value.from_unit_id))
@@ -356,10 +367,12 @@ async function doConvert() {
       from_unit_id: Number(convForm.value.from_unit_id),
       to_unit_id: Number(convForm.value.to_unit_id),
     }
+
     const res = await axios.post('/units/convert/', payload)
     const d = res.data?.data ?? res.data
     const result = String(d?.result ?? '')
     const details = d?.details ?? {}
+
     convResult.value = {
       result,
       details: {
@@ -389,6 +402,7 @@ async function doConvert() {
 
 function swapUnits() {
   const tmp = convForm.value.from_unit_id
+
   convForm.value.from_unit_id = convForm.value.to_unit_id
   convForm.value.to_unit_id = tmp
 }
@@ -427,11 +441,21 @@ function fmtTime(iso: string) {
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <PageHeader
       :title="t('units_ext_title')"
       :subtitle="t('units_ext_subtitle')"
-    />
+    >
+      <template #actions>
+        <Button
+          variant="primary"
+          icon="plus"
+          @click="openCreate"
+        >
+          {{ t('Add Unit') }}
+        </Button>
+      </template>
+    </PageHeader>
 
     <!-- ============ CONVERSION CALCULATOR ============ -->
     <div
@@ -713,7 +737,7 @@ function fmtTime(iso: string) {
 
     <!-- ============ UNITS CRUD ============ -->
     <div class="card">
-      <div
+      <WorkspaceToolbar
         class="toolbar"
         style="flex-wrap: wrap;"
       >
@@ -736,15 +760,7 @@ function fmtTime(iso: string) {
         </div>
 
         <div style="flex: 1;" />
-
-        <Button
-          variant="primary"
-          icon="plus"
-          @click="openCreate"
-        >
-          {{ t('Add Unit') }}
-        </Button>
-      </div>
+      </WorkspaceToolbar>
 
       <div class="card__divider" />
 
@@ -959,7 +975,7 @@ function fmtTime(iso: string) {
         </Button>
       </template>
     </Modal>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>

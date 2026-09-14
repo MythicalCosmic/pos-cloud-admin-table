@@ -1,4 +1,11 @@
 {
+  "workspace_move_up": "Yuqoriga ko‘chirish",
+  "workspace_move_down": "Pastga ko‘chirish",
+  "workspace_purchasing": "Xaridlar",
+  "workspace_inventory": "Zaxiralar",
+  "workspace_stock_movement": "Zaxiralar harakati",
+  "workspace_related_pages": "Bog‘liq sahifalar",
+  "workspace_search_filters": "Qidiruv va filtrlar",
   "Marker size = avg order value": "Belgi o‘lchami — o‘rtacha chek",
   "dash_channel_incomplete": "Ayrim buyurtma manbalari bo‘yicha sonlar olinmadi. Yetishmayotgan qiymatlar mavjud emas deb ko‘rsatiladi.",
   "dash_channel_title": "Buyurtma manbalari",

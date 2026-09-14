@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { modalStack } from './modalStack'
+import DesignIcon from './DesignIcon.vue'
 import IconAction from './IconAction.vue'
 import { designId } from './ids'
+import { workspaceContext } from './workspace/context'
+import { workspaceForPath } from './workspace/navigation'
 
 const props = withDefaults(defineProps<Props>(), {
   closeOnBackdrop: true,
@@ -15,11 +18,17 @@ const emit = defineEmits<{
 
 defineOptions({ inheritAttrs: false })
 
+const injectedWorkspace = inject(workspaceContext, false)
+const route = useRoute()
+const workspace = computed(() => injectedWorkspace || workspaceForPath(route.path).paths.length > 0)
+
 interface Props {
   open: boolean
   busy?: boolean
   title?: string
   subtitle?: string
+  icon?: string
+  tone?: 'primary' | 'warning' | 'danger'
   width?: number | string
   closeOnBackdrop?: boolean
   closeOnEsc?: boolean
@@ -34,6 +43,7 @@ const titleId = `${modalId}-title`
 const subtitleId = `${modalId}-subtitle`
 const handlesKeyboard = computed(() => props.open && modalStack.value.at(-1) === modalId)
 const layer = computed(() => 1000 + Math.max(0, modalStack.value.indexOf(modalId)) * 10)
+const modalIcon = computed(() => props.icon || workspaceForPath(route.path).icon)
 
 function removeFromStack() {
   modalStack.value = modalStack.value.filter(id => id !== modalId)
@@ -143,11 +153,12 @@ onBeforeUnmount(() => {
 
 <template>
   <Teleport to="body">
-    <Transition name="fade">
+    <Transition :name="workspace ? 'workspace-dialog' : 'fade'">
       <div
         v-if="open"
         v-bind="$attrs"
         class="overlay"
+        :class="{ 'workspace-overlay': workspace }"
         :style="{ zIndex: layer }"
         @mousedown="onBackdropDown"
       >
@@ -162,25 +173,40 @@ onBeforeUnmount(() => {
           :aria-describedby="subtitle ? subtitleId : undefined"
           tabindex="-1"
           :style="maxWidthStyle"
+          :data-tone="workspace ? tone || 'primary' : undefined"
         >
           <div class="modal__head">
-            <div style="flex: 1; min-width: 0;">
-              <h3
-                v-if="title"
-                :id="titleId"
-                class="modal__title"
-              >
-                {{ title }}
-              </h3>
+            <div class="modal__identity">
               <div
-                v-if="subtitle"
-                :id="subtitleId"
-                class="modal__sub"
+                v-if="workspace"
+                class="modal__symbol"
+                aria-hidden="true"
               >
-                {{ subtitle }}
+                <DesignIcon
+                  :name="modalIcon"
+                  :size="24"
+                  :weight="1.6"
+                />
+              </div>
+              <div class="modal__copy">
+                <h3
+                  v-if="title"
+                  :id="titleId"
+                  class="modal__title"
+                >
+                  {{ title }}
+                </h3>
+                <div
+                  v-if="subtitle"
+                  :id="subtitleId"
+                  class="modal__sub"
+                >
+                  {{ subtitle }}
+                </div>
               </div>
             </div>
             <IconAction
+              class="modal__close"
               icon="close"
               :disabled="busy"
               :title="t('Close')"
@@ -210,5 +236,48 @@ onBeforeUnmount(() => {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+.modal__identity {
+  display: flex;
+  flex: 1;
+  align-items: flex-start;
+  gap: 14px;
+  min-width: 0;
+}
+
+.modal__copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.workspace-dialog-enter-active,
+.workspace-dialog-leave-active {
+  transition: opacity 220ms cubic-bezier(.2, .8, .2, 1);
+}
+
+.workspace-dialog-enter-active .modal,
+.workspace-dialog-leave-active .modal {
+  transition: opacity 220ms cubic-bezier(.2, .8, .2, 1), transform 220ms cubic-bezier(.2, .8, .2, 1);
+}
+
+.workspace-dialog-enter-from,
+.workspace-dialog-leave-to {
+  opacity: 0;
+}
+
+.workspace-dialog-enter-from .modal,
+.workspace-dialog-leave-to .modal {
+  opacity: 0;
+  transform: translateY(18px) scale(.975);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workspace-dialog-enter-active,
+  .workspace-dialog-leave-active,
+  .workspace-dialog-enter-active .modal,
+  .workspace-dialog-leave-active .modal {
+    transition-duration: 0s;
+  }
 }
 </style>

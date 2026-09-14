@@ -150,6 +150,12 @@ main.page-shell > .page {
   width: 100%;
 }
 
+@media (max-width: 768px) {
+  main.page-shell {
+    padding-block-end: calc(var(--tabbar-h, 62px) + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+
 .fade-enter-active, .fade-leave-active { transition: opacity .15s; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
 </style>

@@ -4,6 +4,7 @@ import DesignIcon from './DesignIcon.vue'
 import { fieldContextKey } from './fieldContext'
 import { designId } from './ids'
 import { cx } from './utils'
+import { workspaceContext } from './workspace/context'
 
 interface Option {
   value: string
@@ -34,6 +35,7 @@ defineOptions({ inheritAttrs: false })
 
 const attrs = useAttrs()
 const field = inject(fieldContextKey, null)
+const workspace = inject(workspaceContext, false)
 const { t } = useI18n({ useScope: 'global' })
 const root = ref<HTMLElement | null>(null)
 const menu = ref<HTMLElement | null>(null)
@@ -244,6 +246,7 @@ onBeforeUnmount(() => {
         v-if="open"
         ref="menu"
         class="search-select__menu"
+        :class="{ 'workspace-popover': workspace }"
         :style="menuStyle"
         @click.stop
       >

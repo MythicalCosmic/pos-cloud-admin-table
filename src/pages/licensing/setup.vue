@@ -109,20 +109,11 @@ onBeforeUnmount(() => clearTimeout(redirectTimer.value))
           <span><b>02</b>{{ t('Sign in') }}</span>
           <span><b>03</b>{{ t('Dashboard') }}</span>
         </div>
-        <div
-          class="license-setup__art"
-          aria-hidden="true"
-        >
-          <span /><span /><span /><DesignIcon
-            name="store"
-            :size="76"
-          />
-        </div>
       </section>
       <section class="license-setup__form">
         <div class="license-emblem">
           <DesignIcon
-            name="key"
+            name="ws-license"
             :size="26"
           />
         </div>
@@ -209,6 +200,7 @@ onBeforeUnmount(() => clearTimeout(redirectTimer.value))
             {{ error }}
           </p>
           <Button
+            variant="primary"
             type="submit"
             icon="arrowright"
             :loading="submitting"

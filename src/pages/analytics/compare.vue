@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
 import PageHeader from '@/components/design/PageHeader.vue'
 
 /* ============================================================
@@ -168,7 +169,7 @@ const productMovers = computed<MoverRow[]>(() =>
 </script>
 
 <template>
-  <div class="page cmp">
+  <WorkspacePage class="page cmp">
     <PageHeader
       :title="t('Compare Periods')"
       :subtitle="t('What changed between two periods — and by how much')"
@@ -270,7 +271,7 @@ const productMovers = computed<MoverRow[]>(() =>
         :total-a="totalA"
       />
     </template>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>

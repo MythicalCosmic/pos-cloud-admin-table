@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
+
 /* ============================================================
    HR SALARIES — monthly payroll: generate, approve, pay
    Plain HTML + design primitives. No Vuetify on this surface.
@@ -615,7 +618,7 @@ function employeeName(row: any): string {
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <PageHeader
       :title="t('Salaries')"
       :subtitle="t('salary_subtitle')"
@@ -659,7 +662,7 @@ function employeeName(row: any): string {
 
     <!-- Toolbar + table -->
     <Card>
-      <div class="toolbar toolbar--wrap">
+      <WorkspaceToolbar class="toolbar toolbar--wrap">
         <div class="tb-filter">
           <Select
             v-model="statusFilter"
@@ -684,7 +687,7 @@ function employeeName(row: any): string {
             :options="employeeSelectOptions"
           />
         </div>
-      </div>
+      </WorkspaceToolbar>
 
       <!-- Filter chips -->
       <div
@@ -1079,14 +1082,6 @@ function employeeName(row: any): string {
         <span class="sal-net__value">{{ formatCurrency(calcNet) }}</span>
       </div>
 
-      <template #footer>
-        <Button
-          variant="ghost"
-          @click="itemDialog = false"
-        >
-          {{ t('Close') }}
-        </Button>
-      </template>
     </Modal>
 
     <!-- Approve-all modal -->
@@ -1170,7 +1165,7 @@ function employeeName(row: any): string {
     >
       {{ snackbarMsg }}
     </VSnackbar>
-  </div>
+  </WorkspacePage>
 </template>
 
 <route lang="yaml">

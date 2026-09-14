@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
 import Textarea from '@/components/design/Textarea.vue'
 /* ============================================================
    ALPHA POS — Recipe drill-down
@@ -539,7 +541,7 @@ function onBatchMultiplierInput(v: string) {
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <!-- Page header -->
     <PageHeader
       :title="pageTitle"
@@ -919,7 +921,7 @@ function onBatchMultiplierInput(v: string) {
 
       <!-- Batch multiplier toolbar (shared by availability + cost) -->
       <div class="card" style="margin-bottom: var(--sp-5);">
-        <div class="toolbar recipe-bm-toolbar" style="gap: var(--sp-3); align-items: center; flex-wrap: wrap;">
+        <WorkspaceToolbar class="toolbar recipe-bm-toolbar" style="gap: var(--sp-3); align-items: center; flex-wrap: wrap;">
           <div style="font-weight: var(--fw-semibold); font-size: var(--fs-md);">
             {{ t('recipe_batch_multiplier') }}
           </div>
@@ -946,7 +948,7 @@ function onBatchMultiplierInput(v: string) {
               {{ t(availabilitySummaryKey) }}
             </Badge>
           </div>
-        </div>
+        </WorkspaceToolbar>
       </div>
 
       <!-- Availability card -->
@@ -1345,7 +1347,7 @@ function onBatchMultiplierInput(v: string) {
         </Button>
       </template>
     </Modal>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>

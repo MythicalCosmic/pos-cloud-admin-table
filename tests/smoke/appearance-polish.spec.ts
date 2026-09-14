@@ -113,6 +113,8 @@ test('unknown saved palette safely falls back to Blue', async ({ page }) => {
   await setup(page, 'en', 'retired-palette')
   await page.goto('/sessions')
   await expect(page.locator('html')).toHaveAttribute('data-palette', 'blue')
+  await expect(page.getByRole('button', { name: copies.en.Language, exact: true })).toBeVisible()
+  await expect(page.getByRole('switch', { name: copies.en.sessions_current_only, exact: true })).toBeVisible()
   await expect(page.locator('.data-table')).toContainText('10.0.0.18')
 })
 
@@ -120,6 +122,7 @@ test('phone session filters can be removed with a named keyboard button without 
   await setup(page)
   await page.setViewportSize({ width: 320, height: 820 })
   await page.goto('/sessions')
+  await page.getByRole('button', { name: 'Search & filters', exact: true }).click()
   const search = page.getByRole('textbox', { name: copies.en.sessions_search_placeholder, exact: true })
   await search.fill('Front desk')
   await expect(page.locator('.mobile-record')).toHaveCount(1)
@@ -177,7 +180,10 @@ for (const [route, action] of formCases) test(`${route} dialog preserves sizing,
     await expect(page.locator('.overlay.hr-events-modal--lg')).toBeVisible()
     await expect(panel).toHaveCSS('max-width', '640px')
     await panel.getByRole('button', { name: copies.ru[action], exact: true }).click()
-    await expect(panel.locator('[aria-invalid="true"]').first()).toBeVisible()
+    const firstInvalid = panel.locator('[aria-invalid="true"]').first()
+    await expect(firstInvalid).toBeVisible()
+    await expect(firstInvalid).toBeFocused()
+    await expect(page.locator('.alpha-toast')).toHaveCount(0)
   }
   const textarea = panel.locator('textarea:not([disabled]):not([readonly])').first()
   if (await textarea.count()) await textarea.fill('Подробное описание для проверки длинных значений, переноса строк и доступности элементов формы.')

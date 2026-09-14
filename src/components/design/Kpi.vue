@@ -2,7 +2,12 @@
 import DesignIcon from './DesignIcon.vue'
 import Delta from './Delta.vue'
 import { fmtAbbr, fmtNum, useFormatMode } from './utils/format'
-import { cx, type Tone } from './utils'
+import { type Tone, cx } from './utils'
+import { workspaceContext } from './workspace/context'
+
+const props = defineProps<Props>()
+
+const workspace = inject(workspaceContext, false)
 
 interface KpiData {
   label: string
@@ -19,11 +24,10 @@ interface Props {
   data: KpiData
 }
 
-const props = defineProps<Props>()
-
 const tone = computed<Tone>(() => props.data.tone || 'primary')
 
 const { mode } = useFormatMode()
+
 const display = computed<{ text: string; unit?: string }>(() => {
   const raw = props.data.value
   if (raw === null || raw === undefined)
@@ -35,12 +39,16 @@ const display = computed<{ text: string; unit?: string }>(() => {
     const fmt = mode.value === 'short' ? fmtAbbr(n) : fmtNum(n)
     return { text: fmt, unit: 'UZS' }
   }
-  return { text: mode.value === 'short' && Math.abs(n) >= 10000 ? fmtAbbr(n) : fmtNum(n) }
+  return { text: (mode.value === 'short' && Math.abs(n) >= 10000) ? fmtAbbr(n) : fmtNum(n) }
 })
 </script>
 
 <template>
-  <div class="kpi kpi--workspace">
+  <div
+    class="kpi kpi--workspace"
+    :class="{ 'workspace-metric': workspace }"
+    :data-tone="workspace ? tone : undefined"
+  >
     <div class="kpi__top">
       <div
         v-if="data.icon"

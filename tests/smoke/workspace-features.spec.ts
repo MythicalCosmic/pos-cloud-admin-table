@@ -1,4 +1,5 @@
 import { type Page, expect, test } from '@playwright/test'
+import { expectControlsToFit } from './helpers/controlGeometry'
 
 test.setTimeout(45_000)
 interface Fixture { fail?: boolean; gate?: Promise<void>; forecastReason?: string }
@@ -72,6 +73,21 @@ test('notification tags can be added and individually removed without losing the
   await expect(page.getByRole('button', { name: 'Chat IDs', exact: true })).toContainText('1003')
   await page.getByRole('tab', { name: 'Logs', exact: true }).click()
   await expect(page.getByText('Sent successfully', { exact: true })).toBeVisible()
+
+  state.fail = false
+  await page.getByRole('tab', { name: 'Templates', exact: true }).click()
+  await page.getByRole('button', { name: 'Edit', exact: true }).click()
+  const editor = page.getByRole('dialog', { name: 'Edit notification template', exact: true })
+  await expect(editor).toBeVisible()
+  await editor.getByRole('textbox', { name: 'Sample context (JSON)', exact: true }).fill('{"first_name":"Ali"}')
+  await editor.getByRole('button', { name: 'Render preview', exact: true }).click()
+  await expect(editor.getByText('Hello, Ali', { exact: true })).toBeVisible()
+  await page.setViewportSize({ width: 320, height: 844 })
+  await expectControlsToFit(page)
+  await page.screenshot({ path: '/tmp/alpha-notification-template-editor-320.png', animations: 'disabled' })
+  await editor.getByRole('button', { name: 'Save', exact: true }).click()
+  await expect(editor).toHaveCount(0)
+  expect(calls.find(call => call.method === 'PUT' && call.path.endsWith('/templates/7/'))?.body).toMatchObject({ name: 'Daily summary', language: 'en', is_enabled: true })
 })
 
 test('license activation preserves a numeric plan and guards failed requests', async ({ page }) => {

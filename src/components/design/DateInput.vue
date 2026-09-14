@@ -2,6 +2,7 @@
 import DesignIcon from './DesignIcon.vue'
 import { designId } from './ids'
 import { fieldContextKey } from './fieldContext'
+import { workspaceContext } from './workspace/context'
 
 const props = withDefaults(defineProps<{
   modelValue?: string | number | null
@@ -23,6 +24,7 @@ const classes = computed(() => String(attrs.class || '').split(/\s+/).filter(Boo
 const controlClasses = computed(() => classes.value.filter(name => name.startsWith('control--')))
 const wrapperClasses = computed(() => classes.value.filter(name => name !== 'control' && !name.startsWith('control--')))
 const field = inject(fieldContextKey, null)
+const workspace = inject(workspaceContext, false)
 const { t, locale } = useI18n({ useScope: 'global' })
 const id = designId('date-input')
 const trigger = ref<HTMLButtonElement | null>(null)
@@ -283,6 +285,7 @@ onBeforeUnmount(() => { window.removeEventListener('resize', measure); popup.val
       <dialog
         ref="popup"
         class="calendar-popover"
+        :class="{ 'workspace-popover': workspace }"
         :style="style"
         :aria-label="label"
         @cancel.prevent.stop="close"

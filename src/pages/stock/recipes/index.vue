@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
+
 /* ============================================================
    ALPHA POS — Stock / Recipes
    Plain HTML + design classes (design-shell.css). Uses the
@@ -340,7 +343,7 @@ const formDifficultyStr = computed<string>({
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <PageHeader
       :title="t('recipes_title')"
       :subtitle="t('recipes_subtitle')"
@@ -358,7 +361,7 @@ const formDifficultyStr = computed<string>({
 
     <div class="card">
       <!-- Toolbar (flex-wrap built into .toolbar) -->
-      <div class="toolbar">
+      <WorkspaceToolbar class="toolbar">
         <div class="grow toolbar-search">
           <Input
             v-model="search"
@@ -404,7 +407,7 @@ const formDifficultyStr = computed<string>({
           <Switch v-model="showOldVersions" />
           <span>{{ t('Show old versions') }}</span>
         </label>
-      </div>
+      </WorkspaceToolbar>
 
       <div class="card__divider" />
 
@@ -674,7 +677,7 @@ const formDifficultyStr = computed<string>({
     >
       {{ snackbarMsg }}
     </VSnackbar>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>

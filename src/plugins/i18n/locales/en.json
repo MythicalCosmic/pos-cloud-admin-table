@@ -1,4 +1,11 @@
 {
+  "workspace_move_up": "Move up",
+  "workspace_move_down": "Move down",
+  "workspace_purchasing": "Purchasing",
+  "workspace_inventory": "Inventory",
+  "workspace_stock_movement": "Stock movement",
+  "workspace_related_pages": "Related pages",
+  "workspace_search_filters": "Search & filters",
   "Marker size = avg order value": "Marker size = avg order value",
   "dash_channel_incomplete": "Some channel counts were not reported. Missing values are shown as unavailable.",
   "dash_channel_title": "Order channels",

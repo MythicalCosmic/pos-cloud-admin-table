@@ -38,12 +38,34 @@ for (const route of routes.filter(route => !['/login'].includes(route))) {
     await installFixture(page, process.env.QA_LOCALE || 'ru', process.env.QA_THEME || 'dark', process.env.QA_PALETTE || 'blue')
     await page.setViewportSize({ width: 1440, height: 1000 })
     await page.goto(route)
-    await expect(page.locator('#app-loader')).toHaveCount(0)
+    await expect(page.locator('#app-loader')).toHaveCount(0, { timeout: 15_000 })
     await expect(page.locator('main, .page, .app-main, .public-state').first()).toBeVisible()
+    const switches = page.getByRole('switch')
+    expect(await page.getByRole('switch', { name: /\S/ }).count()).toBe(await switches.count())
     await page.screenshot({ path: `/tmp/smart-pos-route-${route.replace(/\W/g, '-') || 'root'}-desktop.png`, animations: 'disabled' })
     for (const width of [1440, 390, 320]) {
       await page.setViewportSize({ width, height: 900 })
       await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true)
+      if (width <= 768 && await page.locator('.workspace-heading__nav').count()) {
+        const nav = page.locator('.workspace-heading__nav')
+        const active = nav.locator('[aria-current="page"]')
+        await expect(active).toHaveCount(1)
+        await expect.poll(async () => {
+          const [navBox, activeBox] = await Promise.all([nav.boundingBox(), active.boundingBox()])
+          return !!navBox && !!activeBox && activeBox.x >= navBox.x - 1 && activeBox.x + activeBox.width <= navBox.x + navBox.width + 1
+        }).toBe(true)
+      }
+      if (width <= 768 && await page.locator('.mobile-tabbar').count()) {
+        const clearance = await page.evaluate(() => {
+          const main = document.querySelector<HTMLElement>('main.page-shell')
+          const tabbar = document.querySelector<HTMLElement>('.mobile-tabbar')
+          return main && tabbar
+            ? { padding: Number.parseFloat(getComputedStyle(main).paddingBottom), tabbar: tabbar.getBoundingClientRect().height }
+            : null
+        })
+        expect(clearance).not.toBeNull()
+        expect(clearance!.padding).toBeGreaterThanOrEqual(clearance!.tabbar)
+      }
       const native = await page.locator('main select, main input[type="date"], main input[type="month"], main input[type="time"], main input[type="datetime-local"]').count()
       expect(native).toBe(0)
       await expectControlsToFit(page)

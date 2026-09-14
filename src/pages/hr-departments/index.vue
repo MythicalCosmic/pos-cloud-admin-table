@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
+
 /* ============================================================
    HR DEPARTMENTS — organisational units, manager assignment
    Plain HTML + design primitives. No Vuetify on this surface.
@@ -294,7 +297,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <PageHeader
       :title="t('Departments')"
       :subtitle="t('department_subtitle')"
@@ -320,7 +323,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
 
     <!-- Toolbar + table -->
     <Card>
-      <div class="toolbar toolbar--wrap">
+      <WorkspaceToolbar class="toolbar toolbar--wrap">
         <div class="tb-search">
           <Input
             v-model="search"
@@ -336,7 +339,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
             :options="statusOptions"
           />
         </div>
-      </div>
+      </WorkspaceToolbar>
 
       <!-- Filter chips -->
       <div
@@ -554,7 +557,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
     >
       {{ snackbarMsg }}
     </VSnackbar>
-  </div>
+  </WorkspacePage>
 </template>
 
 <route lang="yaml">

@@ -64,6 +64,10 @@ test('customer settings discard unsaved edits and show guarded server errors', a
   expect(calls.filter(call => call.method === 'PUT')).toHaveLength(0)
   await page.getByRole('button', { name: 'Loyalty Settings', exact: true }).click()
   await expect(page.getByLabel('Reward description')).toHaveValue('Free coffee')
+  await page.setViewportSize({ width: 320, height: 844 })
+  const settingsDialog = page.getByRole('dialog', { name: 'Loyalty Settings', exact: true })
+  await expect.poll(() => settingsDialog.evaluate(node => node.scrollWidth <= node.clientWidth + 1)).toBe(true)
+  await page.screenshot({ path: '/tmp/alpha-loyalty-settings-320.png', animations: 'disabled' })
   state.fail = true
   let release!: () => void
   state.gate = new Promise(resolve => { release = resolve })
@@ -95,6 +99,15 @@ test('phone orders keep filters, complete details, selection and mutation errors
   await page.screenshot({ path: '/tmp/alpha-orders-details-phone.png', animations: 'disabled' })
   await page.keyboard.press('Escape')
   await expect(card.getByRole('button', { name: 'Details', exact: true })).toBeFocused()
+  const pay = card.getByRole('button', { name: 'Pay', exact: true })
+
+  await pay.click()
+  const paymentConfirm = page.getByRole('dialog', { name: 'Mark this order as paid?', exact: true })
+
+  await expect(paymentConfirm.locator('.modal__symbol')).toBeVisible()
+  await page.screenshot({ path: '/tmp/alpha-orders-confirm-phone.png', animations: 'disabled' })
+  await page.keyboard.press('Escape')
+  await expect(pay).toBeFocused()
   await card.getByRole('checkbox').click()
   await expect(page.locator('.bulkbar')).toContainText('1 selected')
   let release!: () => void

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
 import axios from '@/plugins/axios'
 import Badge from '@/components/design/Badge.vue'
 import Button from '@/components/design/Button.vue'
@@ -68,9 +70,6 @@ const formActive = computed<boolean>({
 // Color mode: 'none' = no color (empty), 'pick' = user chose a color
 const colorMode = ref<'none' | 'pick'>('none')
 
-// Color menu
-const colorMenuOpen = ref(false)
-
 // Intensity: controls how vivid the color appears (blends with white)
 const intensityOptions = [
   { label: '70%', value: 0.7 },
@@ -83,6 +82,7 @@ const intensity = ref(0.7)
 
 // Base color (full saturation) — the raw picked color before intensity
 const baseColor = ref('#e74c3c')
+const colorPresets = ['#2563EB', '#7C3AED', '#DB2777', '#E74C3C', '#EA580C', '#CA8A04', '#059669', '#0891B2']
 
 function hexToRgb(hex: string) {
   const r = parseInt(hex.slice(1, 3), 16)
@@ -112,6 +112,10 @@ function setPickedColor(color: string | null) {
   baseColor.value = color
   colorMode.value = 'pick'
   form.value.color = applyIntensity(color, intensity.value)
+}
+
+function onNativeColorInput(event: Event) {
+  setPickedColor((event.target as HTMLInputElement).value)
 }
 
 function setIntensity(value: number) {
@@ -212,7 +216,20 @@ watch([statusFilter, includeDeleted, sortBy], () => {
 })
 
 // ---- drag & drop ----
+const reordering = ref(false)
+
+function moveCategory(index: number, direction: number) {
+  if (!manualSort.value || reordering.value || index + direction < 0 || index + direction >= categories.value.length)
+    return
+  draggedIndex.value = index
+  onDrop(index + direction)
+}
+
 function onDragStart(e: DragEvent, index: number) {
+  if (reordering.value) {
+    e.preventDefault()
+    return
+  }
   draggedIndex.value = index
   if (e.dataTransfer)
     e.dataTransfer.effectAllowed = 'move'
@@ -230,6 +247,8 @@ function onDragLeave() {
 }
 
 function onDrop(targetIndex: number) {
+  if (reordering.value)
+    return
   if (draggedIndex.value === null || draggedIndex.value === targetIndex) {
     draggedIndex.value = null
     dragOverIndex.value = null
@@ -252,6 +271,10 @@ function onDragEnd() {
 }
 
 async function saveOrder(items: any[]) {
+  if (reordering.value)
+    return
+  reordering.value = true
+
   const pageOffset = (page.value - 1) * itemsPerPage.value
   try {
     await axios.post('/categories/reorder', {
@@ -263,6 +286,7 @@ async function saveOrder(items: any[]) {
     notify(e?.response?.data?.message ?? t('Failed to update category order'), 'error')
     await loadCategories()
   }
+  finally { reordering.value = false }
 }
 
 // ---- quick status toggle (per-card, no modal) ----
@@ -489,7 +513,7 @@ function clearAllFilters() {
 </script>
 
 <template>
-  <div class="page categories-page">
+  <WorkspacePage class="page categories-page">
     <!-- Page header -->
     <PageHeader
       :title="t('Categories')"
@@ -508,7 +532,7 @@ function clearAllFilters() {
 
     <!-- KPI strip -->
     <div
-      class="grid cols-4"
+      class="grid cols-4 categories-kpis"
       style="margin-bottom: var(--sp-5);"
     >
       <Kpi :data="kpiTotal" />
@@ -518,8 +542,8 @@ function clearAllFilters() {
     </div>
 
     <!-- Toolbar -->
-    <Card>
-      <div class="toolbar toolbar--wrap">
+    <Card class-name="category-catalog workspace-register">
+      <WorkspaceToolbar class="toolbar toolbar--wrap">
         <div class="tb-search">
           <Input
             v-model="search"
@@ -549,12 +573,15 @@ function clearAllFilters() {
           class="row tb-switch"
           style="gap:10px;align-items:center;"
         >
-          <Switch v-model="includeDeleted" />
+          <Switch
+            v-model="includeDeleted"
+            :aria-label="t('Show deleted categories')"
+          />
           <span style="font-size:13px;color:var(--text-secondary);font-weight:500;">
             {{ t('Show deleted categories') }}
           </span>
         </div>
-      </div>
+      </WorkspaceToolbar>
 
       <!-- Filter chips -->
       <div
@@ -597,10 +624,7 @@ function clearAllFilters() {
       <div class="card__divider" />
 
       <!-- Card grid -->
-      <div
-        class="category-grid"
-        style="padding: var(--sp-4);"
-      >
+      <div class="category-grid">
         <!-- Skeleton cards on initial load -->
         <template v-if="loading && categories.length === 0">
           <div
@@ -640,22 +664,26 @@ function clearAllFilters() {
             @dragleave="onDragLeave"
             @drop.prevent="onDrop(index)"
             @dragend="onDragEnd"
-            @click="openEdit(cat)"
           >
-            <div
-              class="category-card__stripe"
-              :style="{ background: cardColor(cat) }"
-            />
             <div class="category-card__body">
-              <div
-                class="category-card__icon"
-                :style="{ background: cardColor(cat) }"
-              />
+              <div class="category-card__icon">
+                <span :style="{ background: cardColor(cat) }" /><DesignIcon
+                  name="ws-menu"
+                  :size="25"
+                  :weight="1.5"
+                />
+              </div>
               <div
                 class="row"
                 style="gap:4px;align-items:center;justify-content:space-between;margin-top:8px;"
               >
-                <span class="category-card__name">{{ cat.name }}</span>
+                <button
+                  type="button"
+                  class="category-card__name"
+                  @click.stop="openEdit(cat)"
+                >
+                  {{ cat.name }}
+                </button>
                 <DesignIcon
                   v-if="manualSort"
                   name="grid"
@@ -693,6 +721,23 @@ function clearAllFilters() {
                   v-if="cat.product_count !== undefined && cat.product_count !== null"
                   class="mono category-card__order"
                 >{{ t('{n} products', { n: cat.product_count }) }}</span>
+              </div>
+              <div
+                v-if="manualSort"
+                class="category-card__reorder"
+              >
+                <IconAction
+                  icon="arrowup"
+                  :title="t('workspace_move_up')"
+                  :disabled="index === 0 || reordering"
+                  @click.stop="moveCategory(index, -1)"
+                />
+                <IconAction
+                  icon="arrowdown"
+                  :title="t('workspace_move_down')"
+                  :disabled="index === categories.length - 1 || reordering"
+                  @click.stop="moveCategory(index, 1)"
+                />
               </div>
             </div>
           </div>
@@ -917,41 +962,37 @@ function clearAllFilters() {
           :label="t('Color')"
           class="span-2"
         >
-          <div
-            class="row"
-            style="gap:12px;align-items:center;flex-wrap:wrap;"
-          >
-            <VMenu
-              v-model="colorMenuOpen"
-              :close-on-content-click="false"
-              location="bottom start"
-            >
-              <template #activator="{ props: menuProps }">
-                <div
-                  v-bind="menuProps"
-                  class="color-dot"
-                  :style="{ background: form.color || 'var(--surface-inset)' }"
+          <div class="category-color-picker">
+            <label class="category-color-picker__custom">
+              <input
+                :value="baseColor"
+                type="color"
+                :aria-label="t('Color')"
+                @input="onNativeColorInput"
+              >
+              <span :style="{ background: form.color || 'var(--surface-inset)' }">
+                <DesignIcon
+                  name="pencil"
+                  :size="15"
                 />
-              </template>
-              <VColorPicker
-                :model-value="baseColor"
-                mode="hex"
-                :modes="['hex']"
-                show-swatches
-                elevation="0"
-                @update:model-value="setPickedColor($event)"
+              </span>
+            </label>
+            <div class="category-color-picker__presets">
+              <button
+                v-for="preset in colorPresets"
+                :key="preset"
+                type="button"
+                :title="preset"
+                :aria-pressed="baseColor.toLowerCase() === preset.toLowerCase()"
+                :class="{ 'is-active': baseColor.toLowerCase() === preset.toLowerCase() && colorMode === 'pick' }"
+                :style="{ background: preset }"
+                @click="setPickedColor(preset)"
               />
-            </VMenu>
+            </div>
             <span
-              v-if="form.color"
-              class="mono"
-              style="font-size:13px;color:var(--text-secondary);"
-            >{{ form.color.toUpperCase() }}</span>
-            <span
-              v-else
-              style="font-size:13px;color:var(--text-tertiary);"
-            >{{ t('No Color') }}</span>
-            <span style="flex:1;" />
+              class="category-color-picker__value mono"
+              :class="{ 'is-empty': !form.color }"
+            >{{ form.color ? form.color.toUpperCase() : t('No Color') }}</span>
             <IconAction
               v-if="form.color"
               icon="close"
@@ -995,7 +1036,10 @@ function clearAllFilters() {
         >
           {{ t('Delete') }}
         </Button>
-        <span style="flex:1;" />
+        <span
+          v-if="editingCategory"
+          style="flex:1;"
+        />
         <Button
           variant="primary"
           icon="check"
@@ -1061,7 +1105,7 @@ function clearAllFilters() {
     >
       {{ snackbarMsg }}
     </VSnackbar>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>
@@ -1167,7 +1211,8 @@ function clearAllFilters() {
 .status-toggle {
   display: inline-flex;
   align-items: center;
-  padding: 0;
+  min-block-size: 44px;
+  padding: 0 6px;
   margin: 0;
   border: 0;
   background: none;
@@ -1215,6 +1260,24 @@ function clearAllFilters() {
 .status-field__hint {
   font-size: 12px;
   color: var(--text-tertiary);
+}
+
+.category-color-picker { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 12px; min-inline-size: 0; padding: 11px; border: 1px solid var(--work-line); border-radius: 14px; background: var(--work-soft); }
+.category-color-picker__custom { position: relative; display: grid; place-items: center; inline-size: 42px; block-size: 42px; border: 1px solid var(--work-line-strong); border-radius: 12px; background: var(--surface); cursor: pointer; overflow: hidden; }
+.category-color-picker__custom input { position: absolute; inline-size: 1px; block-size: 1px; opacity: 0; }
+.category-color-picker__custom > span { display: grid; place-items: center; inline-size: 30px; block-size: 30px; border: 2px solid rgb(255 255 255 / 65%); border-radius: 9px; color: #fff; box-shadow: 0 2px 8px rgb(15 23 42 / 20%); }
+.category-color-picker__custom:focus-within { outline: 2px solid var(--primary); outline-offset: 2px; }
+.category-color-picker__presets { display: flex; flex-wrap: wrap; gap: 7px; min-inline-size: 0; }
+.category-color-picker__presets button { inline-size: 28px; block-size: 28px; border: 2px solid var(--surface); border-radius: 9px; box-shadow: 0 0 0 1px var(--work-line); cursor: pointer; transition: transform 150ms var(--work-ease), box-shadow 150ms var(--work-ease); }
+.category-color-picker__presets button:hover { transform: translateY(-1px); }
+.category-color-picker__presets button.is-active { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--primary); }
+.category-color-picker__presets button:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.category-color-picker__value { color: var(--text-secondary); font-size: 12px; }
+.category-color-picker__value.is-empty { color: var(--text-tertiary); }
+
+@media (max-width: 560px) {
+  .category-color-picker { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .category-color-picker__presets { grid-column: 1 / -1; grid-row: 2; }
 }
 
 .category-grid__empty {
@@ -1333,8 +1396,13 @@ function clearAllFilters() {
 }
 
 .tb-status {
-  width: 200px;
+  flex: 1 1 240px;
+  min-inline-size: min(240px, 100%);
+  max-inline-size: 340px;
+  width: auto;
 }
+.tb-status :deep(.control--select) { block-size: auto; min-block-size: 40px; }
+.tb-status :deep(.select__label) { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
 
 /* ── Chip / slug overflow guards ── */
 .chips { flex-wrap: wrap; }
@@ -1357,6 +1425,8 @@ function clearAllFilters() {
     max-width: 100%;
     flex: 1 1 100%;
     min-width: 0;
+    max-inline-size: 100%;
+    min-inline-size: 0;
   }
   .tb-switch { flex: 1 1 100%; }
 
@@ -1377,6 +1447,23 @@ function clearAllFilters() {
   /* Small phone: KPIs single column for breathing room */
   .grid.cols-4 { grid-template-columns: 1fr; }
 }
+
+/* Catalog directories: one clipped register with a command bar and anchored pagination. */
+.operations-workspace .category-catalog { overflow: hidden; border: 1px solid var(--work-line); border-radius: var(--work-radius); background: var(--surface); box-shadow: var(--work-shadow); }
+.category-catalog > :deep(.workspace-tools) { border: 0; border-block-end: 1px solid var(--work-line); border-radius: 0; background: var(--work-soft); }
+.category-catalog > .pagination { margin: 0; border-radius: 0; }
+.category-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; padding: 20px; background: color-mix(in srgb, var(--surface) 97%, var(--primary)); }
+.category-card { border: 1px solid var(--work-line); border-radius: 14px; background: var(--surface); box-shadow: none; overflow: visible; }
+.category-card:hover, .category-card:active { transform: none; border-color: var(--border-strong); box-shadow: none; }
+.category-card__body { position: relative; padding: 22px 18px 16px; }
+.category-card__icon { display: flex; align-items: center; justify-content: space-between; inline-size: 100%; block-size: 30px; margin-block-end: 18px; color: var(--text-secondary); background: none; }
+.category-card__icon > span { inline-size: 30px; block-size: 30px; border-radius: 9px; border: 1px solid color-mix(in srgb, var(--text) 15%, transparent); }
+.category-card__name { display: block; text-align: start; white-space: normal; overflow: visible; overflow-wrap: anywhere; max-inline-size: 100%; font-size: 17px; font-weight: 600; letter-spacing: -.02em; line-height: 1.4; }
+.category-card__desc { display: block; overflow: visible; line-height: 1.6; margin-block: 8px 16px; }
+.category-card__order { background: transparent; font-family: var(--font-sans); font-size: 12px; font-weight: 500; padding: 0; color: var(--text-secondary); }
+.category-card__reorder { display: flex; gap: 6px; justify-content: flex-end; margin-block-start: 14px; padding-block-start: 10px; border-block-start: 1px solid var(--work-line); }
+.status-toggle:hover { transform: none; }
+@media (width <= 700px) { .category-grid { grid-template-columns: minmax(0, 1fr); padding: 12px; } .category-card__reorder :deep(.iconaction) { inline-size: 44px; block-size: 44px; } .category-card__name { min-block-size: 44px; } }
 </style>
 
 <route lang="yaml">

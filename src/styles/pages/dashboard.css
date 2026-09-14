@@ -21,11 +21,39 @@ main.page-shell > .dashboard-page {
 }
 
 .dashboard-header {
+  position: relative;
   display: grid;
   align-items: center;
+  margin-block-end: 16px;
+  padding: 22px;
+  border: 1px solid var(--dash-edge);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 8% 0%, color-mix(in srgb, var(--primary) 10%, transparent), transparent 34%),
+    color-mix(in srgb, var(--surface) 96%, var(--primary));
+  box-shadow: var(--dash-shadow);
   gap: 24px;
   grid-template-columns: minmax(0, 1fr) auto auto;
-  padding-block-end: 20px;
+}
+
+.dashboard-header__identity {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-inline-size: 0;
+}
+
+.dashboard-header__symbol {
+  display: grid;
+  flex: 0 0 auto;
+  block-size: 54px;
+  inline-size: 54px;
+  border: 1px solid color-mix(in srgb, var(--on-primary) 18%, transparent);
+  border-radius: 17px;
+  background: var(--primary);
+  box-shadow: 0 14px 30px -18px color-mix(in srgb, var(--primary) 80%, transparent);
+  color: var(--on-primary);
+  place-items: center;
 }
 
 .dashboard-header__intro,
@@ -67,6 +95,11 @@ main.page-shell > .dashboard-page {
 .dashboard-fresh {
   display: flex;
   align-items: center;
+  padding-block: 5px;
+  padding-inline: 9px;
+  border: 1px solid color-mix(in srgb, var(--success) 18%, var(--dash-edge));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--success) 6%, var(--surface));
   color: var(--text-secondary);
   font-size: 11px;
   gap: 6px;
@@ -115,12 +148,15 @@ main.page-shell > .dashboard-page {
   z-index: 15;
   display: flex;
   align-items: center;
-  background: var(--bg);
+  padding: 8px;
+  border: 1px solid var(--dash-edge);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--surface) 97%, var(--primary));
+  box-shadow: var(--dash-shadow);
   gap: 16px;
-  inset-block-start: var(--topbar-h);
+  inset-block-start: calc(var(--topbar-h) + 8px);
   margin-block-end: 16px;
   min-block-size: 60px;
-  padding-block: 8px;
 }
 
 .dashboard-toolbar__period {
@@ -157,8 +193,27 @@ main.page-shell > .dashboard-page {
   padding-block: 24px 16px;
 }
 
-.dashboard-section__head > div {
+.dashboard-section__head > div,
+.dashboard-section__identity > div {
   min-inline-size: 0;
+}
+
+.dashboard-section__identity {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.dashboard-section__symbol {
+  display: grid;
+  flex: 0 0 auto;
+  border: 1px solid var(--primary-border);
+  border-radius: 12px;
+  background: var(--primary-weak);
+  block-size: 42px;
+  color: var(--primary);
+  inline-size: 42px;
+  place-items: center;
 }
 
 .dashboard-section__head h2 {
@@ -1460,7 +1515,19 @@ summary,
 
   .dashboard-header {
     gap: 16px 12px;
-    padding-block-end: 16px;
+    margin-block-end: 12px;
+    padding: 14px;
+    border-radius: 20px;
+  }
+
+  .dashboard-header__identity {
+    gap: 10px;
+  }
+
+  .dashboard-header__symbol {
+    border-radius: 13px;
+    block-size: 42px;
+    inline-size: 42px;
   }
 
   .dashboard-header h1 {
@@ -1486,8 +1553,26 @@ summary,
     display: none;
   }
 
+  .dashboard-header__actions .dashboard-export {
+    inline-size: 44px;
+  }
+
+  .dashboard-header__actions .dashboard-export > button {
+    gap: 0;
+    inline-size: 44px;
+    padding-inline: 0;
+    font-size: 0;
+  }
+
+  .dashboard-header__actions .dashboard-export > button > .ic:last-child {
+    display: none;
+  }
+
   .dashboard-toolbar {
+    padding: 6px;
+    border-radius: 14px;
     gap: 8px;
+    inset-block-start: calc(var(--topbar-h) + 6px);
     margin-block-end: 12px;
     min-block-size: 56px;
   }
@@ -1515,6 +1600,16 @@ summary,
 
   .dashboard-section__head {
     padding-block: 20px 16px;
+  }
+
+  .dashboard-section__identity {
+    gap: 10px;
+  }
+
+  .dashboard-section__symbol {
+    border-radius: 11px;
+    block-size: 38px;
+    inline-size: 38px;
   }
 
   .dashboard-section__head h2 {
@@ -1770,7 +1865,12 @@ summary,
   }
 
   .dashboard-header h1 {
-    font-size: 21px;
+    font-size: 20px;
+  }
+
+  .dashboard-header__symbol {
+    block-size: 38px;
+    inline-size: 38px;
   }
 
   .dashboard-overview .summary-board .card {

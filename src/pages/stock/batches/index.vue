@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
 import { useActionDialog } from '@/composables/useActionDialog'
 
 /* ============================================================
@@ -363,7 +365,7 @@ function clearAll() {
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <!-- Page header -->
     <PageHeader
       :title="t('stock_batches_title')"
@@ -403,7 +405,7 @@ function clearAll() {
     <!-- Main card -->
     <div class="card">
       <!-- Toolbar (flex-wrap, collapses to single column on mobile) -->
-      <div class="toolbar tb-wrap">
+      <WorkspaceToolbar class="toolbar tb-wrap">
         <div class="tb-search">
           <Input
             v-model="search"
@@ -485,7 +487,7 @@ function clearAll() {
           <Switch v-model="includeZeroStock" />
           <span>{{ t('Include zero-stock batches') }}</span>
         </label>
-      </div>
+      </WorkspaceToolbar>
 
       <!-- Active filter chips -->
       <div
@@ -895,7 +897,7 @@ function clearAll() {
         </Button>
       </template>
     </Modal>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>

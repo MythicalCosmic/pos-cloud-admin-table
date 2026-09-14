@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
+
 /* ============================================================
    SESSIONS — Active admin auth sessions
    List devices currently signed in to the admin account.
@@ -264,7 +267,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <!-- Page header -->
     <PageHeader
       :title="t('sessions_page_title')"
@@ -293,7 +296,7 @@ onBeforeUnmount(() => {
 
     <!-- Toolbar + table -->
     <Card>
-      <div class="toolbar sessions-toolbar">
+      <WorkspaceToolbar class="toolbar sessions-toolbar">
         <!-- Search -->
         <Input
           v-model="search"
@@ -304,12 +307,15 @@ onBeforeUnmount(() => {
 
         <!-- Current-only switch -->
         <div class="control sessions-switch">
-          <Switch v-model="currentOnly" />
+          <Switch
+            v-model="currentOnly"
+            :aria-label="t('sessions_current_only')"
+          />
           <span class="sessions-switch__label">
             {{ t('sessions_current_only') }}
           </span>
         </div>
-      </div>
+      </WorkspaceToolbar>
 
       <!-- Filter chips -->
       <div
@@ -539,7 +545,7 @@ onBeforeUnmount(() => {
     >
       {{ snackbarMsg }}
     </VSnackbar>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>

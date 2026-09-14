@@ -16,6 +16,8 @@ onBeforeUnmount(() => close())
   <Modal
     :open="!!current"
     :title="current?.title || ''"
+    :icon="current?.danger ? 'trash' : 'check'"
+    :tone="current?.danger ? 'danger' : 'primary'"
     :width="480"
     @close="close"
   >

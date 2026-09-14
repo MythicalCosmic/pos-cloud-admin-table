@@ -1,4 +1,12 @@
 <script setup lang="ts">
+import DesignIcon from '@/components/design/DesignIcon.vue'
+import Badge from '@/components/design/Badge.vue'
+import IconAction from '@/components/design/IconAction.vue'
+import Input from '@/components/design/Input.vue'
+import Select from '@/components/design/Select.vue'
+import Skeleton from '@/components/design/Skeleton.vue'
+import type { Tone } from '@/components/design/utils'
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
 import { useActionDialog } from '@/composables/useActionDialog'
 import StateFill from '@/components/design/StateFill.vue'
 import Kpi from '@/components/design/Kpi.vue'
@@ -23,18 +31,11 @@ const tablesError = ref(false)
 const placeTypes = ['HALL', 'TERRACE', 'PRIVATE_ROOM', 'BAR', 'OUTDOOR']
 const tableStatuses = ['AVAILABLE', 'OCCUPIED', 'RESERVED', 'OUT_OF_SERVICE']
 
-const statusColors: Record<string, string> = {
+const statusColors: Record<string, Tone> = {
   AVAILABLE: 'success',
   OCCUPIED: 'error',
   RESERVED: 'warning',
   OUT_OF_SERVICE: 'info',
-}
-
-const statusIcons: Record<string, string> = {
-  AVAILABLE: 'bx-check-circle',
-  OCCUPIED: 'bx-user',
-  RESERVED: 'bx-time-five',
-  OUT_OF_SERVICE: 'bx-wrench',
 }
 
 // Place dialog
@@ -176,6 +177,7 @@ async function savePlace() {
 
 const deletingPlaces = ref(new Set<number>())
 const deletingTables = ref(new Set<number>())
+const updatingTables = ref(new Set<number>())
 
 async function deletePlace(p: any) {
   if (deletingPlaces.value.has(p.id))
@@ -247,8 +249,9 @@ async function deleteTable(tbl: any) {
 }
 
 async function changeTableStatus(tbl: any, status: string) {
-  if (tbl.status === status)
+  if (tbl.status === status || updatingTables.value.has(tbl.id))
     return
+  updatingTables.value.add(tbl.id)
   try {
     await axios.patch(`/tables/${tbl.id}/status`, { status })
     notify(t('Status updated'))
@@ -257,26 +260,24 @@ async function changeTableStatus(tbl: any, status: string) {
   catch (e: any) {
     notify(e?.response?.data?.message ?? t('Error'), 'error')
   }
+  finally { updatingTables.value.delete(tbl.id) }
 }
 </script>
 
 <template>
-  <div class="page places-workspace">
+  <WorkspacePage class="page places-workspace">
     <PageHeader
       :title="t('Places & Tables')"
       :subtitle="t('Manage hall layout, tables and seat capacity')"
     >
       <template #actions>
-        <VBtn
-          variant="tonal"
-          color="secondary"
-          size="small"
-          prepend-icon="bx-refresh"
+        <Button
+          icon="refresh"
           :loading="loading || tablesLoading"
           @click="refreshAll"
         >
           {{ t('Refresh') }}
-        </VBtn>
+        </Button>
       </template>
     </PageHeader>
 
@@ -298,367 +299,218 @@ async function changeTableStatus(tbl: any, status: string) {
     <div class="grid cols-4 places-kpis">
       <Kpi :data="{ label: t('Total Tables'), value: tablesLoading || tablesError ? null : tables.length, icon: 'grid' }" />
       <Kpi :data="{ label: t('status_AVAILABLE'), value: tablesLoading || tablesError ? null : statusCounts.AVAILABLE, icon: 'checkcircle' }" />
-      <Kpi :data="{ label: t('Occupancy'), value: tablesLoading || tablesError ? null : `${occupancyPct}%`, icon: 'users', sub: `${statusCounts.OCCUPIED} ${t('status_OCCUPIED').toLowerCase()} · ${statusCounts.RESERVED} ${t('status_RESERVED').toLowerCase()}` }" />
+      <Kpi :data="{ label: t('Occupancy'), value: tablesLoading || tablesError ? null : `${occupancyPct}%`, icon: 'users', sub: tablesLoading || tablesError ? undefined : `${statusCounts.OCCUPIED} ${t('status_OCCUPIED').toLowerCase()} · ${statusCounts.RESERVED} ${t('status_RESERVED').toLowerCase()}` }" />
       <Kpi :data="{ label: t('Total Seats'), value: tablesLoading || tablesError ? null : totalSeats, icon: 'table' }" />
     </div>
-    <VRow>
-      <VCol
-        cols="12"
-        md="4"
+    <div class="dining-workspace">
+      <aside
+        class="dining-areas card"
+        :aria-label="t('Places')"
       >
-        <VCard>
-          <VCardText class="d-flex align-center justify-space-between">
-            <span class="text-h6">{{ t('Places') }}</span>
-            <VBtn
-              size="small"
-              prepend-icon="bx-plus"
+        <div class="dining-areas__head">
+          <h2>{{ t('Places') }}</h2>
+          <Button
+            icon="plus"
+            size="sm"
+            @click="openPlaceDialog(null)"
+          >
+            {{ t('Add') }}
+          </Button>
+        </div>
+        <button
+          class="dining-area dining-area--all"
+          type="button"
+          :class="{ 'is-current': !selectedPlaceId }"
+          :aria-pressed="!selectedPlaceId"
+          @click="selectedPlaceId = null"
+        >
+          <DesignIcon
+            name="ws-dining"
+            :size="20"
+          /><span>{{ t('All Tables') }}</span><strong>{{ tablesLoading || tablesError ? '—' : tables.length }}</strong>
+        </button>
+        <div
+          v-if="loading && !places.length"
+          class="dining-areas__loading"
+        >
+          <Skeleton
+            v-for="n in 3"
+            :key="n"
+            :h="52"
+            w="100%"
+          />
+        </div>
+        <StateFill
+          v-else-if="!places.length"
+          icon="ws-location"
+          :title="t('No places yet')"
+          :sub="t('Create your first hall or dining area')"
+        >
+          <template #action>
+            <Button
+              icon="plus"
               @click="openPlaceDialog(null)"
             >
-              {{ t('Add') }}
-            </VBtn>
-          </VCardText>
-          <VDivider />
-          <VList>
-            <VListItem
-              :active="!selectedPlaceId"
-              @click="selectedPlaceId = null"
-            >
-              <VListItemTitle>{{ t('All Tables') }}</VListItemTitle>
-              <template #append>
-                <VChip size="x-small">
-                  {{ tables.length }}
-                </VChip>
-              </template>
-            </VListItem>
-            <VDivider />
-            <template v-if="loading && places.length === 0">
-              <VListItem
-                v-for="n in 3"
-                :key="n"
-              >
-                <div
-                  class="sk-box"
-                  style="width:100%;height:18px;border-radius:4px;"
-                />
-              </VListItem>
-            </template>
-            <template v-else-if="places.length === 0">
-              <div class="text-center text-disabled py-6 px-4">
-                <VIcon
-                  icon="bx-building-house"
-                  size="40"
-                  class="mb-2"
-                />
-                <div class="text-body-2 mb-1">
-                  {{ t('No places yet') }}
-                </div>
-                <div class="text-caption mb-3">
-                  {{ t('Create your first hall or dining area') }}
-                </div>
-                <VBtn
-                  size="small"
-                  prepend-icon="bx-plus"
-                  @click="openPlaceDialog(null)"
-                >
-                  {{ t('Add Place') }}
-                </VBtn>
-              </div>
-            </template>
-            <VListItem
-              v-for="p in places"
-              :key="p.id"
-              :active="selectedPlaceId === p.id"
-              @click="selectedPlaceId = p.id"
-            >
-              <VListItemTitle
-                class="d-flex align-center"
-                style="gap:6px;"
-              >
-                {{ p.name }}
-                <VChip
-                  v-if="p.is_active === false"
-                  size="x-small"
-                  color="secondary"
-                  variant="tonal"
-                >
-                  {{ t('active_false') }}
-                </VChip>
-              </VListItemTitle>
-              <VListItemSubtitle>{{ t(`place_type_${p.place_type}`) }} · {{ t('Capacity') }}: {{ p.capacity }}</VListItemSubtitle>
-              <template #append>
-                <div
-                  class="d-flex"
-                  style="gap:2px;"
-                >
-                  <VBtn
-                    icon
-                    variant="text"
-                    size="x-small"
-                    :aria-label="`${t('Edit')}: ${p.name}`"
-                    @click.stop="openPlaceDialog(p)"
-                  >
-                    <VIcon
-                      icon="bx-edit-alt"
-                      size="16"
-                    />
-                    <VTooltip
-                      activator="parent"
-                      location="top"
-                    >
-                      {{ t('Edit') }}
-                    </VTooltip>
-                  </VBtn>
-                  <VBtn
-                    icon
-                    variant="text"
-                    size="x-small"
-                    color="error"
-                    :aria-label="`${t('Delete')}: ${p.name}`"
-                    :disabled="deletingPlaces.has(p.id)"
-                    @click.stop="deletePlace(p)"
-                  >
-                    <VIcon
-                      icon="bx-trash"
-                      size="16"
-                    />
-                    <VTooltip
-                      activator="parent"
-                      location="top"
-                    >
-                      {{ t('Delete') }}
-                    </VTooltip>
-                  </VBtn>
-                </div>
-              </template>
-            </VListItem>
-          </VList>
-        </VCard>
-      </VCol>
-
-      <VCol
-        cols="12"
-        md="8"
-      >
-        <VCard>
-          <VCardText
-            class="d-flex align-center justify-space-between flex-wrap"
-            style="gap:12px;"
+              {{ t('Add Place') }}
+            </Button>
+          </template>
+        </StateFill>
+        <div
+          v-for="p in places"
+          :key="p.id"
+          class="dining-area-row"
+          :class="{ 'is-current': selectedPlaceId === p.id }"
+        >
+          <button
+            class="dining-area"
+            type="button"
+            :aria-pressed="selectedPlaceId === p.id"
+            @click="selectedPlaceId = p.id"
           >
-            <span class="text-h6">{{ t('Tables') }}</span>
-            <div
-              class="d-flex align-center flex-wrap"
-              style="gap:8px;"
-            >
-              <FormInput
-                v-model="search"
-                :placeholder="t('Search tables...')"
-                prepend-inner-icon="bx-search"
-                density="compact"
-                variant="outlined"
-                hide-details
-                clearable
-                style="min-width:180px;max-width:220px;"
-              />
-              <VBtn
-                size="small"
-                prepend-icon="bx-plus"
-                :disabled="!places.length"
-                @click="openTableDialog(null)"
-              >
-                {{ t('Add Table') }}
-              </VBtn>
-            </div>
-          </VCardText>
-          <VDivider />
+            <DesignIcon
+              name="ws-location"
+              :size="19"
+            />
+            <span><strong>{{ p.name }}</strong><small>{{ t(`place_type_${p.place_type}`) }} · {{ t('Capacity') }}: {{ p.capacity }}</small><Badge
+              v-if="p.is_active === false"
+              tone="neutral"
+            >{{ t('active_false') }}</Badge></span>
+          </button>
+          <div class="dining-area-row__actions">
+            <IconAction
+              icon="edit"
+              :title="`${t('Edit')}: ${p.name}`"
+              @click="openPlaceDialog(p)"
+            />
+            <IconAction
+              icon="trash"
+              tone="danger"
+              :title="`${t('Delete')}: ${p.name}`"
+              :disabled="deletingPlaces.has(p.id)"
+              @click="deletePlace(p)"
+            />
+          </div>
+        </div>
+      </aside>
 
-          <!-- Status filter / segmented counts -->
+      <section
+        class="dining-floor card"
+        :aria-label="t('Tables')"
+        :aria-busy="tablesLoading"
+      >
+        <div class="dining-floor__head">
+          <div><h2>{{ t('Tables') }}</h2><p>{{ places.find(p => p.id === selectedPlaceId)?.name || t('All Tables') }}</p></div>
+          <Button
+            variant="primary"
+            icon="plus"
+            :disabled="!places.length"
+            @click="openTableDialog(null)"
+          >
+            {{ t('Add Table') }}
+          </Button>
+        </div>
+        <div class="dining-floor__tools">
+          <Input
+            v-model="search"
+            icon="search"
+            :placeholder="t('Search tables...')"
+            :aria-label="t('Search tables...')"
+          />
           <div
             v-if="tables.length || tablesLoading"
-            class="d-flex align-center flex-wrap px-4 pt-4"
-            style="gap:8px;"
+            class="dining-statuses"
+            :aria-label="t('Status')"
           >
-            <VChip
+            <button
               v-for="f in statusFilters"
               :key="String(f.value)"
-              :color="f.color"
-              :variant="statusFilter === f.value ? 'flat' : 'tonal'"
-              size="small"
-              label
+              type="button"
+              :class="{ 'is-current': statusFilter === f.value }"
+              :aria-pressed="statusFilter === f.value"
               @click="statusFilter = f.value"
             >
-              {{ f.label }}
-              <span class="ms-1 font-weight-bold">{{ f.count }}</span>
-            </VChip>
+              {{ f.label }}<span>{{ tablesLoading || tablesError ? '—' : f.count }}</span>
+            </button>
           </div>
-
-          <VCardText>
-            <VRow v-if="filteredTables.length || (tablesLoading && tables.length === 0)">
-              <VCol
-                v-for="(tbl, idx) in (tablesLoading && tables.length === 0 ? Array.from({ length: 8 }) : filteredTables)"
-                :key="(tbl as any)?.id ?? idx"
-                cols="6"
-                sm="4"
-                md="3"
+        </div>
+        <div
+          v-if="tablesLoading && !tables.length"
+          class="dining-table-grid"
+        >
+          <Skeleton
+            v-for="n in 6"
+            :key="n"
+            :h="200"
+            w="100%"
+          />
+        </div>
+        <div
+          v-else-if="filteredTables.length"
+          class="dining-table-grid"
+        >
+          <article
+            v-for="tbl in filteredTables"
+            :key="tbl.id"
+            class="dining-table"
+            :data-status="tbl.status"
+          >
+            <div class="dining-table__head">
+              <DesignIcon
+                name="ws-dining"
+                :size="28"
+                :weight="1.5"
+              /><Badge
+                :tone="statusColors[tbl.status] ?? 'neutral'"
+                dot
               >
-                <VCard
-                  v-if="tbl"
-                  border
-                  hover
-                  class="text-center pa-3 table-card"
-                >
-                  <VAvatar
-                    :color="statusColors[(tbl as any).status] ?? 'default'"
-                    variant="tonal"
-                    size="48"
-                    rounded
-                  >
-                    <VIcon :icon="statusIcons[(tbl as any).status] ?? 'bx-grid-alt'" />
-                  </VAvatar>
-                  <div class="text-h6 mt-2">
-                    #{{ (tbl as any).number }}
-                  </div>
-                  <div class="text-caption text-disabled">
-                    <VIcon
-                      icon="bx-chair"
-                      size="13"
-                      class="me-1"
-                    />{{ (tbl as any).capacity }} {{ t('seats') }}
-                  </div>
-                  <VChip
-                    size="x-small"
-                    :color="statusColors[(tbl as any).status] ?? 'default'"
-                    variant="tonal"
-                    class="mt-1 status-pill"
-                  >
-                    {{ t(`status_${(tbl as any).status}`) }}
-                  </VChip>
-                  <VMenu>
-                    <template #activator="{ props: menuProps }">
-                      <VBtn
-                        v-bind="menuProps"
-                        variant="text"
-                        size="x-small"
-                        class="mt-2"
-                        append-icon="bx-chevron-down"
-                        block
-                      >
-                        {{ t('Change Status') }}
-                      </VBtn>
-                    </template>
-                    <VList density="compact">
-                      <VListItem
-                        v-for="s in tableStatuses"
-                        :key="s"
-                        :active="(tbl as any).status === s"
-                        @click="changeTableStatus(tbl, s)"
-                      >
-                        <template #prepend>
-                          <VIcon
-                            :icon="statusIcons[s]"
-                            :color="statusColors[s]"
-                            size="16"
-                            class="me-2"
-                          />
-                        </template>
-                        <VListItemTitle>{{ t(`status_${s}`) }}</VListItemTitle>
-                      </VListItem>
-                    </VList>
-                  </VMenu>
-                  <div
-                    class="d-flex justify-center mt-1"
-                    style="gap:2px;"
-                  >
-                    <VBtn
-                      icon
-                      variant="text"
-                      size="x-small"
-                      @click="openTableDialog(tbl)"
-                    >
-                      <VIcon
-                        icon="bx-edit-alt"
-                        size="14"
-                      />
-                      <VTooltip
-                        activator="parent"
-                        location="top"
-                      >
-                        {{ t('Edit') }}
-                      </VTooltip>
-                    </VBtn>
-                    <VBtn
-                      icon
-                      variant="text"
-                      size="x-small"
-                      color="error"
-                      @click="deleteTable(tbl)"
-                    >
-                      <VIcon
-                        icon="bx-trash"
-                        size="14"
-                      />
-                      <VTooltip
-                        activator="parent"
-                        location="top"
-                      >
-                        {{ t('Delete') }}
-                      </VTooltip>
-                    </VBtn>
-                  </div>
-                </VCard>
-                <div
-                  v-else
-                  class="sk-box"
-                  style="width:100%;height:170px;border-radius:8px;"
-                />
-              </VCol>
-            </VRow>
-
-            <!-- No match for current filters -->
-            <div
-              v-else-if="tables.length"
-              class="text-center text-disabled py-8"
-            >
-              <VIcon
-                icon="bx-filter-alt"
-                size="48"
-                class="mb-2"
-              />
-              <div class="mb-3">
-                {{ t('No tables match your filters') }}
-              </div>
-              <VBtn
-                size="small"
-                variant="tonal"
-                @click="clearFilters"
-              >
-                {{ t('Clear filters') }}
-              </VBtn>
+                {{ t(`status_${tbl.status}`) }}
+              </Badge>
             </div>
-
-            <!-- Truly empty -->
-            <div
-              v-else
-              class="text-center text-disabled py-8"
-            >
-              <VIcon
-                icon="bx-grid-alt"
-                size="48"
-                class="mb-2"
-              />
-              <div class="mb-1">
-                {{ t('No tables yet') }}
-              </div>
-              <div
-                v-if="!places.length"
-                class="text-caption"
-              >
-                {{ t('Add a place first to create tables') }}
-              </div>
+            <div class="dining-table__identity">
+              <h3>#{{ tbl.number }}</h3><span>{{ tbl.capacity }} {{ t('seats') }}</span>
             </div>
-          </VCardText>
-        </VCard>
-      </VCol>
-    </VRow>
+            <div class="dining-table__actions">
+              <Select
+                :model-value="tbl.status"
+                :options="tableStatuses.map(s => ({ value: s, label: t(`status_${s}`) }))"
+                :aria-label="`${t('Change Status')}: ${tbl.number}`"
+                :disabled="updatingTables.has(tbl.id)"
+                @update:model-value="changeTableStatus(tbl, String($event))"
+              />
+              <IconAction
+                icon="edit"
+                :title="`${t('Edit')}: ${tbl.number}`"
+                @click="openTableDialog(tbl)"
+              />
+              <IconAction
+                icon="trash"
+                tone="danger"
+                :title="`${t('Delete')}: ${tbl.number}`"
+                :disabled="deletingTables.has(tbl.id)"
+                @click="deleteTable(tbl)"
+              />
+            </div>
+          </article>
+        </div>
+        <StateFill
+          v-else-if="tables.length"
+          icon="filter"
+          :title="t('No tables match your filters')"
+        >
+          <template #action>
+            <Button @click="clearFilters">
+              {{ t('Clear filters') }}
+            </Button>
+          </template>
+        </StateFill>
+        <StateFill
+          v-else
+          icon="ws-dining"
+          :title="t('No tables yet')"
+          :sub="!places.length ? t('Add a place first to create tables') : undefined"
+        />
+      </section>
+    </div>
 
     <!-- Place dialog -->
     <Modal
@@ -733,21 +585,48 @@ async function changeTableStatus(tbl: any, status: string) {
     >
       {{ snackbarMsg }}
     </VSnackbar>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>
-.places-kpis { margin-bottom: 24px; }
-.places-workspace :deep(.v-card) { border: 1px solid var(--border); border-radius: 16px; box-shadow: none; }
-.places-workspace :deep(.text-h6) { font-size: 18px !important; font-weight: 600; }
-
-.table-card {
-  transition: border-color .16s ease, box-shadow .16s ease;
-}
-
-.table-card:hover {
-  border-color: rgb(var(--v-theme-primary)) !important;
-}
+.dining-workspace { display: grid; grid-template-columns: 280px minmax(0, 1fr); align-items: start; gap: 20px; }
+.dining-areas__head, .dining-floor__head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 20px; }
+h2 { font-size: 16px; font-weight: 650; letter-spacing: -.015em; }
+.dining-area { display: flex; align-items: center; gap: 12px; inline-size: 100%; min-inline-size: 0; padding: 16px; color: var(--text); background: transparent; text-align: start; }
+.dining-area .ic { flex: 0 0 auto; color: var(--text-secondary); }
+.dining-area > span { flex: 1; min-inline-size: 0; font-size: 13px; overflow-wrap: anywhere; }
+.dining-area strong { display: block; font-weight: 600; }
+.dining-area small { display: block; margin-block-start: 4px; font-size: 11px; line-height: 1.5; color: var(--text-secondary); }
+.dining-area--all { border-block: 1px solid var(--work-line); }
+.dining-area--all > strong { color: var(--primary); font-variant-numeric: tabular-nums; }
+.dining-area-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; border-block-end: 1px solid var(--work-line); }
+.dining-area-row:last-child { border: 0; }
+.dining-area-row__actions { display: flex; flex-direction: column; padding-inline-end: 10px; }
+.dining-area-row.is-current, .dining-area--all.is-current { background: var(--work-soft); }
+.dining-area:is(:hover, :focus-visible) { background: var(--surface-2); }
+.dining-area:focus-visible { outline: 2px solid var(--primary); outline-offset: -3px; }
+.dining-areas__loading { display: grid; gap: 12px; padding: 16px; }
+.operations-workspace .dining-floor { border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.dining-floor__head { padding-inline: 0; border-block-end: 1px solid var(--work-line); }
+.dining-floor__head p { margin: 4px 0 0; font-size: 12px; color: var(--text-secondary); }
+.dining-floor__tools { display: grid; gap: 16px; padding: 20px 0 0; }
+.dining-floor__tools > :first-child { max-inline-size: 380px; }
+.dining-statuses { display: flex; flex-wrap: wrap; gap: 8px; }
+.dining-statuses button { display: flex; align-items: center; gap: 8px; min-block-size: 38px; padding: 8px 10px; border: 1px solid var(--work-line); border-radius: 8px; color: var(--text-secondary); font-size: 11px; }
+.dining-statuses button.is-current { color: var(--primary); background: var(--primary-weak); border-color: var(--primary-border); }
+.dining-statuses span { font-variant-numeric: tabular-nums; font-weight: 650; }
+.dining-table-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; padding: 20px 0; }
+.dining-table { min-inline-size: 0; padding: 18px; border: 1px solid var(--work-line); border-radius: 13px; background: var(--surface); }
+.dining-table__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.dining-table__head > .ic { color: var(--primary); }
+.dining-table__identity { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-block: 22px; }
+.dining-table__identity h3 { font-size: 28px; font-weight: 600; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.dining-table__identity span { color: var(--text-secondary); font-size: 12px; }
+.dining-table__actions { display: flex; align-items: center; gap: 6px; }
+.dining-table__actions > :first-child { flex: 1; min-inline-size: 0; }
+@media (width <= 1100px) { .dining-workspace { grid-template-columns: 230px minmax(0, 1fr); gap: 16px; } }
+@media (width <= 800px) { .dining-workspace { grid-template-columns: minmax(0, 1fr); } .dining-area-row__actions { flex-direction: row; } }
+@media (width <= 700px) { .dining-areas__head { padding: 16px; } .dining-floor__head { padding: 16px 0; } .dining-floor__tools { padding: 16px 0 0; } .dining-table-grid { padding: 16px 0; grid-template-columns: minmax(0, 1fr); } .dining-statuses button { min-block-size: 44px; } }
 </style>
 
 <route lang="yaml">

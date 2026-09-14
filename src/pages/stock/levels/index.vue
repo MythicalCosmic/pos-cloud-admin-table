@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
+
 /* ============================================================
    ALPHA POS — Stock Levels
    Refactored to design primitives (no Vuetify).
@@ -612,7 +615,7 @@ async function exportCsv() {
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <PageHeader
       :title="t('Stock Levels')"
       :subtitle="t('stock_levels_subtitle')"
@@ -639,7 +642,7 @@ async function exportCsv() {
 
     <div class="card">
       <!-- Toolbar -->
-      <div class="toolbar levels-toolbar">
+      <WorkspaceToolbar class="toolbar levels-toolbar">
         <div class="grow tb-search">
           <Input
             v-model="search"
@@ -684,7 +687,7 @@ async function exportCsv() {
           <Switch v-model="lowStockOnly" :disabled="exporting" />
           <span style="font-size:13px;">{{ t('Low Stock Only') }}</span>
         </label>
-      </div>
+      </WorkspaceToolbar>
 
       <!-- Active filter chips -->
       <div
@@ -927,7 +930,7 @@ async function exportCsv() {
         </Button>
       </template>
     </Modal>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>

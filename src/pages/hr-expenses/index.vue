@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
 import type { DataTableColumn } from '@/components/design/DataTable.vue'
 import type { ExpenseCategory, ExpenseRecord, ExpenseSource, ExpenseStatus, ExpenseTotals } from '@/types/expenseControl'
 import Badge from '@/components/design/Badge.vue'
@@ -452,7 +454,7 @@ function sourceLabel(source: ExpenseSource | null) {
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <PageHeader
       :title="t('Expenses')"
       :subtitle="t('expense_subtitle')"
@@ -507,7 +509,7 @@ function sourceLabel(source: ExpenseSource | null) {
       </div>
 
       <Card>
-        <div class="toolbar toolbar--wrap">
+        <WorkspaceToolbar class="toolbar toolbar--wrap">
           <div class="tb-search">
             <Input
               v-model="search"
@@ -555,7 +557,7 @@ function sourceLabel(source: ExpenseSource | null) {
           >
             {{ t('expcat_action_refresh') }}
           </Button>
-        </div>
+        </WorkspaceToolbar>
 
         <div
           v-if="loadError"
@@ -930,7 +932,7 @@ function sourceLabel(source: ExpenseSource | null) {
     >
       {{ snackbarMsg }}
     </VSnackbar>
-  </div>
+  </WorkspacePage>
 </template>
 
 <route lang="yaml">

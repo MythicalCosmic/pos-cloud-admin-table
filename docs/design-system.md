@@ -1,7 +1,7 @@
 # Alpha POS design system
 
 This guide describes the current frontend foundation. Use it to preserve
-working behavior during the redesign; implementation lives in the linked
+working behavior and the implemented visual boundaries; implementation lives in the linked
 source files. [DESIGN.md](../DESIGN.md) provides a portable token summary;
 [the component sidecar](../.impeccable/design.json) records preview primitives.
 
@@ -12,7 +12,8 @@ source files. [DESIGN.md](../DESIGN.md) provides a portable token summary;
   previews consume the same values. [Structural tokens](../src/styles/tokens.css)
   define spacing, typography, elevation and base radii. [Shell styles](../src/styles/design-shell.css) and
   [workspace styles](../src/styles/design-workspace.css) consume these tokens
-  and define shared motion, density and component overrides.
+  and define shared motion, density and component overrides. [Operations styles](../src/styles/design-operations.css)
+  load after the shared workspace layer and apply only to operational pages and their dialog/popover context.
 - [Global stylesheet](../src/styles/styles.scss) controls style order.
 - [Vuetify theme](../src/plugins/vuetify/theme.ts) mirrors the custom palette;
   both theme systems must be verified together.
@@ -24,13 +25,16 @@ source files. [DESIGN.md](../DESIGN.md) provides a portable token summary;
 
 ## Components and layout
 
-The renewed login and startup screens use the selected color palette
+The login and startup screens use the selected color palette
 and the Alpha monogram. Blue is the default: cool light surfaces or layered navy
 in dark mode. Forest retains the approved green, sage and ivory appearance. Login styles live in `src/styles/pages/login.css` and
 its illustration and connection dialog in `src/components/auth/`. Startup
 styles live in `public/loader.css` so they render before the application loads.
 Both screens support the shared theme preference and reduced motion. The login
-illustration also has a pause control. Keep loading indicators indeterminate;
+station diagram also has a pause control. On desktop the connected Alpha POS
+diagram accompanies sign-in; below 900px the story content gives way to the form.
+Public error pages pair a readable status code and explanation with a route home.
+Keep loading indicators indeterminate;
 the startup screen exits when the first route is ready, without a minimum delay.
 
 The dashboard is one continuous page: Overview, Sales & Revenue, Products,
@@ -42,6 +46,11 @@ and updates raw tokens, Vuetify and browser chrome together. Vuetify theme names
 remain `light` and `dark`. Navigation, controls and charts share the palette.
 All existing analytics, comparisons, chart controls, expense records, and
 product/staff detail remain available while scrolling.
+The September 13 polish places the dashboard title and local symbol, independent
+Today’s Orders snapshot, freshness status and existing actions inside one softly
+raised identity panel. The section directory uses a separate floating surface,
+and later section headings gain compact domain symbols. On phones the export and
+refresh actions become icon-sized while retaining their accessible names.
 
 The global Sonner toaster appears at the top-right, with styles in
 `src/styles/design-toasts.css`. It owns stacking, swipe dismissal, hover/focus
@@ -53,6 +62,68 @@ Toast surfaces follow the active palette; semantic accents retain their meaning.
 Appearance previews use each option's own light/dark tokens. The selected check
 sits over the preview so long translated names can use the whole label width.
 The six choices form three desktop columns and two phone columns.
+
+### Operational pages: precision command surface
+
+The operations redesign applies across catalog, customers, HR, finance, stock,
+analytics, settings, notifications, licensing and Orders. Dashboard, AI and the
+shared shell keep their approved appearance. The
+[operations brief](../.impeccable/surfaces/src-pages.md) records the chosen
+command-surface direction and the route boundary.
+
+[WorkspacePage](../src/components/design/workspace/WorkspacePage.vue) is the
+explicit opt-in on 72 route roots. It provides the context used by PageHeader,
+Kpi and DataTable. Modal also recognizes operational routes when hosted globally.
+WorkspaceHeader integrates a solid primary symbol tile, title and existing actions
+with a lower rail of permitted related routes. The current link uses
+the longest matching destination; route metadata, CASL and warehouse access
+checks remain in the navigation path. Semantic domain aliases extend the local SVG set.
+
+Identity panels use 26px corners, a static primary wash, restrained dot texture
+and the work shadow. Actual-value KPI cells join inside a 22px rail with one-pixel
+separators and no separate cell shadows. Registers use the same 22px surface
+family and two-part elevation, with a stronger dark-theme definition. Their
+corners clip the command bar, records and anchored pagination. The category
+directory uses this integrated frame; Products and dining-table grids retain
+their open domain layouts. Controls use 13px corners and a four-pixel primary
+focus ring. Catalog cards and warehouse link groups retain 14px corners.
+
+Desktop pages have 24px side padding. At 700px and below they use 14px, with
+12px at 360px and below. Actions get their own phone row, related navigation
+scrolls internally, and joined metric rails use two columns. Products gives
+its main catalog count the full first row. Creation and mutation actions stay in
+visible page or section headers. WorkspaceToolbar collapses filters
+behind Search & filters while preserving their values. DataTable defaults to
+expandable phone records in this context, reusing cell slots, selection, sorting,
+pagination and actions; explicit mobile props still take precedence. Phone
+records have their own fine frame within the register. Labels wrap; record
+actions remain 44px, heading actions 46px and filter toggles 48px high.
+
+Products defaults to cards with a complete table alternative, category color,
+name, description, exact price, selection, actions and expandable source details.
+Its create/edit flow uses shared Modal with the existing POS preview and fields.
+Categories keeps full names, saved POS color swatches, status, counts and direct
+edit/reorder actions within its clipped directory. Places pairs an area directory with table cards, retaining
+search, actual status counts, capacities and all area/table mutations. Its columns
+stack at 800px. Warehouse groups permitted purchasing, inventory and movement
+links beside the receiving guide; it does not add live-looking stock metrics.
+
+Settings uses short side introductions and aligned switch rows on one editing
+plane, stacking at 1100px. Operational task dialogs have neutral headers with a
+semantic symbol, concise title and X close control. The body holds the task;
+the footer holds meaningful completion actions. Teleported dialogs and
+select/calendar menus carry workspace-overlay/workspace-popover context.
+Phone forms become full-width bottom sheets with a 94dvh height cap, one-column
+fields, safe-area footer spacing and 50px form controls. Inline Field errors
+announce through role=alert and associate error/hint text with the invalid
+control. Existing validation rules, dirty-draft confirmation, duplicate guards,
+visible server errors and topmost-only focus/Escape handling remain intact.
+
+Motion stays brief: controls use 160ms feedback, row emphasis 150ms, metrics
+180ms and dialog opacity/transform 220ms. Hover/press movement is small; records
+have no repeated entrance choreography. Reduced motion removes transitions.
+The washes and local SVG symbols are static, and backdrop blur is limited to
+the dialog layer; there is no new continuous rendering loop for operational pages.
 
 ### Dashboard layout: September 10
 
@@ -68,8 +139,8 @@ table/address, age, amount and links. Show all retains every returned record.
 Later sections use separate tinted KPI cards; paired distributions, expense
 reports and staff panels share their row height. Dashboard cards, date fields
 and today's counter have softly rounded 16px corners, a fine edge mixed from
-text and surface, and a restrained two-part shadow. This is a dashboard rule;
-Product Performance retains its 14px report panels and joined metric rail.
+text and surface, and a restrained two-part shadow. This remains a dashboard rule;
+Product Performance uses the separately scoped operational surfaces and joined metric rail.
 
 All five sections remain on the page. Each start/end field opens a themed
 calendar with an integrated 24-hour time control: select the date, set the time,
@@ -190,8 +261,10 @@ QA covers desktop/mobile, Uzbek/Russian/English, light/dark, focus and scrolling
 loading/empty/partial/error/populated states, shared refresh, and date changes.
 
 Reuse [design primitives](../src/components/design) for headers, cards, filters,
-forms, tables, dialogs, skeletons, empty states, and status badges. Many existing
-pages still use Vuetify directly; follow the surrounding surface's convention.
+forms, tables, dialogs, skeletons, empty states, and status badges. Retained
+Vuetify form adapters preserve validation and model contracts inside operational pages.
+Use WorkspacePage for their visual context; do not copy its overrides into the
+protected Dashboard or AI layouts.
 
 Active custom SVG charts and shared chart helpers live in
 [design/charts](../src/components/design/charts). Period comparison uses the
@@ -203,7 +276,9 @@ topbar, and mobile tabs. Keep pages full-width with moderate density. The
 global topbar date picker and sidebar live widget are intentionally absent;
 pages may own their date range.
 
-A typical page contains a header, KPI row, filters, table, and action dialogs.
+Operational pages lead with identity and action, related tasks, available summaries
+and the domain work area. Choose a register, catalog, directory or editing section
+to suit the task.
 Domain dialogs live under `src/components/<feature>/`, outside the routes tree.
 
 ## Interaction rules
@@ -230,10 +305,11 @@ text wrapping, spacing, alignment, keyboard navigation, focus entry/return,
 and loading/error/empty/populated states. For mutations, verify duplicate-submit
 protection and visible server errors. Correct repeated UI issues globally.
 
-### Shared workspace renewal: September 9
+### Shared controls and shell
 
-`src/styles/design-workspace.css` owns the consistent page headers, KPI
-composition, readable table spacing, custom form density and dialog surfaces.
+`src/styles/design-workspace.css` owns the shared baseline for headers, tables,
+custom controls and dialogs. The scoped operations layer supplies the current
+operational composition and materials described above.
 All active domain pages use the shared input primitives. `FormInput`,
 `FormSelect` and `FormSwitch` bridge Vuetify form validation to Alpha controls;
 retain their original model types, validation rules and server error messages.
@@ -292,12 +368,18 @@ through ProgressiveReply; the full server reply is already stored. Show full
 answer, reduced motion, hidden documents and very large replies bypass the reveal.
 Malformed chart responses expose their content instead of spinning forever or
 inventing values. Rendered Markdown remains sanitized.
+Its September 13 finish keeps the conversation structure intact while adding a
+more defined outer frame, a quiet static primary wash, thin semantic prompt
+accents, a highlighted history control and a stronger composer focus surface.
 
 Shifts use a settlement overview and detailed records in list/card views, with
 search, sort, status filters, load-more pagination and export of the loaded
 scope. Keep all settlement amounts, defensive status mappings and
 CASH/HUMO/PAYME contracts unchanged. Unknown or missing financial data must not
 be shown as zero.
+The overview cards and activity toolbar use the operational work depth, with a
+quiet primary wash on physical cash, compact selection rings and semantic record
+edges. The list/card structure and every reconciliation action remain unchanged.
 
 Settings now separate module selection, stock configuration and notification
 setup into structured editing sections. Notification templates retain editing,
@@ -345,9 +427,15 @@ phones, context has its own toolbar row; style and Send/Stop share the next row.
 The inner thread grid must shrink to its workspace so controls remain fully
 visible at 320px. Pending feedback is indeterminate and reduced-motion aware.
 
-### Orders and AI extension: September 10
+### Orders and AI extensions: September 10–13
 
-Orders places `DashboardFilters` above its four softly tinted KPIs. Desktop and
+Orders now participates in the operational command surface. Its integrated
+identity panel pairs the receipt symbol and actions with a permission-aware rail
+for Products, Categories, Orders, Places and QR Codes. Four actual-value KPIs join
+inside one tinted rail, followed by a single elevated register that contains the
+status queue, filters, payment summary, view switch, records and pagination.
+
+Orders places `DashboardFilters` above its joined KPIs. Desktop and
 phone use the same `DateRangeFields`; Orders opts into All time with empty date
 endpoints. Presets, working hours, explicit times and Apply retain the existing
 Asia/Tashkent date-parameter builder for both list and stats requests. Status,
@@ -362,15 +450,21 @@ grouping does not change payment submission contracts.
 
 Orders defaults to equal ticket cards, with the original twelve-column table
 available through the view switch. Tickets retain selection, item previews,
-preparation state, settlement and original actions. Complete details open in a
+preparation state, settlement and original actions. Their semantic top edges make
+status visible without adding decorative noise. Complete details open in a
 640px desktop side panel or phone sheet, keeping neighboring tickets stationary.
 The shared Modal retains focus containment, Escape and focus return. Sorting,
 export, row/bulk actions and server pagination remain available. At 650px and
 below, shared pagination shows first/current/last pages and adjacent-page arrows,
 keeping even registers with thousands of pages within the phone width.
+Order state confirmations use a concise identity callout, semantic icon and one
+meaningful full-width phone action; X and Escape dismiss without a redundant
+footer close button.
 
-AI uses the approved soft surfaces, a 232px desktop history column and a reachable
-composer. `ProgressiveReply` reveals new replies only after the existing
+AI uses a defined outer frame with approved soft inner surfaces, a 232px desktop
+history column and a reachable composer. Prompt cards use two-pixel semantic
+accents and the active composer receives a clear primary focus ring.
+`ProgressiveReply` reveals new replies only after the existing
 `/ai/query/` JSON request completes. The store retains the complete answer;
 this is presentation, not backend token streaming. Reveal advances at word and
 Markdown boundaries over 650–6000ms, with Show full answer available. Reduced

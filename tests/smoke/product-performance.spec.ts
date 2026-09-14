@@ -42,7 +42,7 @@ async function setup(page: Page, state: State = {}, locale = 'en', theme = 'dark
       }
       const report = payload(url, state)
       const format = url.searchParams.get('format')!
-      await route.fulfill({ contentType: format === 'csv' ? 'text/csv' : format === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', headers: { 'Content-Disposition': `attachment; filename="fallback.${format}"; filename*=UTF-8''Hisobot%20%E2%80%94%20sentabr.${format}`, 'X-Export-Count': String(report.pagination.total), 'X-Report-From': report.range.from, 'X-Report-To': report.range.to, 'X-Report-Cost-Complete': String(report.summary.cost_complete) }, body: `Product,Revenue\nALL PRODUCTS,${report.pagination.total}\nTOTAL,${report.summary.total_revenue}\n` })
+      await route.fulfill({ contentType: format === 'csv' ? 'text/csv' : format === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', headers: { 'Access-Control-Expose-Headers': 'Content-Disposition, X-Export-Count, X-Report-From, X-Report-To, X-Report-Cost-Complete', 'Content-Disposition': `attachment; filename="fallback.${format}"; filename*=UTF-8''Hisobot%20%E2%80%94%20sentabr.${format}`, 'X-Export-Count': String(report.pagination.total), 'X-Report-From': report.range.from, 'X-Report-To': report.range.to, 'X-Report-Cost-Complete': String(report.summary.cost_complete) }, body: `Product,Revenue\nALL PRODUCTS,${report.pagination.total}\nTOTAL,${report.summary.total_revenue}\n` })
       return
     }
     if (url.pathname.endsWith('/reports/product-performance')) {

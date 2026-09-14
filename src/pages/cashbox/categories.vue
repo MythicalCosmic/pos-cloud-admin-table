@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
 import { cashboxApi as axios } from '@/plugins/axios'
 import Button from '@/components/design/Button.vue'
 import Card from '@/components/design/Card.vue'
@@ -71,7 +73,7 @@ const columns = computed<DataTableColumn<any>[]>(() => [
 </script>
 
 <template>
-  <div class="page cashbox-categories-page">
+  <WorkspacePage class="page cashbox-categories-page">
     <PageHeader
       :title="t('Cashbox Expense Categories')"
       :subtitle="t('cashbox_cat_page_subtitle')"
@@ -79,7 +81,7 @@ const columns = computed<DataTableColumn<any>[]>(() => [
 
     <Card>
       <!-- Toolbar: search -->
-      <div class="toolbar toolbar--wrap">
+      <WorkspaceToolbar class="toolbar toolbar--wrap">
         <div class="tb-search">
           <Input
             v-model="search"
@@ -87,7 +89,7 @@ const columns = computed<DataTableColumn<any>[]>(() => [
             :placeholder="t('Search categories...')"
           />
         </div>
-      </div>
+      </WorkspaceToolbar>
 
       <div class="card__divider" />
 
@@ -158,7 +160,7 @@ const columns = computed<DataTableColumn<any>[]>(() => [
     >
       {{ snackbarMsg }}
     </VSnackbar>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>

@@ -4,6 +4,7 @@ import { useThemeConfig } from '@core/composable/useThemeConfig'
 import type { I18nLanguage } from '@layouts/types'
 
 const { isAppRtl } = useThemeConfig()
+const { t } = useI18n({ useScope: 'global' })
 
 const i18nCompLanguages: I18nLanguage[] = [
   {
@@ -28,6 +29,8 @@ const handleLangChange = (_: string) => {
 <template>
   <NavBarI18n
     :languages="i18nCompLanguages"
+    :aria-label="t('Language')"
+    :title="t('Language')"
     @change="handleLangChange"
   />
 </template>

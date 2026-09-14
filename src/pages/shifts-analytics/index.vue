@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
 import Input from '@/components/design/Input.vue'
 import Textarea from '@/components/design/Textarea.vue'
 import axios from '@/plugins/axios'
@@ -670,7 +671,7 @@ function onOverlayMouseUp(e: MouseEvent, closeFn: () => void) {
 </script>
 
 <template>
-  <div class="page shifts-workspace">
+  <WorkspacePage class="page shifts-workspace">
     <PageHeader
       :title="t('Shifts')"
       :subtitle="t('Reconcile cashiers and receive end-of-shift settlements')"
@@ -945,7 +946,7 @@ function onOverlayMouseUp(e: MouseEvent, closeFn: () => void) {
     <!-- Receive-money modal -->
     <div
       v-if="receiving"
-      class="overlay"
+      class="overlay workspace-overlay workspace-overlay--inline"
       @mousedown="onOverlayMouseDown"
       @mouseup="onOverlayMouseUp($event, closeReceive)"
     >
@@ -960,42 +961,38 @@ function onOverlayMouseUp(e: MouseEvent, closeFn: () => void) {
         @mouseup.stop
       >
         <div class="modal__head">
-          <div style="flex:1;min-width:0;">
-            <h3 class="modal__title">
-              {{ t('Receive money') }} &middot; {{ fullName(receiving.user) }}
-            </h3>
-            <div class="modal__sub">
-              {{ t('Shift') }} #{{ receiving.id }} &middot; {{ t('Cash, Card and Payme') }}
+          <div class="modal__identity">
+            <div
+              class="modal__symbol"
+              aria-hidden="true"
+            >
+              <DesignIcon
+                name="ws-shift"
+                :size="24"
+                :weight="1.6"
+              />
+            </div>
+            <div class="modal__copy">
+              <h3 class="modal__title">
+                {{ t('Receive money') }} &middot; {{ fullName(receiving.user) }}
+              </h3>
+              <div class="modal__sub">
+                {{ t('Shift') }} #{{ receiving.id }} &middot; {{ t('Cash, Card and Payme') }}
+              </div>
             </div>
           </div>
           <button
             type="button"
-            class="iconaction"
+            class="iconaction modal__close"
             :title="t('Close')"
             :aria-label="t('Close')"
             :disabled="busy"
             @click="closeReceive"
           >
-            <svg
-              viewBox="0 0 24 24"
-              width="17"
-              height="17"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            ><line
-              x1="18"
-              y1="6"
-              x2="6"
-              y2="18"
-            /><line
-              x1="6"
-              y1="6"
-              x2="18"
-              y2="18"
-            /></svg>
+            <DesignIcon
+              name="close"
+              :size="17"
+            />
           </button>
         </div>
         <div class="modal__body">
@@ -1148,18 +1145,10 @@ function onOverlayMouseUp(e: MouseEvent, closeFn: () => void) {
             :class="{ 'is-loading': busy }"
             :disabled="!canConfirmSettlement || busy"
           >
-            <svg
-              viewBox="0 0 24 24"
-              width="18"
-              height="18"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
+            <DesignIcon
+              name="check"
+              :size="18"
+            />
             {{ t('Confirm settlement') }}
           </button>
         </div>
@@ -1169,7 +1158,7 @@ function onOverlayMouseUp(e: MouseEvent, closeFn: () => void) {
     <!-- End-shift confirm modal -->
     <div
       v-if="endingShift"
-      class="overlay"
+      class="overlay workspace-overlay workspace-overlay--inline"
       @mousedown="onOverlayMouseDown"
       @mouseup="onOverlayMouseUp($event, cancelEndShift)"
     >
@@ -1183,42 +1172,38 @@ function onOverlayMouseUp(e: MouseEvent, closeFn: () => void) {
         @mouseup.stop
       >
         <div class="modal__head">
-          <div style="flex:1;min-width:0;">
-            <h3 class="modal__title">
-              {{ t('End this shift?') }}
-            </h3>
-            <div class="modal__sub">
-              {{ t('Shift') }} #{{ endingShift.id }} · {{ fullName(endingShift.user) }}
+          <div class="modal__identity">
+            <div
+              class="modal__symbol"
+              aria-hidden="true"
+            >
+              <DesignIcon
+                name="ws-shift"
+                :size="24"
+                :weight="1.6"
+              />
+            </div>
+            <div class="modal__copy">
+              <h3 class="modal__title">
+                {{ t('End this shift?') }}
+              </h3>
+              <div class="modal__sub">
+                {{ t('Shift') }} #{{ endingShift.id }} · {{ fullName(endingShift.user) }}
+              </div>
             </div>
           </div>
           <button
             type="button"
-            class="iconaction"
+            class="iconaction modal__close"
             :title="t('Close')"
             :aria-label="t('Close')"
             :disabled="busy"
             @click="cancelEndShift"
           >
-            <svg
-              viewBox="0 0 24 24"
-              width="17"
-              height="17"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            ><line
-              x1="18"
-              y1="6"
-              x2="6"
-              y2="18"
-            /><line
-              x1="6"
-              y1="6"
-              x2="18"
-              y2="18"
-            /></svg>
+            <DesignIcon
+              name="close"
+              :size="17"
+            />
           </button>
         </div>
         <div class="modal__body">
@@ -1241,7 +1226,7 @@ function onOverlayMouseUp(e: MouseEvent, closeFn: () => void) {
         </div>
       </div>
     </div>
-  </div>
+  </WorkspacePage>
 </template>
 
 <route lang="yaml">

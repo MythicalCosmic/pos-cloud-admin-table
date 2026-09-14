@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
+
 /* ============================================================
    ALPHA POS — Stock Counts (Workflow)
    Refactored to design primitives + design-shell.css.
@@ -594,7 +597,7 @@ const itemFilterOptions = computed(() => [
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <!-- Page header -->
     <PageHeader
       :title="t('Stock Counts')"
@@ -614,7 +617,7 @@ const itemFilterOptions = computed(() => [
 
     <!-- Filter card -->
     <div class="card">
-      <div class="toolbar">
+      <WorkspaceToolbar class="toolbar">
         <div class="filter-cell">
           <Select
             :model-value="statusFilter ?? ''"
@@ -654,7 +657,7 @@ const itemFilterOptions = computed(() => [
             {{ t('Clear filters') }}
           </Button>
         </div>
-      </div>
+      </WorkspaceToolbar>
 
       <div class="card__divider" />
 
@@ -1084,12 +1087,6 @@ const itemFilterOptions = computed(() => [
 
       <template #footer>
         <Button
-          variant="ghost"
-          @click="detailDialog = false"
-        >
-          {{ t('Close') }}
-        </Button>
-        <Button
           v-if="isCountEditable && detailCount?.status === 'IN_PROGRESS'"
           variant="primary"
           icon="check"
@@ -1148,7 +1145,7 @@ const itemFilterOptions = computed(() => [
     >
       {{ snackbarMsg }}
     </div>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>
@@ -1215,7 +1212,6 @@ const itemFilterOptions = computed(() => [
   height: 100%;
   border-radius: 999px;
   background: rgb(var(--v-theme-primary));
-  transition: width 0.3s ease;
 }
 .count-progress__fill.is-done { background: rgb(var(--v-theme-success-strong)); }
 

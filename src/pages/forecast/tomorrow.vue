@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
 import axios from '@/plugins/axios'
 import PageHeader from '@/components/design/PageHeader.vue'
 import Button from '@/components/design/Button.vue'
@@ -77,7 +79,7 @@ function exportForecast() {
 </script>
 
 <template>
-  <div class="page forecast-workspace">
+  <WorkspacePage class="page forecast-workspace">
     <PageHeader
       :title="t('Demand Forecast')"
       :subtitle="t('What to prep tomorrow morning, based on last 30 days')"
@@ -112,7 +114,7 @@ function exportForecast() {
       </div>
     </div>
     <div class="card forecast-plan">
-      <div class="toolbar">
+      <WorkspaceToolbar class="toolbar">
         <Input
           v-model="search"
           icon="search"
@@ -123,7 +125,7 @@ function exportForecast() {
           :aria-label="t('Sort')"
           :options="[{ value: 'quantity', label: t('workspace_forecast_quantity') }, { value: 'name', label: t('Name') }]"
         />
-      </div>
+      </WorkspaceToolbar>
       <div
         v-if="loading"
         class="forecast-plan__loading"
@@ -186,16 +188,16 @@ function exportForecast() {
         </li>
       </ol>
     </div>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>
-.forecast-summary { display: grid; grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr)); align-items: center; gap: 28px; padding: 32px; margin-block-end: 24px; border-radius: 20px; background: #294b37; color: #eef3df; }
-.forecast-summary__label { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 600; color: #d5e3b4; }
+.forecast-summary { display: grid; grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr)); align-items: center; gap: 28px; padding: 32px; margin-block-end: 24px; border-radius: 20px; background: var(--surface); color: var(--text); }
+.forecast-summary__label { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 600; color: var(--primary); }
 .forecast-summary h2 { font-size: clamp(24px, 3vw, 32px); margin-block: 14px 10px; letter-spacing: -.035em; line-height: 1.15; }
-.forecast-summary p { max-inline-size: 440px; font-size: 12px; line-height: 1.7; color: #c6d5be; margin: 0; }
-.forecast-summary__metric { display: flex; flex-direction: column; gap: 14px; padding-inline-start: 28px; border-inline-start: 1px solid #526a50; }
-.forecast-summary__metric span { color: #c6d5be; font-size: 12px; }
+.forecast-summary p { max-inline-size: 440px; font-size: 12px; line-height: 1.7; color: var(--text-secondary); margin: 0; }
+.forecast-summary__metric { display: flex; flex-direction: column; gap: 14px; padding-inline-start: 28px; border-inline-start: 1px solid var(--border); }
+.forecast-summary__metric span { color: var(--text-secondary); font-size: 12px; }
 .forecast-summary__metric strong { font-family: var(--font-mono); font-size: clamp(24px, 3vw, 38px); overflow-wrap: anywhere; }
 .forecast-plan { overflow: hidden; }
 .forecast-plan .toolbar { justify-content: space-between; border-block-end: 1px solid var(--border); }

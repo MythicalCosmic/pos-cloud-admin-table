@@ -1,4 +1,11 @@
 {
+  "workspace_move_up": "Переместить вверх",
+  "workspace_move_down": "Переместить вниз",
+  "workspace_purchasing": "Закупки",
+  "workspace_inventory": "Запасы",
+  "workspace_stock_movement": "Движение запасов",
+  "workspace_related_pages": "Связанные страницы",
+  "workspace_search_filters": "Поиск и фильтры",
   "Marker size = avg order value": "Размер маркера — средний чек",
   "dash_channel_incomplete": "Часть данных по источникам заказов не получена. Отсутствующие значения отмечены как недоступные.",
   "dash_channel_title": "Источники заказов",

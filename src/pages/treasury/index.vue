@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
 import axios from '@/plugins/axios'
 import Badge from '@/components/design/Badge.vue'
 import Button from '@/components/design/Button.vue'
@@ -581,11 +583,30 @@ function deltaDisplay(t_: any) {
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <PageHeader
       :title="t('Treasury')"
       :subtitle="t('Ledger')"
-    />
+    >
+      <template #actions>
+        <Button
+          v-if="canTransfer"
+          variant="secondary"
+          icon="ws-transfer"
+          @click="openTransfer"
+        >
+          {{ t('Transfer') }}
+        </Button>
+        <Button
+          v-if="canDirectExpense"
+          variant="primary"
+          icon="receipt"
+          @click="openExpense"
+        >
+          {{ t('Record Expense') }}
+        </Button>
+      </template>
+    </PageHeader>
 
     <!-- Account cards -->
     <StateFill
@@ -597,25 +618,49 @@ function deltaDisplay(t_: any) {
       error
     >
       <template #action>
-        <Button variant="secondary" icon="refresh" @click="loadAccounts">
+        <Button
+          variant="secondary"
+          icon="refresh"
+          @click="loadAccounts"
+        >
           {{ t('Retry') }}
         </Button>
       </template>
     </StateFill>
 
-    <div v-else class="grid cols-3 treasury-kpis">
+    <div
+      v-else
+      class="grid cols-3 treasury-kpis"
+    >
       <div class="kpi-card">
         <div class="kpi-card__top">
           <div class="kpi-card__icon t-success">
-            <DesignIcon name="lock" :size="20" />
+            <DesignIcon
+              name="lock"
+              :size="20"
+            />
           </div>
-          <div class="kpi-card__label">{{ t('Safe (cash)') }}</div>
+          <div class="kpi-card__label">
+            {{ t('Safe (cash)') }}
+          </div>
         </div>
-        <div v-if="accounts.SAFE" class="kpi-card__value num-tabular">
+        <div
+          v-if="accounts.SAFE"
+          class="kpi-card__value num-tabular"
+        >
           {{ formatCurrency(accounts.SAFE.balance ?? 0) }}<span class="kpi-card__unit">{{ t('currency_short') }}</span>
         </div>
-        <Skeleton v-else :h="28" w="140px" :r="4" style="margin: 4px 0;" />
-        <div v-if="accounts.SAFE?.last_updated" class="kpi-card__sub">
+        <Skeleton
+          v-else
+          :h="28"
+          w="140px"
+          :r="4"
+          style="margin: 4px 0;"
+        />
+        <div
+          v-if="accounts.SAFE?.last_updated"
+          class="kpi-card__sub"
+        >
           {{ t('Updated') }}: {{ formatDate(accounts.SAFE.last_updated) }}
         </div>
       </div>
@@ -623,15 +668,32 @@ function deltaDisplay(t_: any) {
       <div class="kpi-card">
         <div class="kpi-card__top">
           <div class="kpi-card__icon t-primary">
-            <DesignIcon name="wallet" :size="20" />
+            <DesignIcon
+              name="wallet"
+              :size="20"
+            />
           </div>
-          <div class="kpi-card__label">{{ t('Bank (cards)') }}</div>
+          <div class="kpi-card__label">
+            {{ t('Bank (cards)') }}
+          </div>
         </div>
-        <div v-if="accounts.BANK" class="kpi-card__value num-tabular">
+        <div
+          v-if="accounts.BANK"
+          class="kpi-card__value num-tabular"
+        >
           {{ formatCurrency(accounts.BANK.balance ?? 0) }}<span class="kpi-card__unit">{{ t('currency_short') }}</span>
         </div>
-        <Skeleton v-else :h="28" w="140px" :r="4" style="margin: 4px 0;" />
-        <div v-if="accounts.BANK?.last_updated" class="kpi-card__sub">
+        <Skeleton
+          v-else
+          :h="28"
+          w="140px"
+          :r="4"
+          style="margin: 4px 0;"
+        />
+        <div
+          v-if="accounts.BANK?.last_updated"
+          class="kpi-card__sub"
+        >
           {{ t('Updated') }}: {{ formatDate(accounts.BANK.last_updated) }}
         </div>
       </div>
@@ -639,14 +701,28 @@ function deltaDisplay(t_: any) {
       <div class="kpi-card treasury-total">
         <div class="kpi-card__top">
           <div class="kpi-card__icon t-info">
-            <DesignIcon name="wallet" :size="20" />
+            <DesignIcon
+              name="wallet"
+              :size="20"
+            />
           </div>
-          <div class="kpi-card__label">{{ t('Total treasury') }}</div>
+          <div class="kpi-card__label">
+            {{ t('Total treasury') }}
+          </div>
         </div>
-        <div v-if="accountsReady" class="kpi-card__value num-tabular">
+        <div
+          v-if="accountsReady"
+          class="kpi-card__value num-tabular"
+        >
           {{ formatCurrency(totalBalance) }}<span class="kpi-card__unit">{{ t('currency_short') }}</span>
         </div>
-        <Skeleton v-else :h="28" w="140px" :r="4" style="margin: 4px 0;" />
+        <Skeleton
+          v-else
+          :h="28"
+          w="140px"
+          :r="4"
+          style="margin: 4px 0;"
+        />
         <div class="kpi-card__sub">
           {{ t('Safe + Bank combined') }}
         </div>
@@ -655,7 +731,7 @@ function deltaDisplay(t_: any) {
 
     <!-- History card -->
     <div class="card">
-      <div class="toolbar treasury-toolbar">
+      <WorkspaceToolbar class="toolbar treasury-toolbar">
         <div class="treasury-search">
           <Input
             v-model="search"
@@ -706,24 +782,8 @@ function deltaDisplay(t_: any) {
           >
             {{ t('Clear filters') }}
           </Button>
-          <Button
-            v-if="canTransfer"
-            variant="secondary"
-            icon="refresh"
-            @click="openTransfer"
-          >
-            {{ t('Transfer') }}
-          </Button>
-          <Button
-            v-if="canDirectExpense"
-            variant="danger"
-            icon="dollar"
-            @click="openExpense"
-          >
-            {{ t('Record Expense') }}
-          </Button>
         </div>
-      </div>
+      </WorkspaceToolbar>
 
       <div
         v-if="historyTotals && !loading"
@@ -766,7 +826,11 @@ function deltaDisplay(t_: any) {
         error
       >
         <template #action>
-          <Button variant="secondary" icon="refresh" @click="loadHistory">
+          <Button
+            variant="secondary"
+            icon="refresh"
+            @click="loadHistory"
+          >
             {{ t('Retry') }}
           </Button>
         </template>
@@ -841,7 +905,10 @@ function deltaDisplay(t_: any) {
               class="cell-muted"
               style="font-size: var(--fs-label);"
             >
-              <DesignIcon name="refresh" :size="12" />
+              <DesignIcon
+                name="refresh"
+                :size="12"
+              />
               {{ t(`treasury_account_${row.counterparty}`) }}
             </div>
           </div>
@@ -880,7 +947,10 @@ function deltaDisplay(t_: any) {
             class="treasury-swap-btn"
             @click="swapTransferAccounts"
           >
-            <DesignIcon name="sort" :size="14" />
+            <DesignIcon
+              name="sort"
+              :size="14"
+            />
             {{ t('Swap direction') }}
           </button>
         </div>
@@ -1049,7 +1119,7 @@ function deltaDisplay(t_: any) {
     >
       {{ snackbarMsg }}
     </VSnackbar>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>

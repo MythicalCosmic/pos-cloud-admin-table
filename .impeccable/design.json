@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-10T12:34:18.710898+00:00",
+  "generatedAt": "2026-09-12T18:52:35.990Z",
   "title": "Design System: Alpha POS",
   "extensions": {
     "colorMeta": {
@@ -454,7 +454,7 @@
       {
         "name": "workspace-card",
         "value": "0 2px 5px rgb(16 32 21 / 2%)",
-        "purpose": "The incumbent shared workspace card shadow in design-workspace.css."
+        "purpose": "Retained shared baseline in design-workspace.css; operational surfaces use their scoped work shadow."
       },
       {
         "name": "dashboard-surface",
@@ -464,12 +464,42 @@
       {
         "name": "orders-surface",
         "value": "var(--orders-shadow, 0 2px 3px -2px #15162512, 0 8px 24px -18px #15162530)",
-        "purpose": "Orders aliases the approved soft surface elevation for tickets, KPIs and insights."
+        "purpose": "Orders applies the operational work elevation to its unified register while tickets and insights retain restrained inner depth."
       },
       {
         "name": "assistant-surface",
         "value": "var(--assistant-shadow, 0 2px 3px -2px #15162512, 0 8px 24px -18px #15162530)",
-        "purpose": "AI aliases the same elevation for messages, composer, prompts and active history."
+        "purpose": "AI uses soft inner elevation inside a defined frame; prompt accents and composer focus carry the active state."
+      },
+      {
+        "name": "operations-surface",
+        "value": "var(--work-shadow, 0 1px 2px rgb(15 28 20 / 4%), 0 14px 34px rgb(15 28 20 / 7%))",
+        "purpose": "Operational identity panels, joined metric rails and work surfaces; cells inside a joined rail have no outer shadow."
+      },
+      {
+        "name": "operations-surface-dark",
+        "value": "0 1px 2px rgb(0 0 0 / 24%), 0 18px 44px rgb(0 0 0 / 24%)",
+        "purpose": "The dark-theme value of --work-shadow."
+      },
+      {
+        "name": "operations-primary-action",
+        "value": "0 7px 16px color-mix(in srgb, var(--primary) 22%, transparent), inset 0 1px rgb(255 255 255 / 18%)",
+        "purpose": "Primary operational buttons; pressing removes the shadow."
+      },
+      {
+        "name": "operations-field-focus",
+        "value": "0 0 0 4px var(--primary-ring), 0 6px 18px color-mix(in srgb, var(--primary) 9%, transparent)",
+        "purpose": "Operational field focus, alongside the primary border."
+      },
+      {
+        "name": "operations-dialog",
+        "value": "0 34px 110px rgb(0 0 0 / 36%), 0 4px 18px rgb(0 0 0 / 14%)",
+        "purpose": "Focused operational task dialogs above a blurred backdrop."
+      },
+      {
+        "name": "operations-popover",
+        "value": "0 22px 64px rgb(0 0 0 / 24%), 0 4px 14px rgb(0 0 0 / 10%)",
+        "purpose": "Teleported operational search, multi-select and calendar menus."
       }
     ],
     "motion": [
@@ -552,6 +582,36 @@
         "name": "reply-cursor",
         "value": "900ms ease-in-out",
         "purpose": "Cursor opacity cycle only during the visual reveal with no reduced-motion preference; it is not backend streaming."
+      },
+      {
+        "name": "work-ease",
+        "value": "cubic-bezier(.2, .8, .2, 1)",
+        "purpose": "Scoped operational color, border, elevation and small hover/press feedback."
+      },
+      {
+        "name": "operations-feedback",
+        "value": "160ms",
+        "purpose": "Controls and related navigation; reduced motion removes transitions."
+      },
+      {
+        "name": "login-station",
+        "value": "6s ease-in-out",
+        "purpose": "Small vertical movement of the Alpha POS hub only; the pause control and reduced motion stop it."
+      },
+      {
+        "name": "operations-row-feedback",
+        "value": "150ms",
+        "purpose": "Register-row tint and inset edge; records have no repeated entrance choreography."
+      },
+      {
+        "name": "operations-metric-feedback",
+        "value": "180ms",
+        "purpose": "Metric tint and inset hover edge within a joined rail."
+      },
+      {
+        "name": "operations-dialog-transition",
+        "value": "220ms cubic-bezier(.2, .8, .2, 1)",
+        "purpose": "Dialog/backdrop opacity and dialog transform only; reduced motion removes it. Inline dialogs use the matching keyframes."
       }
     ],
     "breakpoints": [
@@ -630,6 +690,26 @@
       {
         "name": "thinking-level-dialog",
         "value": "1100px"
+      },
+      {
+        "name": "operations-phone",
+        "value": "700px"
+      },
+      {
+        "name": "operations-narrow-phone",
+        "value": "360px"
+      },
+      {
+        "name": "settings-introduction-stack",
+        "value": "1100px"
+      },
+      {
+        "name": "dining-directory-stack",
+        "value": "800px"
+      },
+      {
+        "name": "login-form-priority",
+        "value": "900px"
       }
     ],
     "typographyMeta": {
@@ -648,6 +728,14 @@
       "dashboard-metric": {
         "displayName": "Dashboard chapter metric",
         "purpose": "Tabular Hanken figures in separate tinted chapter cards; names use the smaller sans-serif treatment."
+      },
+      "operations-heading": {
+        "displayName": "Operational heading",
+        "purpose": "Command-panel title in Hanken Grotesk; 30–38px on desktop, 25px at 700px and 23px at 360px."
+      },
+      "operations-metric": {
+        "displayName": "Operational metric",
+        "purpose": "Tabular Hanken values in joined summary rails; phone values step down to 23px and 21px. Accounting precision and unavailable values remain unchanged."
       }
     }
   },
@@ -655,44 +743,46 @@
     {
       "name": "Primary button",
       "kind": "button",
-      "description": "Alpha Button primary variant; preview only.",
+      "description": "Primary button in an operational workspace; Alpha Button keeps its existing states and behavior.",
       "html": "<button class=\"ds-btn-primary\">Continue</button>",
-      "css": ".ds-btn-primary{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:10px 16px;border:1px solid transparent;border-radius:11px;font:600 14px/1.25 var(--font-sans,\"Hanken Grotesk\",sans-serif);cursor:pointer;transition:background 160ms ease,border-color 160ms ease,color 160ms ease,box-shadow 160ms ease,transform 160ms ease}.ds-btn-primary:focus-visible{outline:none;box-shadow:var(--shadow-focus,0 0 0 3px rgb(59 130 246 / 28%))}.ds-btn-primary:active{transform:translateY(.5px)}.ds-btn-primary{background:var(--primary,#2563eb);color:var(--on-primary,#fff)}.ds-btn-primary:hover{background:var(--primary-hover,#1d4ed8)}.ds-btn-primary:active{background:var(--primary-active,#1e40af)}.ds-btn-primary:disabled{opacity:.5;cursor:not-allowed;pointer-events:none}@media(prefers-reduced-motion:reduce){.ds-btn-primary{transition:none}.ds-btn-primary:active{transform:none}}"
+      "css": ".ds-btn-primary{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 16px;border:1px solid transparent;border-radius:var(--work-control,13px);font:650 14px/1.25 var(--font-sans,\"Hanken Grotesk\",sans-serif);cursor:pointer;transition:background 160ms ease,border-color 160ms ease,color 160ms ease,box-shadow 160ms ease,transform 160ms ease}.ds-btn-primary:focus-visible{outline:none;box-shadow:var(--shadow-focus,0 0 0 3px rgb(59 130 246 / 28%))}.ds-btn-primary:active{transform:translateY(.5px)}.ds-btn-primary{background:var(--primary,#2563eb);color:var(--on-primary,#fff)}.ds-btn-primary:hover{background:var(--primary-hover,#1d4ed8)}.ds-btn-primary:active{background:var(--primary-active,#1e40af)}.ds-btn-primary:disabled{opacity:.5;cursor:not-allowed;pointer-events:none}@media(prefers-reduced-motion:reduce){.ds-btn-primary{transition:none}.ds-btn-primary:active{transform:none}}@media(max-width:700px){.ds-btn-primary{min-height:44px}}.ds-btn-primary{transition:background 160ms cubic-bezier(.2,.8,.2,1),border-color 160ms cubic-bezier(.2,.8,.2,1),color 160ms cubic-bezier(.2,.8,.2,1),box-shadow 160ms cubic-bezier(.2,.8,.2,1),transform 160ms cubic-bezier(.2,.8,.2,1)}.ds-btn-primary{box-shadow:0 7px 16px color-mix(in srgb,var(--primary,#2563eb) 22%,transparent),inset 0 1px rgb(255 255 255 / 18%)}@media(hover:hover){.ds-btn-primary:not([disabled]):hover{transform:translateY(-1px)}}.ds-btn-primary:active{transform:translateY(1px) scale(.99);box-shadow:none}@media(prefers-reduced-motion:reduce){.ds-btn-primary{transition:none}}",
+      "refersTo": "operations-button"
     },
     {
       "name": "Secondary button",
       "kind": "button",
-      "description": "Alpha Button secondary variant; preview only.",
+      "description": "Secondary button in an operational workspace; Alpha Button keeps its existing states and behavior.",
       "html": "<button class=\"ds-btn-secondary\">Continue</button>",
-      "css": ".ds-btn-secondary{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:10px 16px;border:1px solid transparent;border-radius:11px;font:600 14px/1.25 var(--font-sans,\"Hanken Grotesk\",sans-serif);cursor:pointer;transition:background 160ms ease,border-color 160ms ease,color 160ms ease,box-shadow 160ms ease,transform 160ms ease}.ds-btn-secondary:focus-visible{outline:none;box-shadow:var(--shadow-focus,0 0 0 3px rgb(59 130 246 / 28%))}.ds-btn-secondary:active{transform:translateY(.5px)}.ds-btn-secondary{background:var(--surface,#fff);color:var(--text,#17243b);border-color:var(--border-strong,#b8c8df)}.ds-btn-secondary:hover{background:var(--surface-2,#f7f9fd);border-color:var(--text-tertiary,#65758d)}.ds-btn-secondary:disabled{opacity:.5;cursor:not-allowed;pointer-events:none}@media(prefers-reduced-motion:reduce){.ds-btn-secondary{transition:none}.ds-btn-secondary:active{transform:none}}"
+      "css": ".ds-btn-secondary{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 16px;border:1px solid transparent;border-radius:var(--work-control,13px);font:650 14px/1.25 var(--font-sans,\"Hanken Grotesk\",sans-serif);cursor:pointer;transition:background 160ms ease,border-color 160ms ease,color 160ms ease,box-shadow 160ms ease,transform 160ms ease}.ds-btn-secondary:focus-visible{outline:none;box-shadow:var(--shadow-focus,0 0 0 3px rgb(59 130 246 / 28%))}.ds-btn-secondary:active{transform:translateY(.5px)}.ds-btn-secondary{background:var(--surface,#fff);color:var(--text,#17243b);border-color:var(--border-strong,#b8c8df)}.ds-btn-secondary:hover{background:var(--surface-2,#f7f9fd);border-color:var(--text-tertiary,#65758d)}.ds-btn-secondary:disabled{opacity:.5;cursor:not-allowed;pointer-events:none}@media(prefers-reduced-motion:reduce){.ds-btn-secondary{transition:none}.ds-btn-secondary:active{transform:none}}@media(max-width:700px){.ds-btn-secondary{min-height:44px}}.ds-btn-secondary{transition:background 160ms cubic-bezier(.2,.8,.2,1),border-color 160ms cubic-bezier(.2,.8,.2,1),color 160ms cubic-bezier(.2,.8,.2,1),box-shadow 160ms cubic-bezier(.2,.8,.2,1),transform 160ms cubic-bezier(.2,.8,.2,1)}.ds-btn-secondary{box-shadow:var(--shadow-xs)}@media(hover:hover){.ds-btn-secondary:not([disabled]):hover{transform:translateY(-1px)}}.ds-btn-secondary:active{transform:translateY(1px) scale(.99);box-shadow:none}@media(prefers-reduced-motion:reduce){.ds-btn-secondary{transition:none}}"
     },
     {
       "name": "Ghost button",
       "kind": "button",
-      "description": "Alpha Button ghost variant; preview only.",
+      "description": "Ghost button in an operational workspace; Alpha Button keeps its existing states and behavior.",
       "html": "<button class=\"ds-btn-ghost\">Continue</button>",
-      "css": ".ds-btn-ghost{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:10px 16px;border:1px solid transparent;border-radius:11px;font:600 14px/1.25 var(--font-sans,\"Hanken Grotesk\",sans-serif);cursor:pointer;transition:background 160ms ease,border-color 160ms ease,color 160ms ease,box-shadow 160ms ease,transform 160ms ease}.ds-btn-ghost:focus-visible{outline:none;box-shadow:var(--shadow-focus,0 0 0 3px rgb(59 130 246 / 28%))}.ds-btn-ghost:active{transform:translateY(.5px)}.ds-btn-ghost{background:transparent;color:var(--text-secondary,#52627a)}.ds-btn-ghost:hover{background:var(--surface-2,#f7f9fd);color:var(--text,#17243b)}.ds-btn-ghost:disabled{opacity:.5;cursor:not-allowed;pointer-events:none}@media(prefers-reduced-motion:reduce){.ds-btn-ghost{transition:none}.ds-btn-ghost:active{transform:none}}"
+      "css": ".ds-btn-ghost{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 16px;border:1px solid transparent;border-radius:var(--work-control,13px);font:650 14px/1.25 var(--font-sans,\"Hanken Grotesk\",sans-serif);cursor:pointer;transition:background 160ms ease,border-color 160ms ease,color 160ms ease,box-shadow 160ms ease,transform 160ms ease}.ds-btn-ghost:focus-visible{outline:none;box-shadow:var(--shadow-focus,0 0 0 3px rgb(59 130 246 / 28%))}.ds-btn-ghost:active{transform:translateY(.5px)}.ds-btn-ghost{background:transparent;color:var(--text-secondary,#52627a)}.ds-btn-ghost:hover{background:var(--surface-2,#f7f9fd);color:var(--text,#17243b)}.ds-btn-ghost:disabled{opacity:.5;cursor:not-allowed;pointer-events:none}@media(prefers-reduced-motion:reduce){.ds-btn-ghost{transition:none}.ds-btn-ghost:active{transform:none}}@media(max-width:700px){.ds-btn-ghost{min-height:44px}}.ds-btn-ghost{transition:background 160ms cubic-bezier(.2,.8,.2,1),border-color 160ms cubic-bezier(.2,.8,.2,1),color 160ms cubic-bezier(.2,.8,.2,1),box-shadow 160ms cubic-bezier(.2,.8,.2,1),transform 160ms cubic-bezier(.2,.8,.2,1)}@media(hover:hover){.ds-btn-ghost:not([disabled]):hover{transform:translateY(-1px)}}.ds-btn-ghost:active{transform:translateY(1px) scale(.99);box-shadow:none}@media(prefers-reduced-motion:reduce){.ds-btn-ghost{transition:none}}"
     },
     {
       "name": "Danger button",
       "kind": "button",
-      "description": "Alpha Button danger variant; preview only.",
+      "description": "Danger button in an operational workspace; Alpha Button keeps its existing states and behavior.",
       "html": "<button class=\"ds-btn-danger\">Continue</button>",
-      "css": ".ds-btn-danger{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:10px 16px;border:1px solid transparent;border-radius:11px;font:600 14px/1.25 var(--font-sans,\"Hanken Grotesk\",sans-serif);cursor:pointer;transition:background 160ms ease,border-color 160ms ease,color 160ms ease,box-shadow 160ms ease,transform 160ms ease}.ds-btn-danger:focus-visible{outline:none;box-shadow:var(--shadow-focus,0 0 0 3px rgb(59 130 246 / 28%))}.ds-btn-danger:active{transform:translateY(.5px)}.ds-btn-danger{background:var(--error,#c8372a);color:#fff}.ds-btn-danger:hover{background:var(--error-strong,#a82c21)}.ds-btn-danger:disabled{opacity:.5;cursor:not-allowed;pointer-events:none}@media(prefers-reduced-motion:reduce){.ds-btn-danger{transition:none}.ds-btn-danger:active{transform:none}}"
+      "css": ".ds-btn-danger{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 16px;border:1px solid transparent;border-radius:var(--work-control,13px);font:650 14px/1.25 var(--font-sans,\"Hanken Grotesk\",sans-serif);cursor:pointer;transition:background 160ms ease,border-color 160ms ease,color 160ms ease,box-shadow 160ms ease,transform 160ms ease}.ds-btn-danger:focus-visible{outline:none;box-shadow:var(--shadow-focus,0 0 0 3px rgb(59 130 246 / 28%))}.ds-btn-danger:active{transform:translateY(.5px)}.ds-btn-danger{background:var(--error,#c8372a);color:#fff}.ds-btn-danger:hover{background:var(--error-strong,#a82c21)}.ds-btn-danger:disabled{opacity:.5;cursor:not-allowed;pointer-events:none}@media(prefers-reduced-motion:reduce){.ds-btn-danger{transition:none}.ds-btn-danger:active{transform:none}}@media(max-width:700px){.ds-btn-danger{min-height:44px}}.ds-btn-danger{transition:background 160ms cubic-bezier(.2,.8,.2,1),border-color 160ms cubic-bezier(.2,.8,.2,1),color 160ms cubic-bezier(.2,.8,.2,1),box-shadow 160ms cubic-bezier(.2,.8,.2,1),transform 160ms cubic-bezier(.2,.8,.2,1)}@media(hover:hover){.ds-btn-danger:not([disabled]):hover{transform:translateY(-1px)}}.ds-btn-danger:active{transform:translateY(1px) scale(.99);box-shadow:none}@media(prefers-reduced-motion:reduce){.ds-btn-danger{transition:none}}"
     },
     {
       "name": "Danger-Soft button",
       "kind": "button",
-      "description": "Alpha Button danger-soft variant; preview only.",
+      "description": "Danger-Soft button in an operational workspace; Alpha Button keeps its existing states and behavior.",
       "html": "<button class=\"ds-btn-danger-soft\">Continue</button>",
-      "css": ".ds-btn-danger-soft{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:10px 16px;border:1px solid transparent;border-radius:11px;font:600 14px/1.25 var(--font-sans,\"Hanken Grotesk\",sans-serif);cursor:pointer;transition:background 160ms ease,border-color 160ms ease,color 160ms ease,box-shadow 160ms ease,transform 160ms ease}.ds-btn-danger-soft:focus-visible{outline:none;box-shadow:var(--shadow-focus,0 0 0 3px rgb(59 130 246 / 28%))}.ds-btn-danger-soft:active{transform:translateY(.5px)}.ds-btn-danger-soft{background:var(--error-weak,#fbebe9);color:var(--error,#c8372a);border-color:var(--error-border,#f1c8c3)}.ds-btn-danger-soft:hover{background:color-mix(in srgb,var(--error-weak,#fbebe9) 70%,var(--error,#c8372a) 12%)}.ds-btn-danger-soft:disabled{opacity:.5;cursor:not-allowed;pointer-events:none}@media(prefers-reduced-motion:reduce){.ds-btn-danger-soft{transition:none}.ds-btn-danger-soft:active{transform:none}}"
+      "css": ".ds-btn-danger-soft{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 16px;border:1px solid transparent;border-radius:var(--work-control,13px);font:650 14px/1.25 var(--font-sans,\"Hanken Grotesk\",sans-serif);cursor:pointer;transition:background 160ms ease,border-color 160ms ease,color 160ms ease,box-shadow 160ms ease,transform 160ms ease}.ds-btn-danger-soft:focus-visible{outline:none;box-shadow:var(--shadow-focus,0 0 0 3px rgb(59 130 246 / 28%))}.ds-btn-danger-soft:active{transform:translateY(.5px)}.ds-btn-danger-soft{background:var(--error-weak,#fbebe9);color:var(--error,#c8372a);border-color:var(--error-border,#f1c8c3)}.ds-btn-danger-soft:hover{background:color-mix(in srgb,var(--error-weak,#fbebe9) 70%,var(--error,#c8372a) 12%)}.ds-btn-danger-soft:disabled{opacity:.5;cursor:not-allowed;pointer-events:none}@media(prefers-reduced-motion:reduce){.ds-btn-danger-soft{transition:none}.ds-btn-danger-soft:active{transform:none}}@media(max-width:700px){.ds-btn-danger-soft{min-height:44px}}.ds-btn-danger-soft{transition:background 160ms cubic-bezier(.2,.8,.2,1),border-color 160ms cubic-bezier(.2,.8,.2,1),color 160ms cubic-bezier(.2,.8,.2,1),box-shadow 160ms cubic-bezier(.2,.8,.2,1),transform 160ms cubic-bezier(.2,.8,.2,1)}@media(hover:hover){.ds-btn-danger-soft:not([disabled]):hover{transform:translateY(-1px)}}.ds-btn-danger-soft:active{transform:translateY(1px) scale(.99);box-shadow:none}@media(prefers-reduced-motion:reduce){.ds-btn-danger-soft{transition:none}}"
     },
     {
       "name": "Text input",
       "kind": "input",
-      "description": "Shared custom field surface and visible focus.",
-      "html": "<label class=\"ds-field\">Search customers<input class=\"ds-input\" placeholder=\"Phone number\" /></label>",
-      "css": ".ds-field{display:grid;gap:7px;color:var(--text-secondary,#52627a);font:600 12px/1.5 var(--font-sans,\"Hanken Grotesk\",sans-serif)}.ds-input{height:44px;min-width:0;padding:0 12px;border:1px solid var(--border,#dbe3f0);border-radius:11px;background:var(--surface-2,#f7f9fd);color:var(--text,#17243b);font:400 14px var(--font-sans,\"Hanken Grotesk\",sans-serif);transition:border-color 160ms ease,background 160ms ease,box-shadow 160ms ease}.ds-input:hover{border-color:var(--text-tertiary,#65758d)}.ds-input:focus-visible{outline:none;border-color:var(--primary,#2563eb);background:var(--surface,#fff);box-shadow:var(--shadow-focus,0 0 0 3px rgb(59 130 246 / 28%))}.ds-input:disabled{background:var(--surface-inset,#eef3fa);color:var(--text-disabled,#a2afc3);opacity:.55;cursor:not-allowed}@media(max-width:768px){.ds-input{font-size:16px}}@media(prefers-reduced-motion:reduce){.ds-input{transition:none}}"
+      "description": "Operational text field and inline invalid state, with linked labels, error text and the four-pixel focus ring.",
+      "html": "<div class=\"ds-field-examples\"><label class=\"ds-field\"><span>Search</span><input class=\"ds-input\" placeholder=\"Search products\" /></label><label class=\"ds-field\"><span id=\"ds-field-name-label\">Name</span><input class=\"ds-input\" aria-labelledby=\"ds-field-name-label\" aria-describedby=\"ds-field-name-error\" aria-invalid=\"true\" /><span id=\"ds-field-name-error\" class=\"ds-field-error\" role=\"alert\">Required</span></label></div>",
+      "css": ".ds-field-examples{display:grid;gap:18px}.ds-field{display:grid;gap:8px;color:var(--text,#17243b);font:700 11px/1.45 var(--font-sans,\"Hanken Grotesk\",sans-serif);letter-spacing:.025em}.ds-input{min-height:46px;min-width:0;padding:0 12px;border:1px solid var(--work-line,color-mix(in srgb,var(--text,#17243b) 11%,var(--surface,#fff)));border-radius:var(--work-control,13px);background:var(--surface,#fff);color:var(--text,#17243b);box-shadow:inset 0 1px 2px rgb(15 28 20 / 3%);font:400 14px var(--font-sans,\"Hanken Grotesk\",sans-serif);letter-spacing:normal;transition:border-color 160ms cubic-bezier(.2,.8,.2,1),background 160ms cubic-bezier(.2,.8,.2,1),box-shadow 160ms cubic-bezier(.2,.8,.2,1)}.ds-input:hover{border-color:var(--work-line-strong,color-mix(in srgb,var(--text,#17243b) 17%,var(--surface,#fff)));background:var(--work-raised,color-mix(in srgb,var(--surface,#fff) 97%,var(--primary,#2563eb)))}.ds-input:focus-visible{outline:none;border-color:var(--primary,#2563eb);box-shadow:0 0 0 4px var(--primary-ring),0 6px 18px color-mix(in srgb,var(--primary,#2563eb) 9%,transparent)}.ds-input[aria-invalid=true]{border-color:var(--error,#c8372a)}.ds-field-error{color:var(--error-strong,#a82c21);font:400 11px/1.5 var(--font-sans,\"Hanken Grotesk\",sans-serif);letter-spacing:normal}.ds-input:disabled{opacity:.55;cursor:not-allowed}@media(max-width:768px){.ds-input{font-size:16px}}@media(prefers-reduced-motion:reduce){.ds-input{transition:none}}",
+      "refersTo": "operations-input"
     },
     {
       "name": "Active navigation",
@@ -704,16 +794,17 @@
     {
       "name": "Status badge",
       "kind": "chip",
-      "description": "Semantic state text remains readable without relying on color.",
+      "description": "Operational semantic status with a wrapping text label; color supplements the words.",
       "html": "<span class=\"ds-badge\">Open</span>",
-      "css": ".ds-badge{display:inline-flex;align-items:center;min-height:22px;padding:0 9px;border:1px solid var(--success-border,#bde3cd);border-radius:var(--r-xs,6px);background:var(--success-weak,#e6f4ec);color:var(--success-strong,#0f7a4a);font:600 12px var(--font-sans,\"Hanken Grotesk\",sans-serif)}"
+      "css": ".ds-badge{display:inline-flex;align-items:center;padding:5px 8px;border:1px solid var(--success-border,#bde3cd);border-radius:var(--r-xs,6px);background:var(--success-weak,#e6f4ec);color:var(--success-strong,#0f7a4a);font:600 11px/1.5 var(--font-sans,\"Hanken Grotesk\",sans-serif);white-space:normal;overflow-wrap:anywhere}"
     },
     {
-      "name": "Reporting surface",
+      "name": "Joined operational metric rail",
       "kind": "card",
-      "description": "Product Performance retains its quiet 14px reporting surface and exact mono values; absent values stay absent.",
-      "html": "<article class=\"ds-report\"><span>Selected period</span><strong>—</strong><p>No report values in this preview.</p></article>",
-      "css": ".ds-report{padding:17px 16px;border:1px solid var(--border,#dbe3f0);border-radius:14px;background:var(--surface,#fff);color:var(--text,#17243b);font:400 13px var(--font-sans,\"Hanken Grotesk\",sans-serif)}.ds-report strong{display:block;margin-top:12px;font:500 clamp(17px,1.35vw,24px) var(--font-mono,\"JetBrains Mono\",monospace);letter-spacing:-.03em;font-variant-numeric:tabular-nums}.ds-report p{margin:9px 0 0;font-size:10px;line-height:1.5;color:var(--text-secondary,#52627a)}"
+      "description": "Actual-value KPI cells share a clipped outer frame and one-pixel separators. Dashes are preview placeholders; production values retain their source scope.",
+      "html": "<section class=\"ds-work-rail\" aria-label=\"Catalog summary preview\"><article class=\"ds-work-metric\"><span>In catalog</span><strong>—</strong><p>Products</p></article><article class=\"ds-work-metric\"><span>Categories</span><strong>—</strong><p>No preview values</p></article><article class=\"ds-work-metric\"><span>Deleted</span><strong>—</strong><p>No preview values</p></article></section>",
+      "css": ".ds-work-rail{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;padding:1px;border-radius:var(--work-radius,22px);background:var(--work-line,color-mix(in srgb,var(--text,#17243b) 11%,var(--surface,#fff)));box-shadow:var(--work-shadow,0 1px 2px rgb(15 28 20 / 4%),0 14px 34px rgb(15 28 20 / 7%));overflow:hidden}.ds-work-metric{position:relative;min-width:0;min-height:138px;padding:21px 22px;border:0;border-radius:0;background:var(--surface,#fff);color:var(--text,#17243b);box-shadow:none;font:500 11px/1.5 var(--font-sans,\"Hanken Grotesk\",sans-serif);transition:background 180ms cubic-bezier(.2,.8,.2,1),box-shadow 180ms cubic-bezier(.2,.8,.2,1)}.ds-work-metric:hover{z-index:1;background:var(--work-raised,color-mix(in srgb,var(--surface,#fff) 97%,var(--primary,#2563eb)));box-shadow:inset 0 0 0 1px var(--primary-border)}.ds-work-metric>span{color:var(--text-secondary,#52627a);font-size:11px;font-weight:650;line-height:1.45;letter-spacing:.035em;text-transform:uppercase}.ds-work-metric strong{display:block;margin-top:18px;font:700 31px/1.18 var(--font-sans,\"Hanken Grotesk\",sans-serif);letter-spacing:-.04em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}.ds-work-metric p{margin:9px 0 0;color:var(--text-secondary,#52627a);font-size:11px}@media(max-width:700px){.ds-work-rail{grid-template-columns:repeat(2,minmax(0,1fr));border-radius:18px}.ds-work-metric{min-height:118px;padding:15px}.ds-work-metric:first-child{grid-column:1/-1;min-height:90px}.ds-work-metric>span{font-size:9.5px;line-height:1.4}.ds-work-metric strong{font-size:23px}}@media(max-width:360px){.ds-work-metric{padding:12px}.ds-work-metric strong{font-size:21px}}@media(prefers-reduced-motion:reduce){.ds-work-metric{transition:none}}:host-context([data-theme=\"dark\"]) .ds-work-rail{--work-shadow:0 1px 2px rgb(0 0 0 / 24%),0 18px 44px rgb(0 0 0 / 24%)}",
+      "refersTo": "operations-metric-rail"
     },
     {
       "name": "Distribution row",
@@ -751,15 +842,38 @@
       "description": "Illustrative 60/40 geometry preview from roundedSector.ts, with source gradients and contrast-safe dark/light percentage tags. Production sectors use actual shares and retain exact rows.",
       "html": "<figure class=\"ds-ring-preview\"><svg viewBox=\"0 0 220 220\" role=\"img\" aria-label=\"Illustrative 60 and 40 percent sector geometry, not business data\"><defs><linearGradient id=\"ds-ring-a\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0\" stop-color=\"color-mix(in srgb,var(--c1,#2563eb) 52%,white)\"/><stop offset=\"1\" stop-color=\"var(--c1,#2563eb)\"/></linearGradient><linearGradient id=\"ds-ring-b\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0\" stop-color=\"color-mix(in srgb,var(--c4,#7c3aed) 52%,white)\"/><stop offset=\"1\" stop-color=\"var(--c4,#7c3aed)\"/></linearGradient></defs><path class=\"ds-ring-sector ds-ring-sector-a\" tabindex=\"0\" aria-label=\"Illustrative first share: 60 percent\" d=\"M118.0451 16.3449 A94 94 0 1 1 61.4596 190.4974 Q57.2485 187.8028 60.0544 183.6644 L72.9617 164.6275 Q75.7676 160.4891 80.0164 163.1223 A61 61 0 1 0 116.9673 49.3992 Q111.9822 49.0322 112.1446 44.0349 L112.8920 21.0470 Q113.0545 16.0496 118.0451 16.3449 Z\" fill=\"url(#ds-ring-a)\"/><path class=\"ds-ring-sector ds-ring-sector-b\" tabindex=\"0\" aria-label=\"Illustrative second share: 40 percent\" d=\"M48.4423 181.0397 A94 94 0 0 1 101.9549 16.3449 Q106.9455 16.0496 107.1080 21.0470 L107.8554 44.0349 Q108.0178 49.0322 103.0327 49.3992 A61 61 0 0 0 68.7431 154.9318 Q72.5604 158.1589 69.4916 162.1063 L55.3751 180.2646 Q52.3063 184.2121 48.4423 181.0397 Z\" fill=\"url(#ds-ring-b)\"/><g class=\"ds-ring-tag\" transform=\"translate(183.708 133.949)\"><rect x=\"-19\" y=\"-10\" width=\"38\" height=\"20\" rx=\"6\" fill=\"#171923\"/><text y=\"3.5\" fill=\"#FFFFFF\">60%</text></g><g class=\"ds-ring-tag\" transform=\"translate(36.292 86.051)\"><rect x=\"-19\" y=\"-10\" width=\"38\" height=\"20\" rx=\"6\" fill=\"#F4F1FA\"/><text y=\"3.5\" fill=\"#302945\">40%</text></g><text class=\"ds-ring-center\" x=\"110\" y=\"114\">Preview</text></svg><figcaption>Illustrative sector geometry</figcaption></figure>",
       "css": ".ds-ring-preview{margin:0;width:100%;max-width:320px;color:var(--text,#17243b);font-family:var(--font-sans,\"Hanken Grotesk\",sans-serif)}.ds-ring-preview svg{display:block;width:100%;overflow:visible}.ds-ring-sector{cursor:pointer;transition:opacity 180ms ease-out,transform 180ms ease-out}.ds-ring-sector-b{opacity:.75}.ds-ring-sector:hover,.ds-ring-sector:focus-visible{opacity:1;outline:none;stroke:var(--text,#17243b);stroke-width:1.5}.ds-ring-sector-a:hover{transform:translate(2.853px,.927px)}.ds-ring-sector-b:hover{transform:translate(-2.853px,-.927px)}.ds-ring-tag{pointer-events:none}.ds-ring-tag text{text-anchor:middle;font:500 10px var(--font-sans,\"Hanken Grotesk\",sans-serif);font-variant-numeric:tabular-nums}.ds-ring-center{text-anchor:middle;fill:var(--text,#17243b);font:600 16px var(--font-sans,\"Hanken Grotesk\",sans-serif)}.ds-ring-preview figcaption{margin-top:6px;color:var(--text-secondary,#52627a);font-size:11px;text-align:center}@media(prefers-reduced-motion:reduce){.ds-ring-sector{transition:none}.ds-ring-sector:hover{transform:none}}"
+    },
+    {
+      "name": "Operational identity and related routes",
+      "kind": "nav",
+      "description": "An integrated identity panel uses a semantic symbol on solid primary, a title and action, then connected routes. Production links are permission-filtered.",
+      "html": "<header class=\"ds-work-heading\"><div class=\"ds-work-heading-main\"><div class=\"ds-work-identity\"><span class=\"ds-work-symbol\"><svg width=\"27\" height=\"27\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"m16 2l-2.3 2.3a3 3 0 0 0 0 4.2l1.8 1.8a3 3 0 0 0 4.2 0L22 8m-7 7L3.3 3.3a4.2 4.2 0 0 0 0 6l7.3 7.3c.7.7 2 .7 2.8 0zm0 0l7 7m-19.9-.2l6.4-6.3M19 5l-7 7\"/></svg></span><div><h1>Products</h1><p>Catalog of products served at the POS</p></div></div><button class=\"ds-work-action\" type=\"button\">Add Product</button></div><nav class=\"ds-work-nav\" aria-label=\"Related pages\"><a href=\"#products\" aria-current=\"page\">Products</a><a href=\"#categories\">Categories</a><a href=\"#places\">Places &amp; Tables</a><a href=\"#qr\">QR codes</a></nav></header>",
+      "css": ".ds-work-heading{position:relative;overflow:hidden;border:1px solid var(--work-line,color-mix(in srgb,var(--text,#17243b) 11%,var(--surface,#fff)));border-radius:26px;background:linear-gradient(128deg,color-mix(in srgb,var(--primary,#2563eb) 11%,var(--surface,#fff)),var(--surface,#fff) 42%,var(--surface,#fff));box-shadow:var(--work-shadow,0 1px 2px rgb(15 28 20 / 4%),0 14px 34px rgb(15 28 20 / 7%));font-family:var(--font-sans,\"Hanken Grotesk\",sans-serif);color:var(--text,#17243b)}.ds-work-heading:after{position:absolute;top:-36px;right:-24px;width:230px;height:180px;background-image:radial-gradient(color-mix(in srgb,var(--primary,#2563eb) 35%,transparent) 1px,transparent 1px);background-size:16px 16px;content:\"\";opacity:.34;pointer-events:none}.ds-work-heading-main{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:22px 28px;padding:28px 30px 24px}.ds-work-identity{display:flex;flex:1 1 380px;align-items:center;gap:19px;min-width:0}.ds-work-identity>div{min-width:0}.ds-work-symbol{display:grid;flex:0 0 64px;place-items:center;align-self:flex-start;height:64px;border:1px solid color-mix(in srgb,var(--primary,#2563eb) 82%,white);border-radius:19px;background:var(--primary,#2563eb);color:var(--on-primary,#fff);box-shadow:0 10px 24px color-mix(in srgb,var(--primary,#2563eb) 27%,transparent),inset 0 1px rgb(255 255 255 / 22%)}.ds-work-heading h1{margin:0;font-size:clamp(30px,2.6vw,38px);line-height:1.08;font-weight:700;letter-spacing:-.04em;text-wrap:balance;overflow-wrap:anywhere}.ds-work-heading p{max-width:68ch;margin:9px 0 0;color:var(--text-secondary,#52627a);font-size:13px;line-height:1.55;text-wrap:pretty}.ds-work-action{min-height:46px;padding:10px 18px;border:1px solid transparent;border-radius:13px;background:var(--primary,#2563eb);color:var(--on-primary,#fff);font:650 14px/1.25 var(--font-sans,\"Hanken Grotesk\",sans-serif);cursor:pointer;box-shadow:0 7px 16px color-mix(in srgb,var(--primary,#2563eb) 22%,transparent);transition:background 160ms cubic-bezier(.2,.8,.2,1),transform 160ms cubic-bezier(.2,.8,.2,1)}.ds-work-action:hover{background:var(--primary-hover,#1d4ed8)}.ds-work-action:focus-visible{outline:2px solid var(--primary,#2563eb);outline-offset:3px}.ds-work-action:active{transform:translateY(1px) scale(.99);box-shadow:none}.ds-work-nav{position:relative;z-index:1;display:flex;gap:7px;max-width:100%;padding:11px 18px 14px;border-top:1px solid var(--work-line,color-mix(in srgb,var(--text,#17243b) 11%,var(--surface,#fff)));background:color-mix(in srgb,var(--surface,#fff) 84%,transparent);overflow-x:auto;overscroll-behavior-inline:contain;scrollbar-width:thin}.ds-work-nav a{display:flex;flex:0 0 auto;align-items:center;min-height:38px;padding:8px 14px;border:1px solid transparent;border-radius:11px;color:var(--text-secondary,#52627a);font:600 12px/1.4 var(--font-sans,\"Hanken Grotesk\",sans-serif);text-decoration:none;transition:color 160ms cubic-bezier(.2,.8,.2,1),background 160ms cubic-bezier(.2,.8,.2,1),border-color 160ms cubic-bezier(.2,.8,.2,1),box-shadow 160ms cubic-bezier(.2,.8,.2,1)}.ds-work-nav a:hover{color:var(--text,#17243b);background:var(--surface,#fff);border-color:var(--work-line,color-mix(in srgb,var(--text,#17243b) 11%,var(--surface,#fff)))}.ds-work-nav a[aria-current]{background:var(--primary,#2563eb);color:var(--on-primary,#fff);box-shadow:0 6px 15px color-mix(in srgb,var(--primary,#2563eb) 20%,transparent)}.ds-work-nav a:focus-visible{outline:2px solid var(--primary,#2563eb);outline-offset:-2px}@media(max-width:700px){.ds-work-heading{border-radius:21px}.ds-work-heading-main{gap:16px;padding:18px 16px 16px}.ds-work-identity{align-items:flex-start;gap:13px;flex-basis:100%}.ds-work-symbol{flex-basis:48px;height:48px;border-radius:14px}.ds-work-symbol svg{width:24px;height:24px}.ds-work-heading h1{font-size:25px;line-height:1.12}.ds-work-heading p{font-size:12px;margin-top:6px}.ds-work-action{flex:1 1 140px}.ds-work-nav{gap:5px;padding:8px 10px 10px}.ds-work-nav a{min-height:42px;padding-inline:11px;font-size:11px}}@media(max-width:360px){.ds-work-heading h1{font-size:23px}.ds-work-heading-main{padding-inline:14px}}@media(prefers-reduced-motion:reduce){.ds-work-action,.ds-work-nav a{transition:none}}:host-context([data-theme=\"dark\"]) .ds-work-heading{--work-shadow:0 1px 2px rgb(0 0 0 / 24%),0 18px 44px rgb(0 0 0 / 24%)}",
+      "refersTo": "operations-identity"
+    },
+    {
+      "name": "Product catalog card",
+      "kind": "card",
+      "description": "A product card keeps source identity, exact price and expandable details. Labels and dashes identify this as an empty preview.",
+      "html": "<article class=\"ds-product\"><div class=\"ds-product-category\">Category</div><div class=\"ds-product-body\"><button type=\"button\" class=\"ds-product-name\">Product name</button><p>Product description</p></div><div class=\"ds-product-price\"><strong>— <small>UZS</small></strong></div><details class=\"ds-product-details\"><summary>Details</summary><dl><div><dt>Product ID</dt><dd>—</dd></div><div><dt>Preparation time</dt><dd>—</dd></div></dl></details></article>",
+      "css": ".ds-product{min-width:0;border:1px solid var(--work-line,color-mix(in srgb,var(--text,#17243b) 11%,var(--surface,#fff)));border-radius:14px;background:var(--surface,#fff);color:var(--text,#17243b);font-family:var(--font-sans,\"Hanken Grotesk\",sans-serif);transition:border-color 160ms ease,background 160ms ease}.ds-product:hover{border-color:var(--border-strong,#b8c8df)}.ds-product-category{padding:14px 16px;border-bottom:1px solid var(--work-line,var(--border,#dbe3f0));font-size:11px;color:var(--text-secondary,#52627a)}.ds-product-body{padding:20px 16px 24px}.ds-product-name{display:block;max-width:100%;padding:0;border:0;background:transparent;color:inherit;text-align:start;font:600 17px/1.4 var(--font-sans,\"Hanken Grotesk\",sans-serif);letter-spacing:-.02em;overflow-wrap:anywhere;cursor:pointer}.ds-product-name:hover{color:var(--primary,#2563eb)}.ds-product-name:focus-visible,.ds-product-details summary:focus-visible{outline:2px solid var(--primary,#2563eb);outline-offset:3px}.ds-product-body p{margin:8px 0 0;color:var(--text-secondary,#52627a);font-size:12px;line-height:1.6;overflow-wrap:anywhere}.ds-product-price{padding:12px 16px;background:var(--work-soft,color-mix(in srgb,var(--primary,#2563eb) 6%,var(--surface,#fff)));border-block:1px solid var(--work-line,var(--border,#dbe3f0));font-size:20px;font-weight:650;font-variant-numeric:tabular-nums}.ds-product-price small{font-size:11px;font-weight:400;color:var(--text-secondary,#52627a)}.ds-product-details{padding:0 16px}.ds-product-details summary{min-height:42px;align-content:center;color:var(--text-secondary,#52627a);font-size:11px;cursor:pointer}.ds-product-details dl{display:grid;gap:10px;padding-bottom:14px}.ds-product-details dl>div{display:flex;justify-content:space-between;gap:6px;font-size:11px}.ds-product-details dt{color:var(--text-secondary,#52627a)}.ds-product-details dd{margin:0;font-variant-numeric:tabular-nums}@media(max-width:700px){.ds-product-name{font-size:18px}.ds-product-details summary{min-height:44px}}@media(prefers-reduced-motion:reduce){.ds-product{transition:none}}"
+    },
+    {
+      "name": "Operational task dialog",
+      "kind": "custom",
+      "description": "Neutral task header, semantic symbol and inline accessible validation. Static preview; production Modal supplies focus containment, busy guards and phone bottom-sheet behavior.",
+      "html": "<div class=\"ds-task-stage\"><section class=\"ds-task-dialog\" role=\"dialog\" aria-labelledby=\"ds-task-title\"><header class=\"ds-task-head\"><span class=\"ds-task-symbol\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M2.97 12.92A2 2 0 0 0 2 14.63v3.24a2 2 0 0 0 .97 1.71l3 1.8a2 2 0 0 0 2.06 0L12 19v-5.5l-5-3zM7 16.5l-4.74-2.85M7 16.5l5-3m-5 3v5.17m5-8.17V19l3.97 2.38a2 2 0 0 0 2.06 0l3-1.8a2 2 0 0 0 .97-1.71v-3.24a2 2 0 0 0-.97-1.71L17 10.5zm5 3l-5-3m5 3l4.74-2.85M17 16.5v5.17\"/><path d=\"M7.97 4.42A2 2 0 0 0 7 6.13v4.37l5 3l5-3V6.13a2 2 0 0 0-.97-1.71l-3-1.8a2 2 0 0 0-2.06 0zM12 8L7.26 5.15M12 8l4.74-2.85M12 13.5V8\"/></svg></span><h2 id=\"ds-task-title\">Add Category</h2><button class=\"ds-task-close\" type=\"button\" aria-label=\"Close\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M18 6L6 18M6 6l12 12\"/></svg></button></header><div class=\"ds-task-body\"><label class=\"ds-task-field\"><span id=\"ds-task-name-label\">Name</span><input aria-labelledby=\"ds-task-name-label\" aria-describedby=\"ds-task-name-error\" aria-invalid=\"true\" /><span id=\"ds-task-name-error\" class=\"ds-task-error\" role=\"alert\">Required</span></label></div><footer class=\"ds-task-foot\"><button class=\"ds-task-save\" type=\"button\">Save</button></footer></section></div>",
+      "css": ".ds-task-stage{padding:28px;background:color-mix(in srgb,#07120c 62%,transparent);backdrop-filter:blur(10px) saturate(.82)}.ds-task-dialog{border:1px solid var(--work-line-strong,color-mix(in srgb,var(--text,#17243b) 17%,var(--surface,#fff)));border-radius:26px;background:var(--surface,#fff);color:var(--text,#17243b);box-shadow:0 34px 110px rgb(0 0 0 / 36%),0 4px 18px rgb(0 0 0 / 14%);font-family:var(--font-sans,\"Hanken Grotesk\",sans-serif);overflow:hidden}.ds-task-head{display:flex;align-items:flex-start;gap:18px;padding:26px 28px 23px;border-bottom:1px solid var(--work-line,color-mix(in srgb,var(--text,#17243b) 11%,var(--surface,#fff)));background:var(--surface,#fff)}.ds-task-symbol{display:grid;flex:0 0 52px;place-items:center;height:52px;border:1px solid color-mix(in srgb,var(--primary,#2563eb) 82%,white);border-radius:16px;background:var(--primary,#2563eb);color:var(--on-primary,#fff);box-shadow:0 10px 24px color-mix(in srgb,var(--primary,#2563eb) 24%,transparent)}.ds-task-head h2{flex:1;min-width:0;margin:1px 0 0;font-size:24px;line-height:1.18;font-weight:700;letter-spacing:-.04em;text-wrap:balance}.ds-task-close{display:grid;place-items:center;flex:0 0 40px;width:40px;height:40px;padding:0;border:1px solid var(--work-line,color-mix(in srgb,var(--text,#17243b) 11%,var(--surface,#fff)));border-radius:12px;background:var(--surface-2,#f7f9fd);color:var(--text-secondary,#52627a);cursor:pointer}.ds-task-close:hover{background:var(--work-soft,color-mix(in srgb,var(--primary,#2563eb) 6%,var(--surface,#fff)))}.ds-task-close:focus-visible,.ds-task-save:focus-visible{outline:2px solid var(--primary,#2563eb);outline-offset:3px}.ds-task-body{padding:27px 28px 30px;background:color-mix(in srgb,var(--surface,#fff) 96%,var(--primary,#2563eb))}.ds-task-field{display:grid;gap:8px;font-size:11px;font-weight:700;letter-spacing:.035em;line-height:1.45;text-transform:uppercase}.ds-task-field input{min-width:0;min-height:50px;padding:0 14px;border:1px solid var(--error,#c8372a);border-radius:13px;background:var(--surface,#fff);color:var(--text,#17243b);font:400 14px var(--font-sans,\"Hanken Grotesk\",sans-serif);transition:border-color 160ms cubic-bezier(.2,.8,.2,1),box-shadow 160ms cubic-bezier(.2,.8,.2,1)}.ds-task-field input:focus-visible{outline:none;box-shadow:0 0 0 4px var(--primary-ring),0 6px 18px color-mix(in srgb,var(--primary,#2563eb) 9%,transparent)}.ds-task-error{color:var(--error-strong,#a82c21);font:400 11px/1.5 var(--font-sans,\"Hanken Grotesk\",sans-serif);letter-spacing:normal;text-transform:none}.ds-task-foot{display:flex;justify-content:flex-end;gap:10px;padding:17px 28px 19px;border-top:1px solid var(--work-line,color-mix(in srgb,var(--text,#17243b) 11%,var(--surface,#fff)));background:var(--surface,#fff);box-shadow:0 -10px 28px rgb(15 28 20 / 4%)}.ds-task-save{min-height:46px;padding:10px 18px;border:1px solid transparent;border-radius:13px;background:var(--primary,#2563eb);color:var(--on-primary,#fff);font:650 14px/1.25 var(--font-sans,\"Hanken Grotesk\",sans-serif);cursor:pointer;transition:background 160ms cubic-bezier(.2,.8,.2,1),transform 160ms cubic-bezier(.2,.8,.2,1)}.ds-task-save:hover{background:var(--primary-hover,#1d4ed8)}.ds-task-save:active{transform:translateY(1px) scale(.99)}@media(max-width:700px){.ds-task-stage{padding:0;backdrop-filter:blur(7px)}.ds-task-dialog{max-height:94dvh;border-width:1px 0 0;border-radius:24px 24px 0 0}.ds-task-head{gap:12px;padding:28px 16px 17px}.ds-task-symbol{flex-basis:44px;height:44px;border-radius:14px}.ds-task-head h2{font-size:21px}.ds-task-body{padding:21px 16px 24px}.ds-task-field input{font-size:16px}.ds-task-foot{gap:8px;padding:13px 16px max(14px,env(safe-area-inset-bottom))}.ds-task-save{flex:1 1 140px;min-height:48px}}@media(prefers-reduced-motion:reduce){.ds-task-field input,.ds-task-save{transition:none}}"
     }
   ],
   "narrative": {
-    "northStar": "Restaurant operations",
-    "overview": "Alpha POS puts restaurant activity, reporting and daily work in one readable workspace. Its visual direction comes from the user's legacy admin reference and the earlier approved Forest theme. The dashboard's approved September 10 reference adds softly raised surfaces, lightly tinted summary cards, shaded rounded data marks and clearly separated ring sectors. These dashboard treatments use the existing identity, fonts and six palettes; other workspaces retain their established visual rules. Orders and the AI conversation extend these soft surfaces through ticket cards, shared analytical charts and readable replies, without introducing another palette or typeface.",
+    "northStar": "Precision command surface",
+    "overview": "Alpha POS makes restaurant operations composed, tactile and fast. Integrated identity panels pair solid primary symbol tiles with clear titles, actions and related-route rails. Joined metrics show actual values above elevated registers and focused editing surfaces. Product and category catalogs, dining areas, warehouse tasks and settings retain layouts suited to their work within this shared hierarchy.\n\nThe existing Blue and Forest identities, all six palettes and the established fonts remain shared. Dashboard retains its approved soft surfaces, tinted summaries, shaded data marks and separated ring sectors, now led by a framed identity panel and floating section navigator. Orders joins the operational command surface while retaining its ticket, table and detail workflows. AI retains its approved conversation layout with a more defined frame, prompt accents and focused composer. Operational styling is an explicit page opt-in; Dashboard, AI and the shared shell keep their established compositions.",
     "keyCharacteristics": [
-      "Full-width information and clear values.",
-      "Soft dashboard surfaces and shaded data marks.",
-      "Fine table rules and custom controls.",
+      "Integrated identity panels and connected task navigation.",
+      "Joined actual-value metric rails and elevated registers.",
+      "Expandable phone records, collapsible filters and bottom-sheet forms.",
+      "Refined Dashboard and AI compositions, with Orders in the operational hierarchy.",
       "Restrained motion and visible keyboard focus."
     ],
     "rules": [
@@ -767,21 +881,29 @@
         "name": "The Shared Palette Rule",
         "body": "Read canonical tokens; do not hard-code a second palette inside a page.",
         "section": "colors"
+      },
+      {
+        "name": "The Surface Boundary Rule",
+        "body": "Keep operational depth scoped to WorkspacePage and its dialog/popover context; preserve the domain-specific Dashboard and AI structures with their scoped elevation.",
+        "section": "elevation"
       }
     ],
     "dos": [
-      "Preserve fields, actions, permissions, translations, date semantics and backend contracts.",
-      "Keep loading, error, empty, stale and populated states distinct; keep all chart categories accessible.",
-      "Keep phone targets reachable and test full control visibility at 320px as well as 390px.",
-      "Keep chart share scope visible and every returned category, product and person reachable through exact-value controls.",
-      "Keep order-channel colors consistent and chart tags readable across all six light/dark palettes.",
-      "Keep preparation targets as markers on the actual-time scale, so overruns remain visible.",
-      "Keep accounting-report money exact and incomplete historical cost visible through warnings and unavailable-value dashes."
+      "Do preserve fields, actions, permissions, translations, date semantics and backend contracts.",
+      "Do keep loading, error, empty, stale and populated states distinct; keep all chart categories accessible.",
+      "Do retain every register field and action in phone records and details, with reachable 44px controls.",
+      "Do test full control visibility and long labels at 320px as well as 390px.",
+      "Do keep related-page navigation permission-filtered and operational styling explicitly scoped.",
+      "Do keep chart share scope visible and every returned category, product and person reachable through exact-value controls.",
+      "Do keep order-channel colors consistent and chart tags readable across all six light/dark palettes.",
+      "Do keep preparation targets as markers on the actual-time scale, so overruns remain visible.",
+      "Do keep accounting-report money exact and incomplete historical cost visible through warnings and unavailable-value dashes."
     ],
     "donts": [
-      "Do not invent live-looking totals or replace missing financial values with zero.",
-      "Do not turn a displayed subset into a period-wide denominator or normalized staff measures into performance scores.",
-      "Do not copy obsolete decorative eyebrows, oversized blank KPI stacks or clipped composer layouts."
+      "Don't invent live-looking totals or replace missing financial values with zero.",
+      "Don't turn a displayed subset into a period-wide denominator or normalized staff measures into performance scores.",
+      "Don't substitute colored dialog headers for semantic symbols, hide validation errors or repeat record entrances.",
+      "Don't copy obsolete decorative eyebrows, oversized blank KPI stacks or clipped composer layouts."
     ]
   }
 }

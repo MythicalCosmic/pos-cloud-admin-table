@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+
 /* ============================================================
    ALPHA POS — Stock Transactions (Movement Log)
    Refactored to design primitives + design-shell.css.
@@ -199,7 +201,7 @@ const dtPagination = computed(() => ({
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <PageHeader
       :title="t('stock_transactions_title')"
       :subtitle="t('stock_transactions_subtitle')"
@@ -364,7 +366,7 @@ const dtPagination = computed(() => ({
     >
       {{ snackbarMsg }}
     </VSnackbar>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>

@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
+
 /* ============================================================
    ALPHA POS — Goods Receiving page
    Design-system primitives (no Vuetify on the page).
@@ -964,7 +967,7 @@ function clearAll() {
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <PageHeader
       :title="t('Goods Receiving')"
       :subtitle="t('Record and verify goods received against purchase orders')"
@@ -1006,7 +1009,7 @@ function clearAll() {
 
     <div class="card">
       <!-- Toolbar -->
-      <div class="toolbar toolbar--wrap">
+      <WorkspaceToolbar class="toolbar toolbar--wrap">
         <div class="grow tb-search">
           <Input
             v-model="search"
@@ -1052,7 +1055,7 @@ function clearAll() {
             :aria-label="t('Date To')"
           />
         </div>
-      </div>
+      </WorkspaceToolbar>
 
       <!-- Active filter chips -->
       <div
@@ -1788,7 +1791,7 @@ function clearAll() {
         </Button>
       </template>
     </Modal>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>

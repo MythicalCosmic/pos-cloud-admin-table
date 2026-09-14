@@ -11,7 +11,7 @@
  * For Iconify Tools documentation visit https://docs.iconify.design/tools/tools2/
  */
 import { promises as fs } from 'node:fs'
-import { dirname, join } from 'node:path'
+import { dirname, extname, join } from 'node:path'
 
 // Installation: npm install --save-dev @iconify/tools @iconify/utils @iconify/json @iconify/iconify
 import {
@@ -62,6 +62,52 @@ interface BundleScriptConfig {
   json?: (string | BundleScriptCustomJSONConfig)[]
 }
 
+type LegacyIconPrefix = 'bx' | 'bxs' | 'bxl'
+
+const legacyIconCollections: Record<LegacyIconPrefix, string> = {
+  bx: require.resolve('@iconify-json/bx/icons.json'),
+  bxs: require.resolve('@iconify-json/bxs/icons.json'),
+  bxl: require.resolve('@iconify-json/bxl/icons.json'),
+}
+
+const sourceFileExtensions = new Set(['.js', '.ts', '.tsx', '.vue'])
+const legacyIconPattern = /\b(bx|bxs|bxl)(?:-|:)([a-z0-9]+(?:-[a-z0-9]+)*)\b/g
+
+async function collectLegacyIcons(directory: string) {
+  const icons: Record<LegacyIconPrefix, Set<string>> = {
+    bx: new Set<string>(),
+    bxs: new Set<string>(),
+    bxl: new Set<string>(),
+  }
+
+  async function visit(currentDirectory: string) {
+    const entries = await fs.readdir(currentDirectory, { withFileTypes: true })
+
+    for (const entry of entries) {
+      const filename = join(currentDirectory, entry.name)
+
+      if (entry.isDirectory()) {
+        // Generated Iconify files contain every bundled name and must not feed
+        // the next build. Explicit dynamic icons can be added to sources.icons.
+        if (currentDirectory === directory && entry.name === '@iconify')
+          continue
+
+        await visit(filename)
+      }
+      else if (sourceFileExtensions.has(extname(entry.name))) {
+        const source = await fs.readFile(filename, 'utf8')
+
+        for (const match of source.matchAll(legacyIconPattern))
+          icons[match[1] as LegacyIconPrefix].add(match[2])
+      }
+    }
+  }
+
+  await visit(directory)
+
+  return icons
+}
+
 const sources: BundleScriptConfig = {
   svg: [
     {
@@ -91,9 +137,6 @@ const sources: BundleScriptConfig = {
     // 'json/gg.json',
 
     // Iconify JSON file (@iconify/json is a package name, /json/ is directory where files are, then filename)
-    require.resolve('@iconify-json/bx/icons.json'),
-    require.resolve('@iconify-json/bxs/icons.json'),
-    require.resolve('@iconify-json/bxl/icons.json'),
     {
       filename: require.resolve('@iconify-json/mdi/icons.json'),
       icons: [
@@ -161,6 +204,16 @@ const target = join(__dirname, 'icons-bundle.js');
   catch (err) {
     //
   }
+
+  const legacyIcons = await collectLegacyIcons(join(__dirname, '..'))
+  const detectedLegacySources = (Object.keys(legacyIconCollections) as LegacyIconPrefix[])
+    .map(prefix => ({
+      filename: legacyIconCollections[prefix],
+      icons: [...legacyIcons[prefix]].sort(),
+    }))
+    .filter(source => source.icons.length > 0)
+
+  sources.json = [...detectedLegacySources, ...(sources.json ?? [])]
 
   /**
    * Convert sources.icons to sources.json

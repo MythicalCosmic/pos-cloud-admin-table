@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+
 /* ============================================================
    PURCHASE ORDERS — list, create, lifecycle actions
    Refactored to design primitives: PageHeader, Card, DataTable,
@@ -302,7 +304,7 @@ const pagination = computed(() => ({
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <PageHeader
       :title="t('Purchase Orders')"
       :subtitle="t('po_page_subtitle')"
@@ -789,7 +791,7 @@ const pagination = computed(() => ({
     >
       {{ snackbarMsg }}
     </VSnackbar>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>

@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
+
 /* ============================================================
    ALPHA POS — Discounts / Secret Word redemption
    Single-form page: enter a secret word + order id, redeem it,
@@ -253,7 +256,7 @@ function dash(v: any) {
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <!-- Header -->
     <PageHeader
       :title="t('discount_secret_title')"
@@ -341,7 +344,7 @@ function dash(v: any) {
       </div>
 
       <!-- Toolbar / filters -->
-      <div class="toolbar secret-toolbar">
+      <WorkspaceToolbar class="toolbar secret-toolbar">
         <div class="filter-word grow">
           <Input
             v-model="filterWord"
@@ -367,7 +370,7 @@ function dash(v: any) {
         >
           {{ t('discount_secret_action_clear') }}
         </Button>
-      </div>
+      </WorkspaceToolbar>
 
       <!-- Active filter chips -->
       <div
@@ -584,7 +587,7 @@ function dash(v: any) {
         </Button>
       </template>
     </Modal>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>

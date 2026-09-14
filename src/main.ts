@@ -11,13 +11,17 @@ import '@core/scss/template/index.scss'
 import '@styles/styles.scss'
 import { createPinia } from 'pinia'
 import { createApp } from 'vue'
-import * as Sentry from '@sentry/vue'
 
 // Create vue app
 const app = createApp(App)
 
 const sentryDsn = import.meta.env.VITE_SENTRY_DSN
-if (sentryDsn) {
+async function initializeErrorMonitoring() {
+  if (!sentryDsn)
+    return
+
+  const Sentry = await import('@sentry/vue')
+
   Sentry.init({
     app,
     dsn: sentryDsn,
@@ -36,6 +40,12 @@ if (sentryDsn) {
   })
 }
 
+// Keep the observability SDK out of the startup bundle when it is not
+// configured. A failed optional import must never prevent the POS from loading.
+const errorMonitoringReady = initializeErrorMonitoring().catch((error: unknown) => {
+  console.error('Error monitoring startup failed:', error instanceof Error ? error.message : 'Unknown startup error')
+})
+
 // Use plugins
 app.use(vuetify)
 app.use(createPinia())
@@ -47,7 +57,7 @@ app.use(abilitiesPlugin, ability, {
 })
 
 // Keep the startup surface until the first route's code and layout are ready.
-router.isReady().then(() => {
+Promise.all([router.isReady(), errorMonitoringReady]).then(() => {
   app.mount('#app')
   return requestAnimationFrame(() => document.dispatchEvent(new Event('alpha:ready')))
 }).catch((error: unknown) => {

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
 import adminApi, { stockApi as axios } from '@/plugins/axios'
 import Badge from '@/components/design/Badge.vue'
 import Button from '@/components/design/Button.vue'
@@ -252,14 +254,24 @@ async function doUnlink() {
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <PageHeader
       :title="t('product_links_title')"
       :subtitle="t('product_links_subtitle')"
-    />
+    >
+      <template #actions>
+        <Button
+          variant="primary"
+          icon="link"
+          @click="openLink"
+        >
+          {{ t('Link Product') }}
+        </Button>
+      </template>
+    </PageHeader>
 
     <div class="card">
-      <div
+      <WorkspaceToolbar
         class="toolbar"
         style="flex-wrap: wrap;"
       >
@@ -291,15 +303,7 @@ async function doUnlink() {
         </div>
 
         <div class="toolbar-spacer" />
-
-        <Button
-          variant="primary"
-          icon="link"
-          @click="openLink"
-        >
-          {{ t('Link Product') }}
-        </Button>
-      </div>
+      </WorkspaceToolbar>
 
       <div class="card__divider" />
 
@@ -484,7 +488,7 @@ async function doUnlink() {
         </Button>
       </template>
     </Modal>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>

@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
+
 /* ============================================================
    NOTIFICATION SETTINGS — Telegram bot, recipients, master switch
    Single-record settings surface backed by:
@@ -400,7 +403,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <!-- Page header -->
     <PageHeader
       :title="t('notif_settings_title')"
@@ -437,7 +440,7 @@ onBeforeUnmount(() => {
 
     <!-- KPI strip -->
     <div
-      class="grid cols-4"
+      class="grid cols-4 notification-settings-kpis"
       style="margin-bottom: var(--sp-5);"
     >
       <Kpi :data="kpiMaster" />
@@ -447,8 +450,8 @@ onBeforeUnmount(() => {
     </div>
 
     <!-- Toolbar + table -->
-    <Card>
-      <div class="toolbar">
+    <Card class-name="workspace-register">
+      <WorkspaceToolbar class="toolbar">
         <!-- is_enabled — switch filter -->
         <div
           class="control"
@@ -459,6 +462,7 @@ onBeforeUnmount(() => {
           </span>
           <Switch
             :model-value="filterEnabled === true"
+            :aria-label="t('notif_field_is_enabled')"
             @update:model-value="(v) => filterEnabled = (filterEnabled === true ? null : (v ? true : false))"
           />
         </div>
@@ -486,7 +490,7 @@ onBeforeUnmount(() => {
         >
           {{ t('notif_action_refresh') }}
         </Button>
-      </div>
+      </WorkspaceToolbar>
 
       <!-- Filter chips -->
       <div
@@ -839,7 +843,7 @@ onBeforeUnmount(() => {
     >
       {{ snackbarMsg }}
     </VSnackbar>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>

@@ -1,15 +1,36 @@
 <script setup lang="ts">
+import WorkspaceHeader from './workspace/WorkspaceHeader.vue'
+import { workspaceContext } from './workspace/context'
+
+defineProps<Props>()
+
+const workspace = inject(workspaceContext, false)
+
 interface Props {
   title: string
   subtitle?: string
   eyebrow?: string
 }
-
-defineProps<Props>()
 </script>
 
 <template>
-  <div class="page__head">
+  <WorkspaceHeader
+    v-if="workspace"
+    :title="title"
+    :subtitle="subtitle"
+    :eyebrow="eyebrow"
+  >
+    <template
+      v-if="$slots.actions"
+      #actions
+    >
+      <slot name="actions" />
+    </template>
+  </WorkspaceHeader>
+  <div
+    v-else
+    class="page__head"
+  >
     <div style="min-width: 0;">
       <h1 class="page__title">
         {{ title }}

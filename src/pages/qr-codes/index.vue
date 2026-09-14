@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
+
 /* ============================================================
    QR CODES — self-order QR per table
    Backend:
@@ -506,7 +509,7 @@ const qrImgUrl = computed(() => qrTarget.value ? qrImageCache.value[qrImageKey(q
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <!-- Page header -->
     <PageHeader
       :title="t('qr_codes_title')"
@@ -525,7 +528,7 @@ const qrImgUrl = computed(() => qrTarget.value ? qrImageCache.value[qrImageKey(q
 
     <!-- Toolbar + table -->
     <Card>
-      <div class="toolbar toolbar--wrap">
+      <WorkspaceToolbar class="toolbar toolbar--wrap">
         <!-- Search -->
         <div class="tb-search">
           <Input
@@ -553,7 +556,7 @@ const qrImgUrl = computed(() => qrTarget.value ? qrImageCache.value[qrImageKey(q
             :options="statusOptions"
           />
         </div>
-      </div>
+      </WorkspaceToolbar>
 
       <!-- Filter chips -->
       <div
@@ -1049,7 +1052,7 @@ const qrImgUrl = computed(() => qrTarget.value ? qrImageCache.value[qrImageKey(q
     >
       {{ snackbarMsg }}
     </VSnackbar>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>

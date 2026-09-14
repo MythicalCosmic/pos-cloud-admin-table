@@ -137,6 +137,15 @@ test('compact shift ledger retains reports and full details on desktop and phone
   await page.getByRole('button', { name: 'List view', exact: true }).click()
   await expect(page.locator('.shift-ledger tbody tr')).toHaveCount(3)
   await expect(page.locator('.shift-ledger')).toContainText('2\u202F648\u202F000')
+  const rows = page.locator('.shift-ledger tbody > tr:not(.row-expand)')
+  await expect.poll(async () => rows.evaluateAll(items => items.every(item => item.getBoundingClientRect().height <= 60))).toBe(true)
+  const actionRows = page.locator('.shift-ledger .row-actions')
+  await expect.poll(async () => actionRows.evaluateAll(items => items.map(item => {
+    const buttons = [...item.querySelectorAll('button')]
+    return new Set(buttons.map(button => Math.round(button.getBoundingClientRect().top))).size
+  }))).toEqual([1, 1, 1])
+  await page.setViewportSize({ width: 1600, height: 900 })
+  await page.screenshot({ path: '/tmp/alpha-shift-ledger-desktop.png', animations: 'disabled', fullPage: true })
   await page.locator('.shift-ledger tbody tr').first().getByRole('button', { name: 'Expand', exact: true }).click()
   await expect(page.locator('.shift-ledger .shift-record')).toContainText('Evening service and terrace')
   await page.setViewportSize({ width: 390, height: 844 })

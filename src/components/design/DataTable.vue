@@ -8,6 +8,7 @@ import Pagination from './Pagination.vue'
 import Skeleton from './Skeleton.vue'
 import StateFill from './StateFill.vue'
 import { cx } from './utils'
+import { workspaceContext } from './workspace/context'
 
 export type Align = 'left' | 'right' | 'center'
 export type SortDir = 'asc' | 'desc'
@@ -79,6 +80,7 @@ interface Props {
   mobileCards?: boolean
   mobileSummary?: string[]
   mobileTitleKey?: string
+  actionsWidth?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -89,8 +91,9 @@ const props = withDefaults(defineProps<Props>(), {
   perPage: 10,
   perPageOptions: () => [10, 20, 50],
   emptyIcon: 'inbox',
-  mobileCards: false,
+  mobileCards: undefined,
   mobileSummary: () => [],
+  actionsWidth: '120px',
 })
 
 const emit = defineEmits<{
@@ -103,9 +106,18 @@ const emit = defineEmits<{
 
 const { t } = useI18n({ useScope: 'global' })
 const isPhone = useMediaQuery('(max-width: 700px)')
-const showMobileCards = computed(() => props.mobileCards && isPhone.value)
-const mobileTitleColumn = computed(() => props.columns.find(column => column.key === props.mobileTitleKey) ?? props.columns[0])
-const mobileDetails = computed(() => props.expandable || (props.mobileSummary.length > 0 && props.mobileSummary.length < props.columns.length - 1))
+const workspace = inject(workspaceContext, false)
+const showMobileCards = computed(() => (props.mobileCards ?? workspace) && isPhone.value)
+
+const mobileTitleColumn = computed(() => props.columns.find(column => column.key === props.mobileTitleKey)
+  ?? (workspace ? props.columns.find(column => /^(name|full_name|employee|employee_name|item|item_name|product|product_name|title|supplier|supplier_name|order_number|code|sku|phone|ip_address)$/.test(column.key)) : undefined)
+  ?? props.columns[0])
+
+const summaryKeys = computed(() => (props.mobileSummary.length || !workspace)
+  ? props.mobileSummary
+  : props.columns.filter(column => column.key !== mobileTitleColumn.value?.key).slice(0, 4).map(column => column.key))
+
+const mobileDetails = computed(() => props.expandable || (summaryKeys.value.length > 0 && summaryKeys.value.length < props.columns.length - 1))
 
 /* ---------- helpers ---------- */
 function idOf(r: R): string | number {
@@ -303,7 +315,7 @@ function toggleExpand(id: string | number) {
 }
 
 function mobileColumns(row: R) {
-  return props.columns.filter(column => column.key !== mobileTitleColumn.value?.key && (!props.mobileSummary.length || expanded.value.has(idOf(row)) || props.mobileSummary.includes(column.key)))
+  return props.columns.filter(column => column.key !== mobileTitleColumn.value?.key && (!summaryKeys.value.length || expanded.value.has(idOf(row)) || summaryKeys.value.includes(column.key)))
 }
 
 /* ---------- column meta ---------- */
@@ -388,6 +400,7 @@ function skeletonWidth(c: number) {
 <template>
   <div
     class="data-table"
+    :class="{ 'workspace-register': workspace }"
     :aria-busy="loading ? 'true' : undefined"
   >
     <span
@@ -611,7 +624,7 @@ function skeletonWidth(c: number) {
             <th
               v-if="hasRowActions"
               class="num"
-              style="width: 120px;"
+              :style="{ width: actionsWidth }"
             >
               {{ t('Actions') }}
             </th>

@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
+
 /* ============================================================
    HR LEAVE TYPES — categories, quotas, approval rules
    Plain HTML + design primitives (PageHeader / Card / DataTable /
@@ -365,7 +368,7 @@ function fmtInt(n: any): string {
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <PageHeader
       :title="t('leave_types_title')"
       :subtitle="t('leave_types_subtitle')"
@@ -391,7 +394,7 @@ function fmtInt(n: any): string {
 
     <!-- Toolbar + table -->
     <Card>
-      <div class="toolbar toolbar--wrap">
+      <WorkspaceToolbar class="toolbar toolbar--wrap">
         <div class="tb-search">
           <Input
             v-model="search"
@@ -423,7 +426,7 @@ function fmtInt(n: any): string {
             :options="requiresApprovalOptions"
           />
         </div>
-      </div>
+      </WorkspaceToolbar>
 
       <!-- Filter chips -->
       <div
@@ -690,7 +693,7 @@ function fmtInt(n: any): string {
     >
       {{ snackbarMsg }}
     </VSnackbar>
-  </div>
+  </WorkspacePage>
 </template>
 
 <route lang="yaml">

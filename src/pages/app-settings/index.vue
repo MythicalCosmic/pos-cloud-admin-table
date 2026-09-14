@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
 import PageHeader from '@/components/design/PageHeader.vue'
 import Switch from '@/components/design/Switch.vue'
 import Button from '@/components/design/Button.vue'
@@ -74,7 +75,7 @@ const modules = computed(() => [
 </script>
 
 <template>
-  <div class="page app-settings-page">
+  <WorkspacePage class="page app-settings-page">
     <PageHeader
       :title="t('App Settings')"
       :subtitle="t('Toggle modules on or off across the entire system')"
@@ -187,7 +188,7 @@ const modules = computed(() => [
         ><div><strong>{{ t('Short (1M / 1K)') }}</strong><span>{{ t('Abbreviate big numbers') }}</span></div></label>
       </div>
     </section>
-  </div>
+  </WorkspacePage>
 </template>
 
 <route lang="yaml">

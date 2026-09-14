@@ -257,7 +257,7 @@ async function mockReportExports(page: Page, state: ExportState = {}) {
     }
     await route.fulfill({
       contentType: format === 'csv' ? 'text/csv' : format === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      headers: { 'Content-Disposition': `attachment; filename="fallback.${format}"; filename*=UTF-8''Sales%20%E2%80%94%20${url.searchParams.get('from')}.${format}`, 'X-Report-Cost-Complete': 'true', 'X-Export-Count': '185' },
+      headers: { 'Access-Control-Expose-Headers': 'Content-Disposition, X-Report-Cost-Complete, X-Export-Count', 'Content-Disposition': `attachment; filename="fallback.${format}"; filename*=UTF-8''Sales%20%E2%80%94%20${url.searchParams.get('from')}.${format}`, 'X-Report-Cost-Complete': 'true', 'X-Export-Count': '185' },
       body: `Product,Revenue\nALL PRODUCTS,185\nTOTAL,123456.78\n`,
     })
   })
@@ -1111,16 +1111,15 @@ for (const [locale, presetLabel] of [['en', 'Last 30 days'], ['ru', 'После�
       await setup(page, {}, locale, theme)
       await page.goto('/orders')
 
-      const trigger = page.locator('.filterstrip .drp-trigger')
-
-      await trigger.click()
-      await page.locator('.drp-pop').getByRole('button', { name: presetLabel, exact: true }).click()
+      await page.locator('.date-fields').getByRole('combobox').click()
+      await page.getByRole('option', { name: presetLabel, exact: true }).click()
       for (const width of [1440, 390]) {
         await page.setViewportSize({ width, height: 844 })
-        if (width < 700) await page.getByRole('button', { name: locale === 'en' ? 'Filters' : locale === 'ru' ? 'Фильтры' : 'Filtrlar', exact: true }).click()
+        if (width < 700) await page.locator('.dashboard-filters__trigger').click()
+        const trigger = page.locator('.datetime-field__trigger').first()
         await trigger.click()
 
-        const footer = page.locator('.drp-foot__draft')
+        const footer = page.locator('.datetime-pop[open] .datetime-pop__foot > span')
 
         await expect(footer).toBeVisible()
         await expect(footer).not.toContainText(/M0[1-9]|M1[0-2]/)
@@ -1130,7 +1129,7 @@ for (const [locale, presetLabel] of [['en', 'Last 30 days'], ['ru', 'После�
         expect(sizes.width).toBeGreaterThan(200)
         expect(sizes.height).toBeLessThan(65)
         expect(sizes.scroll).toBeLessThanOrEqual(sizes.client + 1)
-        await page.locator('.drp-pop').screenshot({ path: `/tmp/smart-pos-calendar-${locale}-${theme}-${width}.png` })
+        await page.locator('.datetime-pop[open]').screenshot({ path: `/tmp/smart-pos-calendar-${locale}-${theme}-${width}.png` })
         await page.keyboard.press('Escape')
         await expect(trigger).toBeFocused()
       }

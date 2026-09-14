@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
 import { fiscalApi as axios } from '@/plugins/axios'
 import Badge from '@/components/design/Badge.vue'
 import Button from '@/components/design/Button.vue'
@@ -191,7 +193,7 @@ const columns = computed<DataTableColumn<any>[]>(() => [
 </script>
 
 <template>
-  <div class="page fiscalization-page">
+  <WorkspacePage class="page fiscalization-page">
     <!-- Page header -->
     <PageHeader
       :title="t('Fiscalization')"
@@ -277,7 +279,7 @@ const columns = computed<DataTableColumn<any>[]>(() => [
 
     <!-- Receipts -->
     <Card style="margin-top: var(--sp-4);">
-      <div class="toolbar toolbar--wrap">
+      <WorkspaceToolbar class="toolbar toolbar--wrap">
         <h3 class="section-title">{{ t('Receipts') }}</h3>
         <div style="flex: 1;" />
         <div class="tb-status">
@@ -294,7 +296,7 @@ const columns = computed<DataTableColumn<any>[]>(() => [
           :title="t('Refresh')"
           @click="loadReceipts"
         />
-      </div>
+      </WorkspaceToolbar>
 
       <div class="card__divider" />
 
@@ -375,7 +377,7 @@ const columns = computed<DataTableColumn<any>[]>(() => [
     <VSnackbar v-model="snackbar" :color="snackbarColor" :timeout="3000">
       {{ snackbarMsg }}
     </VSnackbar>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>

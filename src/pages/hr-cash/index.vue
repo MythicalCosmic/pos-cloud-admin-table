@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
 import Textarea from '@/components/design/Textarea.vue'
 /* ============================================================
    HR CASH — register deposits, withdrawals, salary/expense payouts
@@ -322,7 +324,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <PageHeader
       :title="t('hr_cash_title')"
       :subtitle="t('hr_cash_subtitle')"
@@ -355,7 +357,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
 
     <!-- Toolbar + table -->
     <Card>
-      <div class="toolbar hr-cash__toolbar">
+      <WorkspaceToolbar class="toolbar hr-cash__toolbar">
         <div class="hr-cash__search">
           <Input
             v-model="search"
@@ -389,7 +391,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
             :aria-label="t('hr_cash_filter_date_to')"
           />
         </div>
-      </div>
+      </WorkspaceToolbar>
 
       <!-- Filter chips -->
       <div
@@ -782,14 +784,6 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
         </Field>
       </div>
 
-      <template #footer>
-        <Button
-          variant="ghost"
-          @click="closeDetail"
-        >
-          {{ t('Close') }}
-        </Button>
-      </template>
     </Modal>
 
     <!-- Toast (kept consistent with the rest of the rebuilt pages) -->
@@ -800,7 +794,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
     >
       {{ snackbarMsg }}
     </VSnackbar>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>

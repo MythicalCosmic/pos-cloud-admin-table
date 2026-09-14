@@ -25,6 +25,14 @@ const names = {
   'plus-circle': 'circle-plus', 'minus-circle': 'circle-minus', restore: 'history', camera: 'camera',
   settings: 'settings-2', barcode: 'barcode', unlock: 'lock-keyhole-open', unlink: 'unlink',
   weight: 'weight', loader: 'loader-circle', exchange: 'arrow-left-right',
+  'ws-menu': 'notebook-tabs', 'ws-customers': 'handshake', 'ws-team': 'contact-round',
+  'ws-calendar': 'calendar-range', 'ws-target': 'scan-eye', 'ws-payroll': 'badge-dollar-sign',
+  'ws-shift': 'calendar-clock', 'ws-finance': 'vault', 'ws-analytics': 'chart-no-axes-combined',
+  'ws-warehouse': 'warehouse', 'ws-delivery': 'truck', 'ws-inventory': 'clipboard-list',
+  'ws-transfer': 'route', 'ws-recipe': 'cooking-pot', 'ws-catalog': 'boxes',
+  'ws-notification': 'radio', 'ws-settings': 'panels-top-left', 'ws-license': 'badge-check',
+  'ws-location': 'map-pinned', 'ws-dining': 'armchair', 'ws-product': 'utensils-crossed',
+  'ws-qr': 'qr-code', 'ws-discount': 'badge-percent', 'ws-session': 'monitor-smartphone',
 }
 const legacy = {
   'bar-chart': 'bars', 'bar-chart-alt-2': 'bars', 'bar-chart-square': 'chart', 'bell': 'bell', 'bot': 'ai',

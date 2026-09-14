@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
 import Button from '@/components/design/Button.vue'
 import DesignIcon from '@/components/design/DesignIcon.vue'
 import StateFill from '@/components/design/StateFill.vue'
@@ -119,7 +120,7 @@ onMounted(loadSettings)
 </script>
 
 <template>
-  <div class="page settings-page">
+  <WorkspacePage class="page settings-page">
     <PageHeader
       :title="t('Stock Settings')"
       :subtitle="t('Configure stock tracking, alerts, modules, and approvals')"
@@ -529,7 +530,7 @@ onMounted(loadSettings)
         </div>
       </div>
     </div>
-  </div>
+  </WorkspacePage>
 </template>
 
 <route lang="yaml">

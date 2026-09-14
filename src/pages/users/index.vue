@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
+
 /* ============================================================
    USERS — accounts, roles, access
    1:1 port of .tmp-alpha-design/alpha-design-source/Users.jsx
@@ -706,7 +709,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <!-- Page header -->
     <PageHeader
       :title="t('Users')"
@@ -734,8 +737,8 @@ onBeforeUnmount(() => {
     </div>
 
     <!-- Toolbar + table -->
-    <Card>
-      <div
+    <Card class-name="workspace-register">
+      <WorkspaceToolbar
         class="toolbar users-toolbar"
         style="flex-wrap:wrap;"
       >
@@ -766,7 +769,7 @@ onBeforeUnmount(() => {
             :options="statusOptions"
           />
         </div>
-      </div>
+      </WorkspaceToolbar>
 
       <!-- Filter chips -->
       <div
@@ -1281,7 +1284,7 @@ onBeforeUnmount(() => {
     >
       {{ snackbarMsg }}
     </VSnackbar>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>
@@ -1444,11 +1447,12 @@ onBeforeUnmount(() => {
   }
 }
 
-/* Small phone (canonical 420px) — KPI collapses to single column */
+/* Small phones keep the summary compact: identity first, two supporting signals below. */
 @media (max-width: 420px) {
   .users-kpi-grid {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
+  .users-kpi-grid > :first-child { grid-column: 1 / -1; }
 }
 </style>
 

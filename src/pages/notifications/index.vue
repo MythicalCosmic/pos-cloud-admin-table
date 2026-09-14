@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
 import Button from '@/components/design/Button.vue'
 import Modal from '@/components/design/Modal.vue'
 import PageHeader from '@/components/design/PageHeader.vue'
@@ -8,8 +9,13 @@ import FormInput from '@/components/design/FormInput.vue'
 import { notificationsApi as axios } from '@/plugins/axios'
 import DataTable from '@/components/design/DataTable.vue'
 import DesignIcon from '@/components/design/DesignIcon.vue'
+import Field from '@/components/design/Field.vue'
+import Input from '@/components/design/Input.vue'
 import Segmented from '@/components/design/Segmented.vue'
+import Select from '@/components/design/Select.vue'
 import StateFill from '@/components/design/StateFill.vue'
+import Switch from '@/components/design/Switch.vue'
+import Textarea from '@/components/design/Textarea.vue'
 
 const { t, te } = useI18n({ useScope: 'global' })
 const { notify } = useNotify()
@@ -290,7 +296,7 @@ const statusColor: Record<string, string> = {
 </script>
 
 <template>
-  <div class="page notifications-workspace">
+  <WorkspacePage class="page notifications-workspace">
     <PageHeader
       :title="t('Notifications')"
       :subtitle="t('Telegram settings, templates and delivery log')"
@@ -554,106 +560,97 @@ const statusColor: Record<string, string> = {
     >
       <div
         v-if="tplEditing"
-        class="text-caption text-disabled mb-3"
+        class="notification-template-editor__meta"
       >
-        {{ tplEditing.notification_type }} · {{ templateLanguageLabel(tplEditing.language) }}
-      </div><VRow>
-        <VCol
-          cols="12"
-          md="6"
-        >
-          <FormInput
-            v-model="tplForm.name"
-            :label="t('Name')"
-            density="compact"
-          />
-          <FormInput
-            v-model="tplForm.description"
-            :label="t('Description')"
-            density="compact"
-            class="mt-2"
-          />
-          <FormInput
-            v-model="tplForm.template_text"
-            multiline
+        <DesignIcon
+          name="file"
+          :size="16"
+        />
+        <span>{{ tplEditing.notification_type }} · {{ templateLanguageLabel(tplEditing.language) }}</span>
+      </div>
+      <form
+        id="notification-template-editor"
+        class="notification-template-editor"
+        @submit.prevent="saveTemplate"
+      >
+        <section class="notification-template-editor__fields">
+          <Field :label="t('Name')">
+            <Input v-model="tplForm.name" />
+          </Field>
+          <Field :label="t('Description')">
+            <Input v-model="tplForm.description" />
+          </Field>
+          <Field
             :label="t('Body (supports {variable} placeholders)')"
-            rows="10"
-            class="mt-2"
             :hint="t('Use {first_name}, {order_id}, etc. Variables are namespaced — no dots / brackets allowed.')"
-            persistent-hint
-          />
-          <VRow class="mt-2">
-            <VCol cols="6">
-              <FormSelect
+          >
+            <Textarea
+              v-model="tplForm.template_text"
+              rows="10"
+            />
+          </Field>
+          <div class="notification-template-editor__row">
+            <Field :label="t('Language')">
+              <Select
                 v-model="tplForm.language"
-                :items="templateLanguageItems"
-                item-title="title"
-                item-value="value"
-                :label="t('Language')"
-                density="compact"
+                :options="templateLanguageItems.map(item => ({ value: item.value, label: item.title }))"
               />
-            </VCol>
-            <VCol cols="6">
-              <FormSwitch
-                v-model="tplForm.is_enabled"
-                :label="t('Enabled')"
-                color="primary"
-                density="compact"
-                hide-details
-              />
-            </VCol>
-          </VRow>
-        </VCol>
-        <VCol
-          cols="12"
-          md="6"
-        >
-          <div class="text-subtitle-2 mb-2">
-            {{ t('Preview') }}
+            </Field>
+            <Field :label="t('Enabled')">
+              <Switch v-model="tplForm.is_enabled" />
+            </Field>
           </div>
-          <FormInput
-            v-model="tplPreviewContext"
-            multiline
-            :label="t('Sample context (JSON)')"
-            rows="6"
-            placeholder="{&quot;first_name&quot;:&quot;Ali&quot;,&quot;order_id&quot;:&quot;123&quot;}"
-          />
-          <VBtn
-            color="primary"
+        </section>
+        <section class="notification-template-editor__preview">
+          <div class="notification-template-editor__preview-head">
+            <div>
+              <h3>{{ t('Preview') }}</h3>
+              <p>{{ t('Sample context (JSON)') }}</p>
+            </div>
+            <DesignIcon
+              name="eye"
+              :size="20"
+            />
+          </div>
+          <Field :label="t('Sample context (JSON)')">
+            <Textarea
+              v-model="tplPreviewContext"
+              rows="7"
+              placeholder="{&quot;first_name&quot;:&quot;Ali&quot;,&quot;order_id&quot;:&quot;123&quot;}"
+              class="notification-template-editor__json"
+            />
+          </Field>
+          <Button
+            variant="secondary"
+            icon="play"
             :loading="tplPreviewLoading"
-            prepend-icon="bx-play"
-            class="mt-2"
             @click="previewTemplate"
           >
             {{ t('Render preview') }}
-          </VBtn>
-          <VCard
+          </Button>
+          <div
             v-if="tplPreviewResult"
-            class="mt-3"
-            variant="outlined"
+            class="notification-template-editor__result"
+            aria-live="polite"
           >
-            <VCardText>
-              <div class="text-caption text-disabled mb-1">
-                {{ t('Rendered output') }}
-              </div>
-              <pre
-                class="text-body-2"
-                style="white-space:pre-wrap;"
-              >{{ tplPreviewResult }}</pre>
-            </VCardText>
-          </VCard>
-        </VCol>
-      </VRow><template #footer>
+            <span>{{ t('Rendered output') }}</span>
+            <pre>{{ tplPreviewResult }}</pre>
+          </div>
+        </section>
+      </form>
+      <template #footer>
         <Button
+          type="submit"
+          form="notification-template-editor"
           variant="primary"
+          icon="save"
           :loading="tplSaving"
-          @click="saveTemplate"
         >
           {{ t('Save') }}
         </Button>
       </template>
     </Modal>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>
@@ -672,7 +669,27 @@ const statusColor: Record<string, string> = {
 .notification-templates h3 { font-size: 15px; font-weight: 600; overflow-wrap: anywhere; }
 .notification-templates p { color: var(--text-secondary); font-size: 12px; margin: 6px 0 0; }
 .notification-log-message { display: block; min-width: 220px; max-width: 500px; white-space: normal; overflow-wrap: anywhere; }
-@media (max-width: 680px) { .notification-form { grid-template-columns: minmax(0, 1fr); } }
+.notification-template-editor__meta { display: flex; align-items: center; gap: 8px; margin-block-end: 16px; color: var(--text-secondary); font-size: 11px; font-weight: 650; letter-spacing: .035em; text-transform: uppercase; }
+.notification-template-editor__meta :deep(.ic) { color: var(--primary); }
+.notification-template-editor { display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(300px, .92fr); gap: 22px; }
+.notification-template-editor__fields { display: grid; align-content: start; gap: 18px; min-inline-size: 0; }
+.notification-template-editor__row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(170px, .7fr); gap: 16px; }
+.notification-template-editor__preview { display: grid; align-content: start; gap: 15px; min-inline-size: 0; padding: 18px; border: 1px solid var(--work-line); border-radius: 17px; background: var(--work-soft); }
+.notification-template-editor__preview-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+.notification-template-editor__preview-head h3 { margin: 0; font-size: 16px; font-weight: 700; }
+.notification-template-editor__preview-head p { margin: 4px 0 0; color: var(--text-secondary); font-size: 12px; }
+.notification-template-editor__preview-head :deep(.ic) { color: var(--primary); }
+.notification-template-editor__json :deep(textarea) { font-family: var(--font-mono); font-size: 12px; }
+.notification-template-editor__result { min-inline-size: 0; padding: 14px; border: 1px solid var(--primary-border); border-radius: 13px; background: var(--surface); }
+.notification-template-editor__result > span { color: var(--text-secondary); font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+.notification-template-editor__result pre { max-block-size: 260px; margin: 9px 0 0; overflow: auto; color: var(--text); font: 12px/1.6 var(--font-mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+
+@media (max-width: 760px) {
+  .notification-form { grid-template-columns: minmax(0, 1fr); }
+  .notification-template-editor { grid-template-columns: minmax(0, 1fr); }
+  .notification-template-editor__row { grid-template-columns: minmax(0, 1fr); }
+  .notification-template-editor__preview { padding: 15px; }
+}
 </style>
 
 <route lang="yaml">

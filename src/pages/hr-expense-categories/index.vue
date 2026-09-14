@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
 import Textarea from '@/components/design/Textarea.vue'
 import type { DataTableColumn } from '@/components/design/DataTable.vue'
 import type { ExpenseCategory, ExpenseCategoryPayload, ExpenseSource } from '@/types/expenseControl'
@@ -307,7 +309,7 @@ function sourceLabel(source: ExpenseSource) {
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <PageHeader
       :title="t('expcat_page_title')"
       :subtitle="t('expcat_page_subtitle')"
@@ -353,7 +355,7 @@ function sourceLabel(source: ExpenseSource) {
     </Card>
 
     <Card v-else>
-      <div class="toolbar toolbar--wrap">
+      <WorkspaceToolbar class="toolbar toolbar--wrap">
         <div class="tb-search">
           <Input
             v-model="search"
@@ -368,7 +370,7 @@ function sourceLabel(source: ExpenseSource) {
           <Switch v-model="includeInactive" />
           <span>{{ t('filter_include_inactive') }}</span>
         </label>
-      </div>
+      </WorkspaceToolbar>
 
       <div
         v-if="loadError"
@@ -647,7 +649,7 @@ function sourceLabel(source: ExpenseSource) {
     >
       {{ snackbarMsg }}
     </VSnackbar>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>

@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
+
 /* ============================================================
    SUPPLIER DRILL — profile, items, ledger, payments
    Dynamic route /stock/suppliers/:id
@@ -974,7 +977,7 @@ function backToList() {
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <!-- Page header -->
     <PageHeader
       :title="supplier?.name || t('supplier_drill_title')"
@@ -1408,7 +1411,7 @@ function backToList() {
 
     <!-- Ledger tab -->
     <Card v-else-if="tab === 'ledger'">
-      <div class="toolbar toolbar-responsive" style="flex-wrap: wrap; gap: 8px;">
+      <WorkspaceToolbar class="toolbar toolbar-responsive" style="flex-wrap: wrap; gap: 8px;">
         <div class="ledger-filter">
           <Select
             v-model="ledgerTypeFilter"
@@ -1432,7 +1435,7 @@ function backToList() {
         >
           {{ t('supplier_action_refresh') }}
         </Button>
-      </div>
+      </WorkspaceToolbar>
 
       <div class="card__divider" />
 
@@ -1876,7 +1879,7 @@ function backToList() {
     >
       {{ snackbarMsg }}
     </VSnackbar>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>

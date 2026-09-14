@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
 import Textarea from '@/components/design/Textarea.vue'
 /* ============================================================
    HR EMPLOYEES — staff directory, contracts and base pay
@@ -494,7 +496,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <PageHeader
       :title="t('Employees')"
       :subtitle="t('hr_employees_subtitle')"
@@ -527,8 +529,8 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
     </div>
 
     <!-- Toolbar + table -->
-    <Card>
-      <div class="toolbar hr-emp__toolbar">
+    <Card class-name="workspace-register">
+      <WorkspaceToolbar class="toolbar hr-emp__toolbar">
         <div class="hr-emp__search">
           <Input
             v-model="search"
@@ -560,7 +562,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
             :options="activeOptions"
           />
         </div>
-      </div>
+      </WorkspaceToolbar>
 
       <!-- Filter chips -->
       <div
@@ -921,7 +923,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
     >
       {{ snackbarMsg }}
     </VSnackbar>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>

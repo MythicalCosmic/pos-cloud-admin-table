@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
+
 /* ============================================================
    STOCK — PRODUCTION ORDERS
    Plain HTML + design primitives. No Vuetify on this surface.
@@ -462,7 +465,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <PageHeader
       :title="t('Production Orders')"
       :subtitle="t('production_orders_subtitle')"
@@ -480,7 +483,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
 
     <Card>
       <!-- Toolbar -->
-      <div class="toolbar toolbar--wrap">
+      <WorkspaceToolbar class="toolbar toolbar--wrap">
         <div class="tb-filter tb-filter--wide">
           <Select
             v-model="recipeFilter"
@@ -522,7 +525,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
         >
           {{ t('Clear') }}
         </Button>
-      </div>
+      </WorkspaceToolbar>
 
       <div class="card__divider" />
 
@@ -980,7 +983,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
     >
       {{ snackbarMsg }}
     </VSnackbar>
-  </div>
+  </WorkspacePage>
 </template>
 
 <route lang="yaml">

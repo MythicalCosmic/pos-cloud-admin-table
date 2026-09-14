@@ -13,12 +13,12 @@ const { t } = useI18n({ useScope: 'global' })
 const { fullName, shiftState, fmtDateTime, expectedSettlement, confirmedSettlement, reportedCash, netOf } = useShiftPresentation()
 
 const columns = computed(() => [
-  { key: 'cashier', label: t('Cashier') },
-  { key: 'status', label: t('Status') },
-  { key: 'start_time', label: t('Started at') },
-  { key: 'orders', label: t('Orders'), align: 'right' as const },
-  { key: 'net', label: `${t('Net')} · UZS`, align: 'right' as const },
-  { key: 'settlement', label: `${t('Settlement')} · UZS`, align: 'right' as const },
+  { key: 'cashier', label: t('Cashier'), width: 180 },
+  { key: 'status', label: t('Status'), width: 180 },
+  { key: 'start_time', label: t('Started at'), width: 110 },
+  { key: 'orders', label: t('Orders'), width: 70, align: 'right' as const },
+  { key: 'net', label: `${t('Net')} · UZS`, width: 130, align: 'right' as const },
+  { key: 'settlement', label: `${t('Settlement')} · UZS`, width: 150, align: 'right' as const },
 ])
 
 function settlement(shift: Record<string, any>) {
@@ -36,13 +36,14 @@ function settlement(shift: Record<string, any>) {
       :columns="columns"
       :per-page="20"
       :per-page-options="[20, 50, 100]"
+      actions-width="var(--shift-ledger-actions, 280px)"
       expandable
       mobile-cards
       :mobile-summary="['status', 'orders', 'net', 'settlement']"
     >
       <template #cell.cashier="{ row }">
         <div class="shift-ledger__cashier">
-          <strong>{{ fullName(row.user) }}</strong><small>{{ t('Shift') }} #{{ row.id }}</small>
+          <strong :title="fullName(row.user)">{{ fullName(row.user) }}</strong><small>{{ t('Shift') }} #{{ row.id }}</small>
         </div>
       </template>
       <template #cell.status="{ row }">
@@ -68,22 +69,29 @@ function settlement(shift: Record<string, any>) {
       <template #row-actions="{ row }">
         <Button
           v-if="shiftState(row) === 'awaiting'"
+          variant="primary"
           size="sm"
+          icon="wallet"
           @click="$emit('receive', row)"
         >
           {{ t('Receive money') }}
         </Button>
         <Button
           v-if="shiftState(row) === 'active'"
-          variant="ghost"
+          variant="danger-soft"
           size="sm"
+          icon="stop"
           @click="$emit('end', row)"
         >
           {{ t('End shift') }}
         </Button>
         <Button
+          class="shift-ledger__report-action"
           variant="secondary"
           size="sm"
+          icon="chart"
+          :aria-label="t(shiftState(row) === 'active' ? 'Live report' : 'Report')"
+          :title="t(shiftState(row) === 'active' ? 'Live report' : 'Report')"
           @click="$emit('report', row)"
         >
           {{ t(shiftState(row) === 'active' ? 'Live report' : 'Report') }}
@@ -102,12 +110,20 @@ function settlement(shift: Record<string, any>) {
 </template>
 
 <style scoped>
-.shift-ledger { min-width: 0; overflow: hidden; }
+.shift-ledger { --shift-ledger-actions: 280px; min-width: 0; overflow: hidden; }
 .shift-ledger__cashier { display: grid; gap: 4px; min-width: 100px; }
-.shift-ledger__cashier strong { font-size: 13px; }
+.shift-ledger__cashier strong { display: block; min-width: 0; overflow: hidden; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
 .shift-ledger__cashier small, .shift-ledger__time { color: var(--text-secondary); font-size: 11px; }
-.shift-ledger :deep(.row-actions) { flex-wrap: wrap; }
+.shift-ledger :deep(.dtable) { min-inline-size: 1080px; }
+.shift-ledger :deep(.badge) { overflow-wrap: normal; white-space: nowrap; }
+.shift-ledger :deep(.row-actions) { flex-wrap: nowrap; gap: 7px; }
+.shift-ledger :deep(.row-actions .btn) { block-size: 36px; min-block-size: 36px; min-inline-size: 0; padding-block: 0; padding-inline: 10px; white-space: nowrap; }
+.shift-ledger :deep(.row-actions .btn__label) { text-wrap: nowrap; white-space: nowrap; }
 .shift-ledger :deep(.expand-inner) { padding: 12px; }
-.shift-ledger :deep(.dtable tbody td) { padding-block: 10px; }
+.shift-ledger :deep(.dtable tbody td) { padding-block: 8px; }
 .shift-ledger :deep(.mobile-record__actions) { flex-wrap: wrap; }
+@media (max-width: 1400px) {
+  .shift-ledger { --shift-ledger-actions: 220px; }
+  .shift-ledger :deep(.shift-ledger__report-action .btn__label) { display: none; }
+}
 </style>

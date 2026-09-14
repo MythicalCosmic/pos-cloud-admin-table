@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
 import axios from '@/plugins/axios'
 import Badge from '@/components/design/Badge.vue'
 import BarChart from '@/components/design/charts/BarChart.vue'
@@ -807,7 +808,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="page product-statistics">
+  <WorkspacePage class="page product-statistics">
     <PageHeader
       :title="t('Product sales analytics')"
       :subtitle="pageSubtitle"
@@ -1327,7 +1328,7 @@ onBeforeUnmount(() => {
         </StateFill>
       </section>
     </template>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>
@@ -1640,7 +1641,6 @@ onBeforeUnmount(() => {
   height: 100%;
   border-radius: inherit;
   background: rgb(var(--v-theme-chart-revenue));
-  transition: width .3s ease;
 }
 
 .product-statistics__type-row small {

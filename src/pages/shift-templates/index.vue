@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
+
 /* ============================================================
    SHIFT TEMPLATES — recurring shift windows assigned to staff
    Built with design primitives (DataTable, Modal, Field, Input,
@@ -391,7 +394,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <!-- Page header -->
     <PageHeader
       :title="t('shift_templates_title')"
@@ -418,7 +421,7 @@ onBeforeUnmount(() => {
 
     <!-- Toolbar + table -->
     <Card>
-      <div class="toolbar shift-tpl-toolbar">
+      <WorkspaceToolbar class="toolbar shift-tpl-toolbar">
         <!-- Search -->
         <div class="shift-tpl-toolbar__search">
           <Input
@@ -437,7 +440,7 @@ onBeforeUnmount(() => {
             :options="statusFilterOptions"
           />
         </div>
-      </div>
+      </WorkspaceToolbar>
 
       <!-- Filter chips -->
       <div
@@ -791,7 +794,7 @@ onBeforeUnmount(() => {
     >
       {{ snackbarMsg }}
     </VSnackbar>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>

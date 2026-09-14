@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
 import Textarea from '@/components/design/Textarea.vue'
 /* ============================================================
    NOTIFICATION TEMPLATES — Telegram message templates per type+lang
@@ -491,7 +493,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <!-- Page header -->
     <PageHeader
       :title="t('ntpl_page_title')"
@@ -518,7 +520,7 @@ onBeforeUnmount(() => {
 
     <!-- Toolbar + table -->
     <Card>
-      <div class="toolbar tpl-toolbar">
+      <WorkspaceToolbar class="toolbar tpl-toolbar">
         <!-- Search -->
         <div class="tpl-toolbar__search">
           <Input
@@ -552,12 +554,15 @@ onBeforeUnmount(() => {
           class="row tpl-toolbar__switch"
           style="gap:10px;align-items:center;height:42px;padding:0 10px;"
         >
-          <Switch v-model="enabledOnly" />
+          <Switch
+            v-model="enabledOnly"
+            :aria-label="t('ntpl_filter_enabled')"
+          />
           <span style="font-size:13px;color:var(--text-secondary);white-space:nowrap;">
             {{ t('ntpl_filter_enabled') }}
           </span>
         </div>
-      </div>
+      </WorkspaceToolbar>
 
       <!-- Filter chips -->
       <div
@@ -1024,7 +1029,7 @@ onBeforeUnmount(() => {
     >
       {{ snackbarMsg }}
     </VSnackbar>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>

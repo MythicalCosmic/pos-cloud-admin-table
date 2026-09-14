@@ -3,12 +3,14 @@ import DesignIcon from './DesignIcon.vue'
 import Checkbox from './Checkbox.vue'
 import Input from './Input.vue'
 import { fieldContextKey } from './fieldContext'
+import { workspaceContext } from './workspace/context'
 
 interface Option { value: string | number; label: string; disabled?: boolean }
 const props = withDefaults(defineProps<{ modelValue?: Array<string | number>; options?: Option[]; placeholder?: string; disabled?: boolean; creatable?: boolean }>(), { modelValue: () => [], options: () => [] })
 const emit = defineEmits<{ (e: 'update:modelValue', values: Array<string | number>): void }>()
 const { t } = useI18n({ useScope: 'global' })
 const field = inject(fieldContextKey, null)
+const workspace = inject(workspaceContext, false)
 const trigger = ref<HTMLButtonElement | null>(null)
 const popup = ref<HTMLDialogElement | null>(null)
 const query = ref('')
@@ -85,6 +87,7 @@ onBeforeUnmount(() => { window.removeEventListener('resize', measure); popup.val
       <dialog
         ref="popup"
         class="multi-select__popover"
+        :class="{ 'workspace-popover': workspace }"
         :style="style"
         :aria-label="field?.label.value || placeholder || t('Select')"
         @cancel.prevent.stop="close"

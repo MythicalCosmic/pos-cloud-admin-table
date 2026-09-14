@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
 import type { DateRangeValue } from '@/components/design/DateRangePicker.vue'
 import type { AttendanceSummaryRow, AuditDashboard, EmployeeRef } from '@/types/operationsAudit'
 import AttendanceAuditPanel from '@/components/audit/AttendanceAuditPanel.vue'
@@ -229,7 +230,7 @@ const kpis = computed(() => {
 </script>
 
 <template>
-  <div class="page audit-page">
+  <WorkspacePage class="page audit-page">
     <PageHeader
       :title="t('opsAudit.title')"
       :subtitle="t('opsAudit.subtitle')"
@@ -353,7 +354,7 @@ const kpis = computed(() => {
         @changed="onChildChanged"
       />
     </template>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>

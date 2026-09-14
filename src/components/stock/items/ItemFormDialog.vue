@@ -4,6 +4,7 @@ import Modal from '@/components/design/Modal.vue'
 import FormSwitch from '@/components/design/FormSwitch.vue'
 import FormSelect from '@/components/design/FormSelect.vue'
 import FormInput from '@/components/design/FormInput.vue'
+import DesignIcon from '@/components/design/DesignIcon.vue'
 import { stockApi as axios } from '@/plugins/axios'
 
 const props = defineProps<{
@@ -28,6 +29,7 @@ const dialog = computed({
 })
 
 const saving = ref(false)
+const baseUnitError = ref('')
 
 const itemTypes = ['RAW', 'SEMI', 'FINISHED', 'PACKAGING']
 
@@ -58,6 +60,7 @@ const form = ref(defaultForm())
 watch(() => props.modelValue, open => {
   if (!open)
     return
+  baseUnitError.value = ''
   if (props.mode === 'edit' && props.item) {
     const it = props.item
 
@@ -87,10 +90,17 @@ watch(() => props.modelValue, open => {
   }
 })
 
+watch(() => form.value.base_unit_id, value => {
+  if (value)
+    baseUnitError.value = ''
+})
+
 async function save() {
-  if (saving.value) return
+  if (saving.value)
+    return
   if (!form.value.base_unit_id) {
-    notify(t('Base unit is required'), 'error')
+    baseUnitError.value = t('Base unit is required')
+    notify(baseUnitError.value, 'error')
 
     return
   }
@@ -106,11 +116,13 @@ async function save() {
     if (!payload.storage_conditions)
       delete payload.storage_conditions
 
-    if (props.mode === 'create')
+    if (props.mode === 'create') {
       await axios.post('/items/', payload)
-    else
+    }
+    else {
       // Item detail route allows GET/PUT/DELETE (not PATCH).
       await axios.put(`/items/${props.item.id}/`, payload)
+    }
     notify(props.mode === 'create' ? t('Item created') : t('Item updated'))
     dialog.value = false
     emit('saved')
@@ -125,226 +137,174 @@ async function save() {
 </script>
 
 <template>
-  <Modal :open="dialog" :title="mode === 'create' ? t('Add Stock Item') : t('Edit Stock Item')" :width="720" :busy="saving" @close="dialog = false"><VRow>
-          <!-- Basic info -->
-          <VCol cols="12">
-            <p class="text-overline text-disabled mb-1">
-              {{ t('Basic Information') }}
-            </p>
-          </VCol>
-          <VCol
-            cols="12"
-            sm="6"
-          >
-            <FormInput
-              v-model="form.name"
-              :label="t('Name')"
-              required
-            />
-          </VCol>
-          <VCol
-            cols="12"
-            sm="3"
-          >
-            <FormInput
-              v-model="form.sku"
-              :label="t('SKU')"
-            />
-          </VCol>
-          <VCol
-            cols="12"
-            sm="3"
-          >
-            <FormInput
-              v-model="form.barcode"
-              :label="t('Barcode')"
-            />
-          </VCol>
-          <VCol
-            cols="12"
-            sm="4"
-          >
-            <FormSelect
-              v-model="form.item_type"
-              :items="itemTypes"
-              :label="t('Type')"
-              required
-            />
-          </VCol>
-          <VCol
-            cols="12"
-            sm="4"
-          >
-            <FormSelect
-              v-model="form.category_id"
-              :items="categoryOptions"
-              :label="t('Category')"
-              clearable
-            />
-          </VCol>
-          <VCol
-            cols="12"
-            sm="4"
-          >
-            <FormSelect
-              v-model="form.base_unit_id"
-              :items="unitOptions"
-              :label="t('Base Unit *')"
-            />
-          </VCol>
+  <Modal
+    :open="dialog"
+    :title="mode === 'create' ? t('Add Stock Item') : t('Edit Stock Item')"
+    :width="780"
+    :busy="saving"
+    @close="dialog = false"
+  >
+    <form
+      id="stock-item-form"
+      class="stock-item-form"
+      @submit.prevent="save"
+    >
+      <section class="stock-item-form__section">
+        <header class="stock-item-form__section-head">
+          <span><DesignIcon
+            name="box"
+            :size="18"
+          /></span>
+          <h3>{{ t('Basic Information') }}</h3>
+        </header>
+        <div class="stock-item-form__grid stock-item-form__grid--identity">
+          <FormInput
+            v-model="form.name"
+            class="stock-item-form__identity-name"
+            :label="t('Name')"
+            required
+          />
+          <FormInput
+            v-model="form.sku"
+            class="stock-item-form__identity-code"
+            :label="t('SKU')"
+          />
+          <FormInput
+            v-model="form.barcode"
+            class="stock-item-form__identity-code"
+            :label="t('Barcode')"
+          />
+          <FormSelect
+            v-model="form.item_type"
+            class="stock-item-form__identity-select"
+            :items="itemTypes"
+            :label="t('Type')"
+            required
+          />
+          <FormSelect
+            v-model="form.category_id"
+            class="stock-item-form__identity-select"
+            :items="categoryOptions"
+            :label="t('Category')"
+            clearable
+          />
+          <FormSelect
+            v-model="form.base_unit_id"
+            class="stock-item-form__identity-select"
+            :items="unitOptions"
+            :label="t('Base Unit *')"
+            :error-messages="baseUnitError"
+          />
+        </div>
+      </section>
 
-          <!-- Stock thresholds -->
-          <VCol
-            cols="12"
-            class="mt-2"
-          >
-            <p class="text-overline text-disabled mb-1">
-              {{ t('Stock Levels') }}
-            </p>
-          </VCol>
-          <VCol
-            cols="12"
-            sm="4"
-          >
-            <FormInput
-              v-model.number="form.min_stock_level"
-              :label="t('Min Level')"
-              type="number"
-              step="0.01"
-            />
-          </VCol>
-          <VCol
-            cols="12"
-            sm="4"
-          >
-            <FormInput
-              v-model.number="form.max_stock_level"
-              :label="t('Max Level')"
-              type="number"
-              step="0.01"
-            />
-          </VCol>
-          <VCol
-            cols="12"
-            sm="4"
-          >
-            <FormInput
-              v-model.number="form.reorder_point"
-              :label="t('Reorder Point')"
-              type="number"
-              step="0.01"
-            />
-          </VCol>
-          <VCol
-            cols="12"
-            sm="4"
-          >
-            <AppPriceInput
-              v-model="form.cost_price"
-              :label="t('Cost Price')"
-            />
-          </VCol>
+      <section class="stock-item-form__section">
+        <header class="stock-item-form__section-head">
+          <span><DesignIcon
+            name="chart"
+            :size="18"
+          /></span>
+          <h3>{{ t('Stock Levels') }}</h3>
+        </header>
+        <div class="stock-item-form__grid stock-item-form__grid--levels">
+          <FormInput
+            v-model.number="form.min_stock_level"
+            :label="t('Min Level')"
+            type="number"
+            step="0.01"
+          />
+          <FormInput
+            v-model.number="form.max_stock_level"
+            :label="t('Max Level')"
+            type="number"
+            step="0.01"
+          />
+          <FormInput
+            v-model.number="form.reorder_point"
+            :label="t('Reorder Point')"
+            type="number"
+            step="0.01"
+          />
+          <AppPriceInput
+            v-model="form.cost_price"
+            :label="t('Cost Price')"
+          />
+        </div>
+      </section>
 
-          <!-- Flags -->
-          <VCol
-            cols="12"
-            class="mt-2"
-          >
-            <p class="text-overline text-disabled mb-1">
-              {{ t('Flags') }}
-            </p>
-          </VCol>
-          <VCol
-            cols="6"
-            sm="4"
-          >
-            <FormSwitch
-              v-model="form.is_purchasable"
-              :label="t('Purchasable')"
-              color="primary"
-              density="compact"
-            />
-          </VCol>
-          <VCol
-            cols="6"
-            sm="4"
-          >
-            <FormSwitch
-              v-model="form.is_sellable"
-              :label="t('Sellable')"
-              color="primary"
-              density="compact"
-            />
-          </VCol>
-          <VCol
-            cols="6"
-            sm="4"
-          >
-            <FormSwitch
-              v-model="form.is_producible"
-              :label="t('Producible')"
-              color="primary"
-              density="compact"
-            />
-          </VCol>
-          <VCol
-            cols="6"
-            sm="4"
-          >
-            <FormSwitch
-              v-model="form.track_batches"
-              :label="t('Track Batches')"
-              color="warning"
-              density="compact"
-            />
-          </VCol>
-          <VCol
-            cols="6"
-            sm="4"
-          >
-            <FormSwitch
-              v-model="form.track_expiry"
-              :label="t('Track Expiry')"
-              color="warning"
-              density="compact"
-            />
-          </VCol>
+      <section class="stock-item-form__section">
+        <header class="stock-item-form__section-head">
+          <span><DesignIcon
+            name="sliders"
+            :size="18"
+          /></span>
+          <h3>{{ t('Flags') }}</h3>
+        </header>
+        <div class="stock-item-form__toggles">
+          <FormSwitch
+            v-model="form.is_purchasable"
+            :label="t('Purchasable')"
+          />
+          <FormSwitch
+            v-model="form.is_sellable"
+            :label="t('Sellable')"
+          />
+          <FormSwitch
+            v-model="form.is_producible"
+            :label="t('Producible')"
+          />
+          <FormSwitch
+            v-model="form.track_batches"
+            :label="t('Track Batches')"
+          />
+          <FormSwitch
+            v-model="form.track_expiry"
+            :label="t('Track Expiry')"
+          />
+          <FormSwitch
+            v-if="mode === 'edit'"
+            v-model="form.is_active"
+            :label="t('Active')"
+          />
+        </div>
+      </section>
 
-          <!-- Expiry / storage -->
-          <template v-if="form.track_expiry">
-            <VCol
-              cols="12"
-              sm="4"
-            >
-              <FormInput
-                v-model.number="form.default_expiry_days"
-                :label="t('Default Expiry (days)')"
-                type="number"
-                :min="1"
-              />
-            </VCol>
-          </template>
-          <VCol cols="12">
-            <FormInput
-              v-model="form.storage_conditions"
-              :label="t('Storage Conditions')"
-            />
-          </VCol>
-          <VCol cols="12">
-            <FormSwitch
-              v-if="mode === 'edit'"
-              v-model="form.is_active"
-              :label="t('Active')"
-              color="success"
-              density="compact"
-            />
-          </VCol>
-        </VRow><template #footer><Button
-          :loading="saving"
-          @click="save"
-        >
-          {{ t('Save') }}
-        </Button></template></Modal>
+      <section class="stock-item-form__section">
+        <header class="stock-item-form__section-head">
+          <span><DesignIcon
+            name="package"
+            :size="18"
+          /></span>
+          <h3>{{ t('Storage Conditions') }}</h3>
+        </header>
+        <div class="stock-item-form__grid stock-item-form__grid--storage">
+          <FormInput
+            v-if="form.track_expiry"
+            v-model.number="form.default_expiry_days"
+            :label="t('Default Expiry (days)')"
+            type="number"
+            :min="1"
+          />
+          <FormInput
+            v-model="form.storage_conditions"
+            :class="{ 'stock-item-form__wide': !form.track_expiry }"
+            :label="t('Storage Conditions')"
+          />
+        </div>
+      </section>
+    </form>
+
+    <template #footer>
+      <Button
+        type="submit"
+        form="stock-item-form"
+        icon="save"
+        :loading="saving"
+      >
+        {{ t('Save') }}
+      </Button>
+    </template>
+  </Modal>
 
   <VSnackbar
     v-model="snackbar"
@@ -354,3 +314,33 @@ async function save() {
     {{ snackbarMsg }}
   </VSnackbar>
 </template>
+
+<style scoped>
+.stock-item-form { display: grid; gap: 18px; }
+.stock-item-form__section { overflow: hidden; border: 1px solid var(--work-line); border-radius: 17px; background: var(--surface); }
+.stock-item-form__section-head { display: flex; align-items: center; gap: 11px; padding: 13px 16px; border-block-end: 1px solid var(--work-line); background: var(--work-soft); }
+.stock-item-form__section-head > span { display: grid; place-items: center; inline-size: 32px; block-size: 32px; border: 1px solid var(--primary-border); border-radius: 10px; background: var(--surface); color: var(--primary); }
+.stock-item-form__section-head h3 { margin: 0; font-size: 13px; font-weight: 700; letter-spacing: -.01em; }
+.stock-item-form__grid { display: grid; gap: 17px 15px; padding: 18px 16px 20px; }
+.stock-item-form__grid--identity { grid-template-columns: repeat(12, minmax(0, 1fr)); }
+.stock-item-form__identity-name { grid-column: span 6; }
+.stock-item-form__identity-code { grid-column: span 3; }
+.stock-item-form__identity-select { grid-column: span 4; }
+.stock-item-form__grid--levels { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.stock-item-form__grid--storage { grid-template-columns: minmax(170px, .45fr) minmax(0, 1fr); }
+.stock-item-form__wide { grid-column: span 2; }
+.stock-item-form__toggles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding: 16px; }
+.stock-item-form__toggles :deep(.form-switch) { min-block-size: 58px; margin: 0; }
+
+@media (max-width: 700px) {
+  .stock-item-form { gap: 14px; }
+  .stock-item-form__grid--identity,
+  .stock-item-form__grid--levels,
+  .stock-item-form__grid--storage { grid-template-columns: minmax(0, 1fr); }
+  .stock-item-form__identity-name,
+  .stock-item-form__identity-code,
+  .stock-item-form__identity-select { grid-column: auto; }
+  .stock-item-form__wide { grid-column: auto; }
+  .stock-item-form__toggles { grid-template-columns: minmax(0, 1fr); }
+}
+</style>

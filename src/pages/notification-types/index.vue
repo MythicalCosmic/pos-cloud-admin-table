@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
+import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
 import Textarea from '@/components/design/Textarea.vue'
 /* ============================================================
    NOTIFICATION TYPES — toggle delivery and edit message templates
@@ -320,7 +322,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
 </script>
 
 <template>
-  <div class="page">
+  <WorkspacePage class="page">
     <!-- Header -->
     <PageHeader
       :title="t('notif_page_title')"
@@ -340,7 +342,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
 
     <!-- Toolbar + table -->
     <Card>
-      <div class="toolbar nt-toolbar">
+      <WorkspaceToolbar class="toolbar nt-toolbar">
         <!-- Search -->
         <div class="nt-toolbar__search">
           <Input
@@ -368,7 +370,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
             :options="statusOptions"
           />
         </div>
-      </div>
+      </WorkspaceToolbar>
 
       <!-- Active filter chips -->
       <div
@@ -658,7 +660,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
     >
       {{ snackbarMsg }}
     </VSnackbar>
-  </div>
+  </WorkspacePage>
 </template>
 
 <style scoped>
