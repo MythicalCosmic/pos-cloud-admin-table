@@ -126,8 +126,17 @@ function sectionFixture(path: string, state: FixtureState) {
 }
 
 function todayFixture(state: FixtureState) {
+  const orderCount = state.empty ? 0 : state.todayOrders === undefined ? 42 : state.todayOrders
+  const hasSales = typeof orderCount === 'number' && orderCount > 0
+
   return {
-    today: { orders: state.empty ? 0 : state.todayOrders === undefined ? 42 : state.todayOrders },
+    today: {
+      orders: orderCount,
+      peak_hour: hasSales ? { hour: 13, orders: 11, revenue: 690000 } : null,
+    },
+    top_products_today: hasSales
+      ? [{ product_id: 1, product_name: 'Signature lavash with grilled chicken', quantity: 28, revenue: 1_400_000 }]
+      : [],
     category_stats_today: state.todayFallback ? categories : [],
   }
 }
@@ -955,6 +964,12 @@ test('today orders remain independent of range totals and distinguish zero from 
   const card = page.getByRole('complementary', { name: 'Today\'s Orders', exact: true })
 
   await expect(card.locator('.today-orders__count')).toHaveText('42')
+  const pulse = page.getByRole('region', { name: 'Today at a glance', exact: true })
+  await expect(pulse).toContainText('13:00–14:00')
+  await expect(pulse).toContainText('11 orders · 690 000 UZS')
+  await expect(pulse).toContainText('Signature lavash with grilled chicken')
+  await expect(pulse).toContainText('28 sold · 1 400 000 UZS')
+  await pulse.screenshot({ path: '/tmp/alpha-dashboard-today-pulse.png', animations: 'disabled' })
   await expect(page.getByRole('button', { name: 'Refresh', exact: true })).toBeEnabled()
   expect(calls.filter(url => url.pathname.endsWith('/dashboard/today'))).toHaveLength(1)
   await page.getByRole('combobox', { name: 'Quick select', exact: true }).click()

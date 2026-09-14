@@ -268,7 +268,7 @@ watch(
       range_from: dateRange.value?.from || undefined,
       range_to: dateRange.value?.to || undefined,
       filters: { section: v.id, layout: 'continuous' },
-      visible_data_keys: ['revenue', 'orders', 'paid_orders', 'units_sold', 'grossMargin', 'revenue30', 'expense30', 'channelDays', 'top_products', 'affinity', 'leaderboard', 'hours_worked', 'funnel', 'tableGrid'],
+      visible_data_keys: ['revenue', 'orders', 'paid_orders', 'units_sold', 'peak_hour', 'grossMargin', 'revenue30', 'expense30', 'channelDays', 'top_products', 'top_products_today', 'affinity', 'leaderboard', 'hours_worked', 'funnel', 'tableGrid'],
     })
   },
   { immediate: true },

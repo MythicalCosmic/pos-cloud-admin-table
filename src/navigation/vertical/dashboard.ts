@@ -7,6 +7,13 @@ export default [
     subject: 'all',
   },
   {
+    title: 'Product comparison',
+    icon: { icon: 'bx-git-compare' },
+    to: 'analytics-compare',
+    action: 'manage',
+    subject: 'all',
+  },
+  {
     title: 'AI Assistant',
     icon: { icon: 'bx-bot' },
     to: 'ai-assistant',

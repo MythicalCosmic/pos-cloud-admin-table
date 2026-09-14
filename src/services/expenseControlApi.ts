@@ -2,8 +2,11 @@ import axios from '@/plugins/axios'
 import type {
   ExpenseCategory,
   ExpenseCategoryPayload,
+  ExpenseCostBehavior,
   ExpenseCreatePayload,
   ExpensePagination,
+  ExpenseReclassificationPayload,
+  ExpenseReclassificationResult,
   ExpenseRecord,
   ExpenseSource,
   ExpenseStatus,
@@ -15,13 +18,21 @@ interface CategoryListParams {
   per_page?: number
   search?: string
   include_inactive?: boolean
+  parent_id?: number
+  roots_only?: boolean
+  cost_behavior?: ExpenseCostBehavior | ''
 }
 
-interface ExpenseListParams {
+export interface ExpenseListParams {
   page?: number
   per_page?: number
   status?: ExpenseStatus | ''
   category_id?: number
+  include_subcategories?: boolean
+  category_parent_id?: number
+  cost_behavior?: ExpenseCostBehavior | ''
+  reporting_group?: string
+  source_account?: ExpenseSource | ''
   date_from?: string
   date_to?: string
   search?: string
@@ -148,4 +159,31 @@ export async function voidExpense(id: number, reason: string) {
   const response = await axios.post(`/expenses/${id}/void`, { reason })
 
   return payloadOf(response).expense as ExpenseRecord
+}
+
+export async function reclassifyExpenses(
+  payload: ExpenseReclassificationPayload,
+  idempotencyKey: string,
+) {
+  const key = idempotencyKey.trim()
+  if (!key)
+    throw new TypeError('Idempotency-Key is required for expense reclassification')
+
+  const response = await axios.post('/expenses/reclassify', payload, {
+    headers: { 'Idempotency-Key': key },
+  })
+
+  const data = payloadOf(response)
+  const raw = (data.preview ?? data.result ?? data) as Record<string, any>
+
+  return {
+    ...raw,
+    row_count: Number(raw.row_count ?? raw.count ?? raw.total_count ?? payload.expense_ids.length),
+    total_amount_uzs: raw.total_amount_uzs ?? raw.amount_uzs ?? raw.total_uzs,
+    current_category_breakdown: raw.current_category_breakdown ?? raw.current_categories,
+    source_breakdown: raw.source_breakdown ?? raw.sources,
+    target_path: raw.target_path ?? raw.target_category?.path,
+    target_cost_behavior: raw.target_cost_behavior ?? raw.target_category?.cost_behavior,
+    target_reporting_group: raw.target_reporting_group ?? raw.target_category?.reporting_group,
+  } as ExpenseReclassificationResult
 }

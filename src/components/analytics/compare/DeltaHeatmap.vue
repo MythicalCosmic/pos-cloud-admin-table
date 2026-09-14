@@ -1,18 +1,16 @@
 <script setup lang="ts">
-/* Hour × weekday DELTA heatmap: cell = Period A − Period B (orders). Green =
-   busier now, red = quieter. Renders only when the matrices are present. */
-import ChartCard from '@/components/design/ChartCard.vue'
+import type { EChartsOption } from 'echarts'
 import EChart from './EChart.vue'
+import ChartCard from '@/components/design/ChartCard.vue'
 import { useEChartTheme } from '@/composables/useEChartTheme'
 import { fmtInt } from '@/composables/useCurrency'
-import type { EChartsOption } from 'echarts'
 
+/* Hour × weekday delta heatmap. Each cell is Period A minus Period B orders. */
+interface Props { matrix: { a: number[][]; b: number[][] } }
+
+const props = defineProps<Props>()
 const { t } = useI18n({ useScope: 'global' })
 const { tokens, tooltip } = useEChartTheme()
-
-interface Props { matrix: { a: number[][], b: number[][] } }
-const props = defineProps<Props>()
-
 const DOW = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 const hours = Array.from({ length: 24 }, (_, h) => String(h).padStart(2, '0'))
 
@@ -24,7 +22,8 @@ const cells = computed(() => {
       const a = props.matrix.a?.[w]?.[h] ?? 0
       const b = props.matrix.b?.[w]?.[h] ?? 0
       const d = a - b
-      if (Math.abs(d) > maxAbs) maxAbs = Math.abs(d)
+      if (Math.abs(d) > maxAbs)
+        maxAbs = Math.abs(d)
       out.push([h, w, d])
     }
   }
@@ -42,19 +41,29 @@ const option = computed<EChartsOption>(() => ({
     },
   }),
   xAxis: {
-    type: 'category', data: hours,
+    type: 'category',
+    data: hours,
     axisLabel: { color: tokens.value.textTertiary, fontFamily: tokens.value.fontMono, fontSize: 10, interval: 1 },
-    axisLine: { show: false }, axisTick: { show: false }, splitArea: { show: false },
+    axisLine: { show: false },
+    axisTick: { show: false },
+    splitArea: { show: false },
   },
   yAxis: {
-    type: 'category', data: DOW.map(d => t(d)),
+    type: 'category',
+    data: DOW.map(d => t(d)),
     axisLabel: { color: tokens.value.textTertiary, fontFamily: tokens.value.fontUI, fontSize: 11 },
-    axisLine: { show: false }, axisTick: { show: false },
+    axisLine: { show: false },
+    axisTick: { show: false },
   },
   visualMap: {
-    min: -cells.value.maxAbs, max: cells.value.maxAbs,
-    calculable: true, orient: 'horizontal', left: 'center', bottom: 0,
-    itemWidth: 12, itemHeight: 120,
+    min: -cells.value.maxAbs,
+    max: cells.value.maxAbs,
+    calculable: true,
+    orient: 'horizontal',
+    left: 'center',
+    bottom: 0,
+    itemWidth: 12,
+    itemHeight: 120,
     textStyle: { color: tokens.value.textTertiary, fontFamily: tokens.value.fontMono, fontSize: 10 },
     inRange: { color: [tokens.value.negative, tokens.value.surface2, tokens.value.positive] },
   },
@@ -68,7 +77,15 @@ const option = computed<EChartsOption>(() => ({
 </script>
 
 <template>
-  <ChartCard :eyebrow="t('Demand shift')" :title="t('Busier / quieter by hour × weekday')" :sub="t('Green = busier this period, red = quieter')">
-    <EChart :option="option" :height="300" />
+  <ChartCard
+    :eyebrow="t('Demand shift')"
+    :title="t('Busier / quieter by hour × weekday')"
+    :sub="t('Green = busier this period, red = quieter')"
+  >
+    <EChart
+      :option="option"
+      :height="300"
+      :aria-label="t('Busier / quieter by hour × weekday')"
+    />
   </ChartCard>
 </template>

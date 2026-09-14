@@ -3,7 +3,7 @@ import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
 import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
 import Textarea from '@/components/design/Textarea.vue'
 import type { DataTableColumn } from '@/components/design/DataTable.vue'
-import type { ExpenseCategory, ExpenseCategoryPayload, ExpenseSource } from '@/types/expenseControl'
+import type { ExpenseCategory, ExpenseCategoryPayload, ExpenseCostBehavior, ExpenseSource } from '@/types/expenseControl'
 import Badge from '@/components/design/Badge.vue'
 import Button from '@/components/design/Button.vue'
 import Card from '@/components/design/Card.vue'
@@ -20,10 +20,16 @@ import Switch from '@/components/design/Switch.vue'
 import {
   createExpenseCategory,
   deactivateExpenseCategory,
+  listAllExpenseCategories,
   listExpenseCategories,
   updateExpenseCategory,
 } from '@/services/expenseControlApi'
 import { useUserAccess } from '@/composables/useUserAccess'
+import {
+  EXPENSE_COST_BEHAVIORS,
+  expenseCategoryPath,
+  expenseCostBehavior,
+} from '@/utils/expenseCategories'
 
 const { t } = useI18n({ useScope: 'global' })
 const { snackbar, snackbarMsg, snackbarColor, notify } = useNotify()
@@ -41,6 +47,10 @@ const page = ref(1)
 const itemsPerPage = ref(20)
 const search = ref('')
 const includeInactive = ref(false)
+const costBehaviorFilter = ref<ExpenseCostBehavior | ''>('')
+const rootCategories = ref<ExpenseCategory[]>([])
+const rootsLoading = ref(false)
+const editing = ref<ExpenseCategory | null>(null)
 
 const SOURCE_OPTIONS: ExpenseSource[] = ['DRAWER', 'SAFE', 'BANK']
 
@@ -65,6 +75,31 @@ const reportingGroupOptions = computed(() => REPORTING_GROUPS.map(value => ({
   label: t(`expense_reporting_group_${value}`),
 })))
 
+const costBehaviorOptions = computed(() => EXPENSE_COST_BEHAVIORS.map(value => ({
+  value,
+  label: t(`expense_cost_behavior_${value}`),
+})))
+
+const costBehaviorFilterOptions = computed(() => [
+  { value: '', label: t('expense_cost_behavior_all') },
+  ...costBehaviorOptions.value,
+])
+
+const parentOptions = computed(() => rootCategories.value
+  .filter(category =>
+    category.is_active !== false
+    && category.id !== editing.value?.id
+    && !category.parent_id
+    && (category.depth ?? 0) === 0,
+  )
+  .map(category => ({
+    value: String(category.id),
+    label: expenseCategoryPath(category),
+  })))
+
+const parentLocked = computed(() => !!editing.value && Number(editing.value.child_count ?? 0) > 0)
+const deactivationLocked = computed(() => Number(editing.value?.active_child_count ?? 0) > 0)
+
 function apiError(error: any): string {
   const body = error?.response?.data
 
@@ -86,6 +121,7 @@ async function load() {
       per_page: itemsPerPage.value,
       search: search.value.trim() || undefined,
       include_inactive: (canManage.value && includeInactive.value) ? true : undefined,
+      cost_behavior: costBehaviorFilter.value || undefined,
     })
 
     items.value = result.categories
@@ -101,9 +137,28 @@ async function load() {
   }
 }
 
-onMounted(load)
+async function loadRoots() {
+  if (!canView.value || rootsLoading.value)
+    return
+
+  rootsLoading.value = true
+  try {
+    rootCategories.value = await listAllExpenseCategories({ roots_only: true })
+  }
+  catch {
+    rootCategories.value = items.value.filter(category => !category.parent_id && (category.depth ?? 0) === 0)
+  }
+  finally {
+    rootsLoading.value = false
+  }
+}
+
+onMounted(() => {
+  load()
+  loadRoots()
+})
 watch([page, itemsPerPage], load)
-watch(includeInactive, () => {
+watch([includeInactive, costBehaviorFilter], () => {
   page.value = 1
   load()
 })
@@ -115,15 +170,16 @@ const debouncedSearch = useDebounceFn(() => {
 
 watch(search, debouncedSearch)
 
-const columns: DataTableColumn<ExpenseCategory>[] = [
-  { key: 'code', label: t('Code'), width: 150 },
-  { key: 'name', label: t('expcat_col_name') },
-  { key: 'reporting_group', label: t('expense_reporting_group'), width: 180 },
-  { key: 'allowed_sources', label: t('expense_allowed_sources'), width: 210 },
-  { key: 'budget_limit', label: t('expcat_col_budget_limit'), align: 'right', width: 160 },
-  { key: 'expense_count', label: t('expcat_col_expense_count'), align: 'right', width: 100 },
-  { key: 'is_active', label: t('expcat_col_status'), width: 110 },
-]
+const columns = computed<DataTableColumn<ExpenseCategory>[]>(() => [
+  { key: 'code', label: t('Code'), width: 130 },
+  { key: 'name', label: t('expcat_col_name'), width: 350, mobileFullWidth: true },
+  { key: 'cost_behavior', label: t('expense_cost_behavior'), width: 140 },
+  { key: 'reporting_group', label: t('expense_reporting_group'), width: 160 },
+  { key: 'allowed_sources', label: t('expense_allowed_sources'), width: 170 },
+  { key: 'budget_limit', label: t('expcat_col_budget_limit'), align: 'right', width: 150 },
+  { key: 'expense_count', label: t('expcat_col_expense_count'), align: 'right', width: 110 },
+  { key: 'is_active', label: t('expcat_col_status'), width: 100 },
+])
 
 const tablePagination = computed(() => ({
   page: page.value,
@@ -144,6 +200,8 @@ interface CategoryForm {
   requires_receipt: boolean
   requires_description: boolean
   is_active: boolean
+  parent_id: string
+  cost_behavior: ExpenseCostBehavior
 }
 
 function blankForm(): CategoryForm {
@@ -158,11 +216,12 @@ function blankForm(): CategoryForm {
     requires_receipt: false,
     requires_description: false,
     is_active: true,
+    parent_id: '',
+    cost_behavior: 'UNCLASSIFIED',
   }
 }
 
 const formOpen = ref(false)
-const editing = ref<ExpenseCategory | null>(null)
 const saving = ref(false)
 const form = ref<CategoryForm>(blankForm())
 const errors = ref<Record<string, string>>({})
@@ -172,6 +231,7 @@ function openCreate() {
   form.value = blankForm()
   errors.value = {}
   formOpen.value = true
+  loadRoots()
 }
 
 function openEdit(row: ExpenseCategory) {
@@ -187,9 +247,12 @@ function openEdit(row: ExpenseCategory) {
     requires_receipt: !!row.requires_receipt,
     requires_description: !!row.requires_description,
     is_active: !!row.is_active,
+    parent_id: row.parent_id == null ? '' : String(row.parent_id),
+    cost_behavior: expenseCostBehavior(row),
   }
   errors.value = {}
   formOpen.value = true
+  loadRoots()
 }
 
 function closeForm() {
@@ -245,6 +308,8 @@ async function submit() {
       allowed_sources: form.value.allowed_sources,
       requires_receipt: form.value.requires_receipt,
       requires_description: form.value.requires_description,
+      parent_id: form.value.parent_id ? Number(form.value.parent_id) : null,
+      cost_behavior: form.value.cost_behavior,
       ...((!editing.value && form.value.code.trim()) ? { code: form.value.code.trim().toUpperCase() } : {}),
     }
 
@@ -258,7 +323,7 @@ async function submit() {
     }
     formOpen.value = false
     editing.value = null
-    await load()
+    await Promise.all([load(), loadRoots()])
   }
   catch (error: any) {
     notify(apiError(error), 'error')
@@ -293,7 +358,7 @@ async function doDeactivate() {
     notify(t('expcat_toast_deleted'))
     confirmOpen.value = false
     confirmRow.value = null
-    await load()
+    await Promise.all([load(), loadRoots()])
   }
   catch (error: any) {
     notify(apiError(error), 'error')
@@ -305,6 +370,28 @@ async function doDeactivate() {
 
 function sourceLabel(source: ExpenseSource) {
   return t(`supplier_source_${source}`)
+}
+
+function categoryIsGroup(category: ExpenseCategory): boolean {
+  return Number(category.active_child_count ?? category.child_count ?? 0) > 0 || category.is_selectable === false
+}
+
+function categoryExpenseCount(category: ExpenseCategory): number {
+  if (categoryIsGroup(category))
+    return Number(category.subtree_expense_count ?? category.expense_count ?? 0)
+
+  return Number(category.direct_expense_count ?? category.expense_count ?? 0)
+}
+
+function costBehaviorTone(value: ExpenseCostBehavior): 'neutral' | 'info' | 'primary' | 'warning' {
+  if (value === 'FIXED')
+    return 'info'
+  if (value === 'VARIABLE')
+    return 'primary'
+  if (value === 'MIXED' || value === 'ONE_TIME')
+    return 'warning'
+
+  return 'neutral'
 }
 </script>
 
@@ -333,6 +420,22 @@ function sourceLabel(source: ExpenseSource) {
         </Button>
       </template>
     </PageHeader>
+
+    <div
+      v-if="canView"
+      class="hierarchy-guide"
+    >
+      <div class="hierarchy-guide__icon">
+        <DesignIcon
+          name="folder"
+          :size="22"
+        />
+      </div>
+      <div>
+        <strong>{{ t('expense_hierarchy_title') }}</strong>
+        <p>{{ t('expense_hierarchy_body') }}</p>
+      </div>
+    </div>
 
     <Card
       v-if="!canView"
@@ -363,6 +466,13 @@ function sourceLabel(source: ExpenseSource) {
             :placeholder="t('expcat_search_ph')"
           />
         </div>
+        <div class="tb-filter">
+          <Select
+            v-model="costBehaviorFilter"
+            :options="costBehaviorFilterOptions"
+            :aria-label="t('expense_cost_behavior')"
+          />
+        </div>
         <label
           v-if="canManage"
           class="include-inactive"
@@ -390,9 +500,11 @@ function sourceLabel(source: ExpenseSource) {
       <div class="card__divider" />
 
       <DataTable
+        class="category-table"
         :columns="columns"
         :rows="items"
         row-key="id"
+        actions-width="96px"
         :loading="loading"
         :pagination="tablePagination"
         :empty-title="t('expcat_empty_title')"
@@ -402,13 +514,40 @@ function sourceLabel(source: ExpenseSource) {
           <span class="mono cell-muted">{{ row.code }}</span>
         </template>
         <template #cell.name="{ row }">
-          <div class="cell-stack">
-            <span class="cell-strong">{{ row.name }}</span>
+          <div
+            class="category-cell"
+            :class="{ 'category-cell--child': (row.depth ?? (row.parent_id ? 1 : 0)) > 0 }"
+          >
+            <div class="category-cell__title">
+              <DesignIcon
+                :name="categoryIsGroup(row) ? 'folder' : 'tag'"
+                :size="16"
+              />
+              <span class="cell-strong">{{ expenseCategoryPath(row) }}</span>
+              <Badge :tone="categoryIsGroup(row) ? 'info' : 'success'">
+                {{ t(categoryIsGroup(row) ? 'expense_category_group' : 'expense_category_selectable') }}
+              </Badge>
+            </div>
             <span
               v-if="row.description"
               class="cell-muted truncate"
             >{{ row.description }}</span>
+            <span
+              v-if="Number(row.active_child_count ?? 0) > 0"
+              class="category-cell__rule"
+            >
+              <DesignIcon
+                name="info"
+                :size="13"
+              />
+              {{ t('expense_category_active_children_block') }}
+            </span>
           </div>
+        </template>
+        <template #cell.cost_behavior="{ row }">
+          <Badge :tone="costBehaviorTone(expenseCostBehavior(row))">
+            {{ t(`expense_cost_behavior_${expenseCostBehavior(row)}`) }}
+          </Badge>
         </template>
         <template #cell.reporting_group="{ row }">
           {{ t(`expense_reporting_group_${row.reporting_group}`) }}
@@ -435,7 +574,10 @@ function sourceLabel(source: ExpenseSource) {
           >{{ formatCurrency(row.budget_limit) }}</span>
         </template>
         <template #cell.expense_count="{ row }">
-          <span class="mono">{{ row.expense_count ?? 0 }}</span>
+          <div class="cell-stack cell-stack--end">
+            <span class="mono cell-strong">{{ categoryExpenseCount(row) }}</span>
+            <span class="cell-muted">{{ t(categoryIsGroup(row) ? 'expense_count_subtree' : 'expense_count_direct') }}</span>
+          </div>
         </template>
         <template #cell.is_active="{ row }">
           <Badge :tone="row.is_active ? 'success' : 'neutral'">
@@ -453,7 +595,8 @@ function sourceLabel(source: ExpenseSource) {
             v-if="canManage && row.is_active"
             icon="trash"
             tone="danger"
-            :title="t('expcat_action_delete')"
+            :disabled="Number(row.active_child_count ?? 0) > 0"
+            :title="Number(row.active_child_count ?? 0) > 0 ? t('expense_category_active_children_block') : t('expcat_action_delete')"
             @click="askDeactivate(row)"
           />
         </template>
@@ -517,6 +660,23 @@ function sourceLabel(source: ExpenseSource) {
               :placeholder="t('expense_cat_name_placeholder')"
               maxlength="100"
               autofocus
+            />
+          </Field>
+          <Field
+            :label="t('expense_parent_category')"
+            :hint="parentLocked ? t('expense_parent_locked_children') : t('expense_parent_category_hint')"
+          >
+            <Select
+              v-model="form.parent_id"
+              :options="parentOptions"
+              :placeholder="rootsLoading ? t('Loading') : t('expense_top_level_category')"
+              :disabled="rootsLoading || parentLocked"
+            />
+          </Field>
+          <Field :label="t('expense_cost_behavior')">
+            <Select
+              v-model="form.cost_behavior"
+              :options="costBehaviorOptions"
             />
           </Field>
           <Field :label="t('expense_reporting_group')">
@@ -585,6 +745,7 @@ function sourceLabel(source: ExpenseSource) {
           <Field
             :label="t('expense_category_rules')"
             class="span-2"
+            :hint="deactivationLocked ? t('expense_category_active_children_block') : ''"
           >
             <div class="policy-grid">
               <label class="toggle-card">
@@ -596,7 +757,10 @@ function sourceLabel(source: ExpenseSource) {
                 <span>{{ t('expense_requires_description') }}</span>
               </label>
               <label class="toggle-card">
-                <Switch v-model="form.is_active" />
+                <Switch
+                  v-model="form.is_active"
+                  :disabled="deactivationLocked"
+                />
                 <span>{{ t('expcat_field_is_active') }}</span>
               </label>
             </div>
@@ -653,11 +817,38 @@ function sourceLabel(source: ExpenseSource) {
 </template>
 
 <style scoped>
+.hierarchy-guide {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-block-end: 16px;
+  padding: 16px 18px;
+  border: 1px solid color-mix(in srgb, var(--primary) 22%, var(--border));
+  border-radius: 14px;
+  background: linear-gradient(120deg, color-mix(in srgb, var(--primary) 8%, var(--surface)), var(--surface));
+}
+.hierarchy-guide__icon { display: grid; flex: 0 0 42px; width: 42px; height: 42px; place-items: center; border-radius: 12px; background: var(--primary-weak); color: var(--primary); }
+.hierarchy-guide strong { display: block; color: var(--text); font-size: 14px; }
+.hierarchy-guide p { margin: 3px 0 0; color: var(--text-secondary); font-size: 13px; line-height: 1.5; }
 .toolbar--wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; }
 .tb-search { flex: 1 1 260px; max-width: 380px; }
+.tb-filter { width: 210px; }
 .include-inactive { display: inline-flex; align-items: center; gap: 10px; color: rgb(var(--v-theme-text-secondary)); font-size: 14px; cursor: pointer; }
 .error-banner { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 16px 12px; padding: 10px 12px; border: 1px solid rgba(var(--v-theme-error), .3); border-radius: 8px; background: rgba(var(--v-theme-error), .08); color: rgb(var(--v-theme-error)); }
 .cell-stack { display: flex; flex-direction: column; min-width: 0; gap: 2px; }
+.cell-stack--end { align-items: flex-end; }
+.category-cell { display: grid; min-width: 0; gap: 4px; }
+.category-cell--child { padding-inline-start: 18px; }
+.category-cell__title { display: flex; align-items: center; min-width: 0; gap: 8px; }
+.category-cell__title > svg { flex: 0 0 auto; color: var(--primary); }
+.category-cell__title .cell-strong { min-width: 0; overflow-wrap: break-word; }
+.category-cell__title :deep(.badge) { flex: 0 0 auto; }
+.category-cell__rule { display: flex; align-items: center; gap: 5px; color: var(--color-warning); font-size: 11px; line-height: 1.35; }
+.category-cell__rule > svg { flex: 0 0 auto; }
+.category-table :deep(.dtable) { min-inline-size: 1406px; }
+.category-table :deep(.dtable thead th:last-child),
+.category-table :deep(.dtable tbody td:last-child) { position: sticky; z-index: 3; inset-inline-end: 0; background: var(--surface); box-shadow: -10px 0 18px -18px color-mix(in srgb, var(--text) 40%, transparent); }
+.category-table :deep(.dtable thead th:last-child) { z-index: 4; background: var(--surface-2); }
 .truncate { display: block; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .source-badges { display: flex; flex-wrap: wrap; gap: 4px; }
 .empty-action { margin-block-start: 12px; }
@@ -673,13 +864,18 @@ function sourceLabel(source: ExpenseSource) {
 
 @media (max-width: 768px) {
   .tb-search { max-width: none; flex-basis: 100%; }
+  .tb-filter { width: 100%; flex: 1 1 100%; }
   .form-grid { grid-template-columns: 1fr; }
   .span-2 { grid-column: span 1; }
   .source-grid,
   .policy-grid { grid-template-columns: 1fr; }
+  .category-cell--child { padding-inline-start: 0; }
+  .category-cell__title { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; }
+  .category-cell__title :deep(.badge) { grid-column: 2; justify-self: start; }
 }
 
 @media (max-width: 480px) {
+  .hierarchy-guide { align-items: flex-start; }
   .error-banner { align-items: flex-start; flex-direction: column; }
 }
 </style>

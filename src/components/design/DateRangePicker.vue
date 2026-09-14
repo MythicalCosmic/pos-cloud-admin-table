@@ -19,6 +19,7 @@ export interface DateRangeValue {
 interface Props {
   modelValue?: DateRangeValue
   value?: DateRangeValue
+  ariaLabel?: string
   align?: 'left' | 'right'
   size?: 'sm'
   placeholder?: string
@@ -513,6 +514,7 @@ function onModeKey(e: KeyboardEvent) {
       type="button"
       :class="cx('drp-trigger', hasValue && 'has-value', open && 'is-open')"
       aria-haspopup="dialog"
+      :aria-label="ariaLabel"
       :aria-expanded="open"
       :aria-controls="dialogId"
       @click="open = !open"

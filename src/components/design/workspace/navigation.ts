@@ -58,7 +58,7 @@ const pageIcons: Record<string, string> = {
   '/reports/product-performance': 'ws-analytics',
   '/analytics/product-statistics': 'bars',
   '/analytics/menu-engineering': 'ws-menu',
-  '/analytics/compare': 'share',
+  '/analytics/compare': 'exchange',
   '/forecast/tomorrow': 'trend',
   '/warehouse': 'ws-warehouse',
   '/stock/items': 'ws-catalog',

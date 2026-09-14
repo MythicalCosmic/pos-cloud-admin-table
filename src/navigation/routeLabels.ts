@@ -18,7 +18,7 @@ export const ROUTE_LABELS: Record<string, string> = {
   '/analytics/menu-engineering': 'Menu Engineering',
   '/analytics/product-statistics': 'Product sales analytics',
   '/reports/product-performance': 'report_title',
-  '/analytics/compare': 'Compare Periods',
+  '/analytics/compare': 'Product comparison',
   '/forecast/tomorrow': 'Demand Forecast',
   '/audit': 'Operational Audit',
   '/warehouse': 'Warehouse operations',

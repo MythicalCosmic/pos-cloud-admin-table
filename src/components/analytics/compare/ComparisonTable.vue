@@ -115,18 +115,77 @@ const cols: { key: SortKey; label: string; num?: boolean }[] = [
         </button>
       </div>
     </template>
-    <div class="ct__wrap">
+    <div class="ct-mobile">
+      <article
+        v-for="r in filtered"
+        :key="r.id"
+        class="ct-mobile__card"
+      >
+        <div class="ct-mobile__head">
+          <div>
+            <strong>{{ r.name }}</strong>
+            <span>{{ r.category }}</span>
+          </div>
+          <DeltaBadge
+            :delta-pct="r.delta_pct"
+            is-up-good
+            size="sm"
+          />
+        </div>
+        <dl class="ct-mobile__values">
+          <div>
+            <dt>A · {{ t('Current') }}</dt>
+            <dd>{{ fmtUZS(r.a_revenue) }} <small>UZS</small></dd>
+            <span>{{ fmtInt(r.a_qty) }} · {{ t('Items sold') }}</span>
+          </div>
+          <div>
+            <dt>B · {{ t('Baseline') }}</dt>
+            <dd>{{ fmtUZS(r.b_revenue) }} <small>UZS</small></dd>
+            <span>{{ fmtInt(r.b_qty) }} · {{ t('Items sold') }}</span>
+          </div>
+        </dl>
+        <div class="ct-mobile__foot">
+          <span>{{ t('Difference') }}</span>
+          <strong :class="r.delta > 0 ? 'up' : r.delta < 0 ? 'down' : ''">
+            {{ r.delta > 0 ? '+' : r.delta < 0 ? '−' : '' }}{{ fmtUZS(Math.abs(r.delta)) }} UZS
+          </strong>
+          <small>{{ r.share }}% · {{ t('Share of A') }}</small>
+        </div>
+      </article>
+      <div
+        v-if="!filtered.length"
+        class="ct__empty"
+      >
+        {{ t('No matching products') }}
+      </div>
+    </div>
+    <div
+      class="ct__wrap"
+      tabindex="0"
+      :aria-label="t('Product-level comparison')"
+    >
       <table class="ct">
+        <caption class="visually-hidden">
+          {{ t('Product-level comparison') }}
+        </caption>
         <thead>
           <tr>
             <th
               v-for="c in cols"
               :key="c.key"
-              class="sortable"
+              scope="col"
               :class="{ num: c.num, active: sortKey === c.key }"
-              @click="toggleSort(c.key)"
+              :aria-sort="sortKey === c.key ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'"
             >
-              {{ t(c.label) }} <span class="ct__sort">{{ sortIcon(c.key) }}</span>
+              <button
+                type="button"
+                @click="toggleSort(c.key)"
+              >
+                {{ t(c.label) }} <span
+                  class="ct__sort"
+                  aria-hidden="true"
+                >{{ sortIcon(c.key) }}</span>
+              </button>
             </th>
           </tr>
         </thead>
@@ -186,13 +245,16 @@ const cols: { key: SortKey; label: string; num?: boolean }[] = [
 
 <style scoped>
 .ct__actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; min-width: 0; }
+.ct-mobile { display: none; }
 .ct__search { height: 32px; border: 1px solid var(--border-strong, var(--border)); border-radius: var(--r-sm); background: var(--surface); color: var(--text); padding: 0 10px; font: inherit; font-size: 13px; min-width: 180px; }
 .ct__export { height: 32px; border: 1px solid var(--border-strong, var(--border)); border-radius: var(--r-sm); background: var(--surface); color: var(--text-secondary); font: inherit; font-size: 12px; font-weight: 500; padding: 0 12px; cursor: pointer; }
 .ct__export:hover { background: var(--surface-2); color: var(--text); }
 .ct__wrap { overflow-x: auto; max-width: 100%; max-height: 520px; overflow-y: auto; }
-.ct { width: 100%; border-collapse: collapse; font-size: 13px; }
+.ct { width: 100%; min-width: 920px; border-collapse: collapse; font-size: 13px; }
 .ct thead th { position: sticky; top: 0; z-index: 1; background: var(--surface); text-align: left; font-size: var(--fs-label); text-transform: uppercase; letter-spacing: var(--tracking-label); color: var(--text-tertiary); font-weight: 600; padding: 9px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; user-select: none; }
-.ct thead th.sortable { cursor: pointer; }
+.ct thead button { display: inline-flex; align-items: center; justify-content: inherit; gap: 4px; inline-size: 100%; border: 0; color: inherit; background: transparent; font: inherit; letter-spacing: inherit; text-transform: inherit; cursor: pointer; }
+.ct thead th.num button { justify-content: flex-end; }
+.ct thead button:focus-visible { border-radius: 4px; outline: 2px solid var(--primary); outline-offset: 3px; }
 .ct thead th.active { color: var(--text); }
 .ct thead th.num, .ct td.num { text-align: right; }
 .ct__sort { font-size: 9px; }
@@ -204,4 +266,30 @@ const cols: { key: SortKey; label: string; num?: boolean }[] = [
 .ct .up { color: var(--color-positive); }
 .ct .down { color: var(--color-negative); }
 .ct__empty { text-align: center; color: var(--text-tertiary); padding: 22px; }
+
+@media (max-width: 650px) {
+  .ct__actions { inline-size: 100%; }
+  .ct__actions :deep(.control) { flex: 1 1 180px; min-inline-size: 0; }
+  .ct__export { min-block-size: 42px; }
+  .ct__wrap { display: none; }
+  .ct-mobile { display: grid; gap: 10px; }
+  .ct-mobile__card { overflow: hidden; border: 1px solid var(--border); border-radius: 15px; background: var(--surface-2); }
+  .ct-mobile__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; padding: 13px; border-bottom: 1px solid var(--border); }
+  .ct-mobile__head > div { display: grid; min-inline-size: 0; gap: 3px; }
+  .ct-mobile__head strong { font-size: 13px; line-height: 1.35; overflow-wrap: anywhere; }
+  .ct-mobile__head span { color: var(--text-secondary); font-size: 10px; }
+  .ct-mobile__values { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0; }
+  .ct-mobile__values > div { display: grid; min-inline-size: 0; gap: 4px; padding: 13px; }
+  .ct-mobile__values > div + div { border-inline-start: 1px solid var(--border); }
+  .ct-mobile__values dt { color: var(--text-tertiary); font-size: 9px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+  .ct-mobile__values dd { margin: 0; font-family: var(--font-mono); font-size: 14px; font-variant-numeric: tabular-nums; font-weight: 650; overflow-wrap: anywhere; }
+  .ct-mobile__values dd small { color: var(--text-tertiary); font: 500 9px var(--font-sans); }
+  .ct-mobile__values span { color: var(--text-secondary); font-size: 10px; }
+  .ct-mobile__foot { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 3px 10px; padding: 11px 13px; border-top: 1px solid var(--border); background: var(--surface); }
+  .ct-mobile__foot > span { color: var(--text-tertiary); font-size: 10px; }
+  .ct-mobile__foot strong { font-family: var(--font-mono); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .ct-mobile__foot small { grid-column: 1 / -1; color: var(--text-secondary); font-size: 9px; }
+  .ct-mobile__foot .up { color: var(--color-positive); }
+  .ct-mobile__foot .down { color: var(--color-negative); }
+}
 </style>

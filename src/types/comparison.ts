@@ -1,6 +1,7 @@
 /* ============================================================
-   Compare Periods — types mirroring GET /api/admins/analytics/comparison/
-   (contract sent to Abrorbek via dev-bot). Money is integer so'm.
+   Compare Periods — types mirroring GET /api/admins/analytics/comparison.
+   See requirementsbackend.md for the pending backend contract.
+   Money is integer so'm.
    ============================================================ */
 
 export type Granularity = 'day' | 'week' | 'month'
@@ -28,7 +29,7 @@ export type KpiKey =
 
 export interface TimeseriesPoint {
   index: number // 1-based relative position, so A and B overlay on one axis
-  date: string  // real calendar date for this index
+  date: string // real calendar date for this index
   value: number
 }
 export interface RevenueTimeseries {
@@ -66,14 +67,14 @@ export interface MoverRow {
   delta_pct: number | null
 }
 
-export interface HourPoint { hour: number, value: number }
-export interface WeekdayPoint { weekday: number, value: number } // 0 = Mon
+export interface HourPoint { hour: number; value: number }
+export interface WeekdayPoint { weekday: number; value: number } // 0 = Mon
 
 export interface MixSlice {
   method?: string // payment_methods
-  type?: string   // order_types
+  type?: string // order_types
   value: number
-  share: number   // 0..100
+  share: number // 0..100
 }
 
 export interface BranchRow {
@@ -85,6 +86,14 @@ export interface BranchRow {
 }
 
 export interface ComparisonResponse {
+  selection?: {
+    scope: 'all_products' | 'product'
+    product_id?: number | string | null
+    product_name?: string | null
+    category_id?: number | string | null
+    category_name?: string | null
+  }
+  generated_at?: string
   period_a: RangeMeta
   period_b: RangeMeta
   kpis: Partial<Record<KpiKey, KpiCell>>
@@ -93,13 +102,14 @@ export interface ComparisonResponse {
   products: ProductRow[]
   top_gainers: MoverRow[]
   top_losers: MoverRow[]
-  by_hour: { a: HourPoint[], b: HourPoint[] }
-  by_weekday: { a: WeekdayPoint[], b: WeekdayPoint[] }
+  by_hour: { a: HourPoint[]; b: HourPoint[] }
+  by_weekday: { a: WeekdayPoint[]; b: WeekdayPoint[] }
+
   /** Optional hour×weekday matrices [7 weekdays (0=Mon)][24 hours] for the
    *  delta heatmap. Rendered only when present. */
-  hour_weekday?: { a: number[][], b: number[][] }
-  payment_methods: { a: MixSlice[], b: MixSlice[] }
-  order_types: { a: MixSlice[], b: MixSlice[] }
+  hour_weekday?: { a: number[][]; b: number[][] }
+  payment_methods: { a: MixSlice[]; b: MixSlice[] }
+  order_types: { a: MixSlice[]; b: MixSlice[] }
   by_branch?: BranchRow[]
   by_cashier?: BranchRow[]
 }
@@ -110,9 +120,10 @@ export interface ComparisonParams {
   b_start: string
   b_end: string
   granularity: Granularity
+  product_id?: number | string
   branch_id?: number | string
   tz?: string
 }
 
 /** Comparison mode: how Period B is derived from Period A. */
-export type CompareMode = 'previous_period' | 'same_period_last_year' | 'custom'
+export type CompareMode = 'previous_month' | 'previous_period' | 'same_period_last_year' | 'custom'

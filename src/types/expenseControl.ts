@@ -1,5 +1,12 @@
 export type ExpenseSource = 'DRAWER' | 'SAFE' | 'BANK'
 
+export type ExpenseCostBehavior =
+  | 'UNCLASSIFIED'
+  | 'FIXED'
+  | 'VARIABLE'
+  | 'MIXED'
+  | 'ONE_TIME'
+
 export type ExpenseStatus =
   | 'PENDING'
   | 'APPROVED'
@@ -27,10 +34,38 @@ export interface ExpenseCategory {
   requires_receipt: boolean
   requires_description: boolean
   expense_count: number
+  parent_id?: number | null
+  parent?: {
+    id: number
+    uuid?: string
+    code: string
+    name: string
+    is_active: boolean
+  } | null
+  depth?: 0 | 1
+  path?: string[]
+  cost_behavior?: ExpenseCostBehavior
+  direct_expense_count?: number
+  descendant_expense_count?: number
+  subtree_expense_count?: number
+  child_count?: number
+  active_child_count?: number
+  is_selectable?: boolean
   created_by?: ExpenseActor | null
   updated_by?: ExpenseActor | null
   created_at?: string
   updated_at?: string
+}
+
+export interface ExpenseCategorySnapshot {
+  id: number
+  code: string
+  name: string
+  parent?: { code?: string; name: string } | null
+  path?: string[]
+  cost_behavior?: ExpenseCostBehavior
+  reporting_group: string
+  is_active: boolean
 }
 
 export interface ExpenseTransition {
@@ -46,7 +81,7 @@ export interface ExpenseTransition {
 export interface ExpenseRecord {
   id: number
   uuid: string
-  category: Pick<ExpenseCategory, 'id' | 'code' | 'name' | 'reporting_group' | 'is_active'> | null
+  category: ExpenseCategorySnapshot | null
   category_id: number | null
   amount: string
   amount_uzs: number
@@ -108,6 +143,8 @@ export interface ExpenseCategoryPayload {
   allowed_sources: ExpenseSource[]
   requires_receipt: boolean
   requires_description: boolean
+  parent_id: number | null
+  cost_behavior: ExpenseCostBehavior
 }
 
 export interface ExpenseCreatePayload {
@@ -118,4 +155,35 @@ export interface ExpenseCreatePayload {
   description: string
   receipt_number: string
   notes: string
+}
+
+export interface ExpenseReclassificationPayload {
+  expense_ids: number[]
+  category_id: number
+  expected_category_id?: number
+  reason: string
+  dry_run: boolean
+}
+
+export interface ExpenseReclassificationBreakdown {
+  id?: number
+  category_id?: number
+  code?: string
+  name?: string
+  source_account?: ExpenseSource
+  count: number
+  amount_uzs: number
+  path?: string[]
+}
+
+export interface ExpenseReclassificationResult {
+  row_count: number
+  total_amount_uzs: number
+  current_category_breakdown?: ExpenseReclassificationBreakdown[]
+  source_breakdown?: ExpenseReclassificationBreakdown[]
+  target_category?: Partial<ExpenseCategorySnapshot> & { id?: number }
+  target_path?: string[]
+  target_cost_behavior?: ExpenseCostBehavior
+  target_reporting_group?: string
+  expenses?: ExpenseRecord[]
 }

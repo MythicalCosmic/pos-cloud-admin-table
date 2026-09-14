@@ -17,13 +17,6 @@ export default [
     subject: 'all',
   },
   {
-    title: 'Compare Periods',
-    icon: { icon: 'bx-git-compare' },
-    to: 'analytics-compare',
-    action: 'manage',
-    subject: 'all',
-  },
-  {
     title: 'report_title',
     icon: { icon: 'bx-receipt' },
     to: 'reports-product-performance',

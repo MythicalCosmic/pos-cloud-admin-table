@@ -1,13 +1,13 @@
 # Compare Periods — Analytics page design
 
-**Route:** `/analytics/compare` · **Status:** approved 2026-07-05 · build FE against mock, wire to BE when shipped, then merge to main.
+**Route:** `/analytics/compare` · **Status:** implemented 2026-09-14 · backend contract pending; see [`requirementsbackend.md`](../../requirementsbackend.md).
 
 ## Goal
-Period-over-period comparison. User picks **Period A** (primary) and **Period B** (baseline); page answers "what changed and by how much" with KPI scorecards, a dual revenue trend, category/product breakdown, top movers, hourly/weekday patterns, payment/order-type mix, a delta heatmap, and a detailed table.
+Product period-over-period comparison. The user selects the full catalog or one product, then picks **Period A** (primary) and **Period B** (baseline). The page answers "what changed and by how much" with KPI scorecards, a dual revenue trend, category/product breakdown, top movers, hourly/weekday patterns, payment/order-type mix, a delta heatmap, and a detailed evidence table.
 
 ## Reconciled decisions (vs the pasted spec)
 - **Charts: ECharts via `vue-echarts`** (user choice). Not the existing SVG primitives. All charts go through one themed `<EChart>` wrapper + `useEChartTheme()` that maps CSS tokens → an ECharts theme (Hanken Grotesk labels, JetBrains Mono `tabular-nums` figures, series colors from A/B tokens, deltas from positive/negative, grid/axis/tooltip from tokens; light+dark aware). No hardcoded colors.
-- **Backend:** owned by Abrorbek. Single endpoint `GET /api/admins/analytics/comparison/` (spec sent via dev-bot msg 71). FE builds against a realistic **mock fixture** (flag-gated) until it ships.
+- **Backend:** single endpoint `GET /api/admins/analytics/comparison`. The frontend uses deterministic, visibly labeled preview data only for an unavailable endpoint (501 or an endpoint-level 404). Authentication, permission, validation, product-not-found, and server failures retain their real error states.
 - **v1 scope:** control bar + presets, KPI scorecards, dual revenue trend, category/product breakdown (+ diverging-delta toggle), top movers, hourly, weekday, payment + order-type mix, **delta heatmap**, detailed table. **Deferred:** waterfall decomposition, AI auto-insight. `by_branch`/`by_cashier` render only if the payload carries them.
 
 ## New design tokens
@@ -22,7 +22,7 @@ Period-over-period comparison. User picks **Period A** (primary) and **Period B*
 - `useCurrency`: UZS space-separators (`12 345 000`), abbreviate (`12.3M` / `450K`), integer math only.
 
 ## Data flow
-`ComparePeriodsPage` holds `{ aRange, bRange, mode, granularity, branchId, avgMode }` → synced to URL query (shareable) → single fetch (mock or real) → typed `ComparisonResponse` → passed to blocks. Progressive per-block skeleton loading; per-block error + retry. Default view = **This month vs Last month**.
+`ComparePeriodsPage` holds `{ productId, aRange, bRange, mode, granularity, avgMode }` → applied explicitly → synced to a shareable URL query → single fetch (live or scoped preview) → typed `ComparisonResponse` → passed to blocks. Controls changed during a request remain unapplied, and duplicate submissions are guarded. Default view = **This month vs Last month**.
 
 ## Component tree
 ```

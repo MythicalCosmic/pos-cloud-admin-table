@@ -2,6 +2,7 @@ import { type Page, expect, test } from '@playwright/test'
 
 const expectedAdminNav = [
   '/',
+  '/analytics/compare',
   '/ai-assistant',
   '/shifts-analytics',
   '/users',
@@ -13,11 +14,12 @@ const expectedAdminNav = [
   '/discounts/secret-word',
   '/loyalty',
   '/cashbox/categories',
+  '/hr-expenses',
   '/money-control',
   '/treasury',
   '/analytics/product-statistics',
+  '/reports/product-performance',
   '/analytics/menu-engineering',
-  '/analytics/compare',
   '/forecast/tomorrow',
   '/warehouse',
   '/stock/items',
@@ -78,6 +80,9 @@ test.describe('selected admin navigation', () => {
 
     const sidebar = page.locator('#primary-navigation')
 
+    await expect(page.locator('#app')).not.toHaveAttribute('aria-busy', 'true')
+    await expect(sidebar.locator('a.nav-item').first()).toBeVisible()
+
     const hrefs = await sidebar.locator('a.nav-item').evaluateAll(links =>
       links.map(link => link.getAttribute('href')),
     )
@@ -131,6 +136,7 @@ test.describe('selected admin navigation', () => {
     await expect(sidebar).toHaveClass(/is-open/)
 
     await sidebar.locator('.sidebar-group__heading').filter({ hasText: 'Bildirishnomalar' }).click()
+
     const lastNotification = sidebar.locator('a[href="/notification-types"]')
 
     await lastNotification.scrollIntoViewIfNeeded()

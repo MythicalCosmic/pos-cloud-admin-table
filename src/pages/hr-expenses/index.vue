@@ -2,7 +2,15 @@
 import WorkspacePage from '@/components/design/workspace/WorkspacePage.vue'
 import WorkspaceToolbar from '@/components/design/workspace/WorkspaceToolbar.vue'
 import type { DataTableColumn } from '@/components/design/DataTable.vue'
-import type { ExpenseCategory, ExpenseRecord, ExpenseSource, ExpenseStatus, ExpenseTotals } from '@/types/expenseControl'
+import type {
+  ExpenseCategory,
+  ExpenseCostBehavior,
+  ExpenseReclassificationResult,
+  ExpenseRecord,
+  ExpenseSource,
+  ExpenseStatus,
+  ExpenseTotals,
+} from '@/types/expenseControl'
 import Badge from '@/components/design/Badge.vue'
 import Button from '@/components/design/Button.vue'
 import Card from '@/components/design/Card.vue'
@@ -16,6 +24,8 @@ import MoneyInput from '@/components/design/MoneyInput.vue'
 import Modal from '@/components/design/Modal.vue'
 import PageHeader from '@/components/design/PageHeader.vue'
 import Select from '@/components/design/Select.vue'
+import Switch from '@/components/design/Switch.vue'
+import Textarea from '@/components/design/Textarea.vue'
 import {
   approveExpense,
   cancelExpense,
@@ -24,10 +34,18 @@ import {
   listAllExpenseCategories,
   listExpenses,
   payExpense,
+  reclassifyExpenses,
   rejectExpense,
   voidExpense,
 } from '@/services/expenseControlApi'
 import { useUserAccess } from '@/composables/useUserAccess'
+import {
+  EXPENSE_COST_BEHAVIORS,
+  expenseCategoryAllowsSource,
+  expenseCategoryPath,
+  expenseCostBehavior,
+  isSelectableExpenseCategory,
+} from '@/utils/expenseCategories'
 
 const { t } = useI18n({ useScope: 'global' })
 const router = useRouter()
@@ -46,6 +64,10 @@ const canPay = computed(() => hasPermission('expense.request.pay'))
 const canVoid = computed(() => hasPermission('expense.request.void'))
 const canViewCategories = computed(() => hasPermission('expense.category.view'))
 
+const canReclassify = computed(() =>
+  hasPermission('expense.category.manage') && hasPermission('expense.request.approve'),
+)
+
 const items = ref<ExpenseRecord[]>([])
 const total = ref(0)
 const loading = ref(false)
@@ -57,9 +79,15 @@ const categories = ref<ExpenseCategory[]>([])
 
 const statusFilter = ref<ExpenseStatus | ''>('')
 const categoryFilter = ref('')
+const includeSubcategories = ref(false)
+const costBehaviorFilter = ref<ExpenseCostBehavior | ''>('')
+const reportingGroupFilter = ref('')
+const sourceFilter = ref<ExpenseSource | ''>('')
 const dateFrom = ref('')
 const dateTo = ref('')
 const search = ref('')
+const reviewMode = ref(false)
+const reviewSelection = ref<Set<string | number>>(new Set())
 let expenseRequestId = 0
 
 const EXPENSE_STATUSES: ExpenseStatus[] = [
@@ -78,17 +106,44 @@ const statusFilterOptions = computed(() => [
 
 const categoryFilterOptions = computed(() => [
   { value: '', label: t('expense_filter_all_categories') },
-  ...categories.value.map(category => ({ value: String(category.id), label: category.name })),
+  ...categories.value.map(category => ({ value: String(category.id), label: expenseCategoryPath(category) })),
 ])
 
 const availableRequestCategories = computed(() => categories.value.filter(category =>
-  category.is_active && category.allowed_sources.some(source => source === 'SAFE' || source === 'BANK'),
+  isSelectableExpenseCategory(category)
+  && (expenseCategoryAllowsSource(category, 'SAFE') || expenseCategoryAllowsSource(category, 'BANK')),
 ))
 
 const categoryFormOptions = computed(() => availableRequestCategories.value.map(category => ({
   value: String(category.id),
-  label: category.name,
+  label: `${expenseCategoryPath(category)} · ${t(`expense_cost_behavior_${expenseCostBehavior(category)}`)}`,
 })))
+
+const costBehaviorFilterOptions = computed(() => [
+  { value: '', label: t('expense_cost_behavior_all') },
+  ...EXPENSE_COST_BEHAVIORS.map(value => ({ value, label: t(`expense_cost_behavior_${value}`) })),
+])
+
+const reportingGroupFilterOptions = computed(() => [
+  { value: '', label: t('expense_reporting_group_all') },
+  ...[...new Set(categories.value.map(category => category.reporting_group).filter(Boolean))].map(value => ({
+    value,
+    label: t(`expense_reporting_group_${value}`),
+  })),
+])
+
+const sourceFilterOptions = computed(() => [
+  { value: '', label: t('expense_source_all') },
+  ...(['DRAWER', 'SAFE', 'BANK'] as ExpenseSource[]).map(value => ({
+    value,
+    label: t(`supplier_source_${value}`),
+  })),
+])
+
+const tableRows = computed(() => reviewMode.value
+  ? items.value.filter(row => row.status === 'PENDING')
+  : items.value,
+)
 
 const dialog = ref(false)
 const saving = ref(false)
@@ -109,7 +164,13 @@ const selectedCategory = computed(() =>
 )
 
 const availableSources = computed<Array<'SAFE' | 'BANK'>>(() => {
-  const allowed = selectedCategory.value?.allowed_sources ?? []
+  if (!selectedCategory.value)
+    return []
+
+  if (!Array.isArray(selectedCategory.value.allowed_sources))
+    return ['SAFE', 'BANK']
+
+  const allowed = selectedCategory.value.allowed_sources
 
   return (['SAFE', 'BANK'] as const).filter(source => allowed.includes(source))
 })
@@ -139,6 +200,25 @@ function apiError(error: any): string {
   return String(fieldErrors || body?.message || body?.detail || t('Error'))
 }
 
+function applyExpenseResult(requestId: number, result: Awaited<ReturnType<typeof listExpenses>>) {
+  if (requestId !== expenseRequestId)
+    return
+
+  items.value = result.expenses
+  total.value = Number(result.pagination.total ?? result.expenses.length)
+  totals.value = result.totals
+}
+
+function applyExpenseError(requestId: number, error: unknown) {
+  if (requestId !== expenseRequestId)
+    return
+
+  loadError.value = apiError(error)
+  items.value = []
+  total.value = 0
+  totals.value = { row_count: 0, amount_uzs: 0, by_status: {} }
+}
+
 async function load() {
   if (!canView.value)
     return
@@ -152,24 +232,19 @@ async function load() {
       per_page: itemsPerPage.value,
       status: statusFilter.value,
       category_id: categoryFilter.value ? Number(categoryFilter.value) : undefined,
+      include_subcategories: Boolean(categoryFilter.value && includeSubcategories.value) || undefined,
+      cost_behavior: costBehaviorFilter.value || undefined,
+      reporting_group: reportingGroupFilter.value || undefined,
+      source_account: sourceFilter.value || undefined,
       date_from: dateFrom.value || undefined,
       date_to: dateTo.value || undefined,
       search: search.value.trim() || undefined,
     })
 
-    if (requestId === expenseRequestId) {
-      items.value = result.expenses
-      total.value = Number(result.pagination.total ?? result.expenses.length)
-      totals.value = result.totals
-    }
+    applyExpenseResult(requestId, result)
   }
-  catch (error: any) {
-    if (requestId === expenseRequestId) {
-      loadError.value = apiError(error)
-      items.value = []
-      total.value = 0
-      totals.value = { row_count: 0, amount_uzs: 0, by_status: {} }
-    }
+  catch (error: unknown) {
+    applyExpenseError(requestId, error)
   }
   finally {
     if (requestId === expenseRequestId)
@@ -178,7 +253,7 @@ async function load() {
 }
 
 async function loadCategories() {
-  if (!canViewCategories.value)
+  if (!canViewCategories.value && !canCreate.value && !canReclassify.value)
     return
   try {
     categories.value = await listAllExpenseCategories()
@@ -190,8 +265,9 @@ async function loadCategories() {
 
 onMounted(() => Promise.all([load(), loadCategories()]))
 watch([page, itemsPerPage], load)
-watch([statusFilter, categoryFilter, dateFrom, dateTo], () => {
+watch([statusFilter, categoryFilter, includeSubcategories, costBehaviorFilter, reportingGroupFilter, sourceFilter, dateFrom, dateTo], () => {
   page.value = 1
+  reviewSelection.value = new Set()
   load()
 })
 
@@ -202,15 +278,15 @@ const debouncedSearch = useDebounceFn(() => {
 
 watch(search, debouncedSearch)
 
-const columns: DataTableColumn<ExpenseRecord>[] = [
+const columns = computed<DataTableColumn<ExpenseRecord>[]>(() => [
   { key: 'expense_date', label: t('Date'), width: 116 },
-  { key: 'category', label: t('Category') },
-  { key: 'description', label: t('Description') },
+  { key: 'category', label: t('Category'), width: 250, mobileFullWidth: true },
+  { key: 'description', label: t('Description'), width: 280, mobileFullWidth: true },
   { key: 'amount_uzs', label: t('Amount'), align: 'right', width: 150 },
   { key: 'requested_source', label: t('pay_field_source_account'), width: 130 },
-  { key: 'created_by', label: t('Filed by') },
+  { key: 'created_by', label: t('Filed by'), width: 170 },
   { key: 'status', label: t('Status'), width: 126 },
-]
+])
 
 const tablePagination = computed(() => ({
   page: page.value,
@@ -233,13 +309,24 @@ function statusAmount(status: ExpenseStatus) {
   return Number(totals.value.by_status?.[status]?.amount_uzs ?? 0)
 }
 
+function defaultRequestSource(category: ExpenseCategory | undefined): '' | 'SAFE' | 'BANK' {
+  if (!category)
+    return ''
+  if (expenseCategoryAllowsSource(category, 'SAFE'))
+    return 'SAFE'
+  if (expenseCategoryAllowsSource(category, 'BANK'))
+    return 'BANK'
+
+  return ''
+}
+
 function openCreate() {
   const first = availableRequestCategories.value[0]
 
   form.value = {
     category_id: first?.id ?? null,
     amount_uzs: 0,
-    requested_source: first?.allowed_sources.includes('SAFE') ? 'SAFE' : first?.allowed_sources.includes('BANK') ? 'BANK' : '',
+    requested_source: defaultRequestSource(first),
     description: '',
     expense_date: new Date().toISOString().slice(0, 10),
     receipt_number: '',
@@ -451,6 +538,202 @@ function actorName(actor: any) {
 function sourceLabel(source: ExpenseSource | null) {
   return source ? t(`supplier_source_${source}`) : '—'
 }
+
+function costBehaviorTone(value: ExpenseCostBehavior): 'neutral' | 'info' | 'primary' | 'warning' {
+  if (value === 'FIXED')
+    return 'info'
+  if (value === 'VARIABLE')
+    return 'primary'
+  if (value === 'MIXED' || value === 'ONE_TIME')
+    return 'warning'
+
+  return 'neutral'
+}
+
+const reviewRows = computed(() => tableRows.value.filter(row => reviewSelection.value.has(row.id)))
+
+async function startReview() {
+  reviewMode.value = true
+  reviewSelection.value = new Set()
+  page.value = 1
+  if (statusFilter.value !== 'PENDING')
+    statusFilter.value = 'PENDING'
+  else
+    await load()
+}
+
+function stopReview() {
+  reviewMode.value = false
+  reviewSelection.value = new Set()
+}
+
+function updateReviewSelection(value: Set<string | number>) {
+  if (reviewMode.value)
+    reviewSelection.value = value
+}
+
+function operationKey(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
+    return crypto.randomUUID()
+
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 11)}`
+}
+
+const reclassOpen = ref(false)
+const reclassTargetId = ref('')
+const reclassReason = ref('')
+const reclassPreview = shallowRef<ExpenseReclassificationResult | null>(null)
+const reclassPreviewing = ref(false)
+const reclassApplying = ref(false)
+const reclassError = ref('')
+const reclassNeedsReload = ref(false)
+const reclassReasonAttempted = ref(false)
+const applyIdempotencyKey = ref('')
+const reclassExpenseIds = ref<number[]>([])
+const reclassExpectedCategoryId = ref<number | undefined>()
+const reclassReasonField = ref<{ focus: () => void } | null>(null)
+
+const reclassTarget = computed(() => availableRequestCategories.value.find(category =>
+  String(category.id) === reclassTargetId.value,
+))
+
+const expectedCategoryId = computed(() => {
+  const ids = new Set(reviewRows.value
+    .map(row => row.category_id)
+    .filter((id): id is number => typeof id === 'number'))
+
+  return ids.size === 1 ? [...ids][0] : undefined
+})
+
+const reclassPreviewCount = computed(() => Number(
+  reclassPreview.value?.row_count ?? reviewRows.value.length,
+))
+
+const reclassPreviewTotal = computed(() => Number(
+  reclassPreview.value?.total_amount_uzs
+    ?? reviewRows.value.reduce((sum, row) => sum + Number(row.amount_uzs ?? 0), 0),
+))
+
+const reclassPreviewTargetPath = computed(() => {
+  const previewPath = reclassPreview.value?.target_path ?? reclassPreview.value?.target_category?.path
+
+  return previewPath?.filter(Boolean).join(' / ') || expenseCategoryPath(reclassTarget.value)
+})
+
+const reclassPreviewBehavior = computed(() =>
+  reclassPreview.value?.target_cost_behavior
+  ?? reclassPreview.value?.target_category?.cost_behavior
+  ?? expenseCostBehavior(reclassTarget.value),
+)
+
+const reclassPreviewReportingGroup = computed(() =>
+  reclassPreview.value?.target_reporting_group
+  ?? reclassPreview.value?.target_category?.reporting_group
+  ?? reclassTarget.value?.reporting_group
+  ?? '',
+)
+
+function closeReclassification() {
+  if (reclassPreviewing.value || reclassApplying.value)
+    return
+
+  reclassOpen.value = false
+  reclassPreview.value = null
+  reclassExpenseIds.value = []
+  reclassExpectedCategoryId.value = undefined
+}
+
+function openReclassification() {
+  if (!reviewRows.value.length)
+    return
+
+  reclassTargetId.value = ''
+  reclassReason.value = ''
+  reclassPreview.value = null
+  reclassError.value = ''
+  reclassNeedsReload.value = false
+  reclassReasonAttempted.value = false
+  applyIdempotencyKey.value = ''
+  reclassExpenseIds.value = reviewRows.value.map(row => row.id)
+  reclassExpectedCategoryId.value = expectedCategoryId.value
+  reclassOpen.value = true
+}
+
+function reclassificationPayload(dryRun: boolean) {
+  return {
+    expense_ids: [...reclassExpenseIds.value],
+    category_id: Number(reclassTargetId.value),
+    ...(reclassExpectedCategoryId.value ? { expected_category_id: reclassExpectedCategoryId.value } : {}),
+    reason: dryRun ? '' : reclassReason.value.trim(),
+    dry_run: dryRun,
+  }
+}
+
+function reclassificationStale(error: any): boolean {
+  const code = String(error?.response?.data?.code ?? '')
+
+  return error?.response?.status === 409
+    || code === 'EXPENSE_RECLASSIFICATION_NO_CHANGE'
+    || code.includes('EXPENSE_STATUS')
+    || code.includes('EXPECTED_CATEGORY')
+}
+
+async function previewReclassification() {
+  if (!reclassTarget.value || reclassPreviewing.value)
+    return
+
+  reclassPreviewing.value = true
+  reclassError.value = ''
+  reclassNeedsReload.value = false
+  try {
+    reclassPreview.value = await reclassifyExpenses(reclassificationPayload(true), operationKey())
+    applyIdempotencyKey.value = operationKey()
+    await nextTick()
+    reclassReasonField.value?.focus()
+  }
+  catch (error: any) {
+    reclassError.value = apiError(error)
+    reclassNeedsReload.value = reclassificationStale(error)
+  }
+  finally {
+    reclassPreviewing.value = false
+  }
+}
+
+async function applyReclassification() {
+  reclassReasonAttempted.value = true
+  if (!reclassPreview.value || !reclassReason.value.trim() || reclassApplying.value)
+    return
+
+  reclassApplying.value = true
+  reclassError.value = ''
+  reclassNeedsReload.value = false
+  try {
+    await reclassifyExpenses(reclassificationPayload(false), applyIdempotencyKey.value)
+    notify(t('expense_reclassify_success', { count: reclassPreviewCount.value }))
+    reclassOpen.value = false
+    reclassExpenseIds.value = []
+    reclassExpectedCategoryId.value = undefined
+    reviewSelection.value = new Set()
+    await load()
+  }
+  catch (error: any) {
+    reclassError.value = apiError(error)
+    reclassNeedsReload.value = reclassificationStale(error)
+  }
+  finally {
+    reclassApplying.value = false
+  }
+}
+
+async function reloadReclassification() {
+  reclassOpen.value = false
+  reclassPreview.value = null
+  reclassExpenseIds.value = []
+  reclassExpectedCategoryId.value = undefined
+  reviewSelection.value = new Set()
+  await load()
+}
 </script>
 
 <template>
@@ -460,6 +743,14 @@ function sourceLabel(source: ExpenseSource | null) {
       :subtitle="t('expense_subtitle')"
     >
       <template #actions>
+        <Button
+          v-if="canReclassify"
+          :variant="reviewMode ? 'primary' : 'ghost'"
+          :icon="reviewMode ? 'close' : 'check'"
+          @click="reviewMode ? stopReview() : startReview()"
+        >
+          {{ t(reviewMode ? 'expense_review_exit' : 'expense_review_categories') }}
+        </Button>
         <Button
           v-if="canViewCategories"
           variant="ghost"
@@ -501,6 +792,23 @@ function sourceLabel(source: ExpenseSource | null) {
     </Card>
 
     <template v-else>
+      <div
+        v-if="reviewMode"
+        class="review-banner"
+        role="status"
+      >
+        <div class="review-banner__icon">
+          <DesignIcon
+            name="check"
+            :size="20"
+          />
+        </div>
+        <div>
+          <strong>{{ t('expense_review_mode_title') }}</strong>
+          <p>{{ t('expense_review_mode_body') }}</p>
+        </div>
+      </div>
+
       <div class="kpi-grid">
         <Kpi :data="{ label: t('Pending'), value: statusAmount('PENDING'), icon: 'clock', tone: 'warning', money: true }" />
         <Kpi :data="{ label: t('Approved'), value: statusAmount('APPROVED'), icon: 'calendar', tone: 'info', money: true }" />
@@ -523,6 +831,7 @@ function sourceLabel(source: ExpenseSource | null) {
               icon="filter"
               :options="statusFilterOptions"
               :placeholder="t('expense_status_filter_all')"
+              :disabled="reviewMode"
             />
           </div>
           <div class="tb-filter tb-filter--wide">
@@ -531,6 +840,34 @@ function sourceLabel(source: ExpenseSource | null) {
               icon="folder"
               :options="categoryFilterOptions"
               :placeholder="t('expense_filter_all_categories')"
+            />
+          </div>
+          <label
+            v-if="categoryFilter"
+            class="subcategories-toggle"
+          >
+            <Switch v-model="includeSubcategories" />
+            <span>{{ t('expense_include_subcategories') }}</span>
+          </label>
+          <div class="tb-filter">
+            <Select
+              v-model="costBehaviorFilter"
+              :options="costBehaviorFilterOptions"
+              :aria-label="t('expense_cost_behavior')"
+            />
+          </div>
+          <div class="tb-filter tb-filter--wide">
+            <Select
+              v-model="reportingGroupFilter"
+              :options="reportingGroupFilterOptions"
+              :aria-label="t('expense_reporting_group')"
+            />
+          </div>
+          <div class="tb-filter">
+            <Select
+              v-model="sourceFilter"
+              :options="sourceFilterOptions"
+              :aria-label="t('pay_field_source_account')"
             />
           </div>
           <div class="tb-date">
@@ -577,24 +914,44 @@ function sourceLabel(source: ExpenseSource | null) {
         <div class="card__divider" />
 
         <DataTable
+          class="expense-table"
           :columns="columns"
-          :rows="items"
+          :rows="tableRows"
           row-key="id"
           :loading="loading"
+          :selectable="reviewMode"
+          :selection="reviewMode ? reviewSelection : undefined"
           :pagination="tablePagination"
           :empty-title="t('expense_empty_title')"
           :empty-sub="t('expense_empty_hint')"
+          @update:selection="updateReviewSelection"
         >
+          <template #bulk-actions>
+            <Button
+              v-if="reviewMode"
+              variant="primary"
+              size="sm"
+              icon="check"
+              @click="openReclassification"
+            >
+              {{ t('expense_review_selection') }}
+            </Button>
+          </template>
           <template #cell.expense_date="{ row }">
             {{ formatDate(row.expense_date) }}
           </template>
           <template #cell.category="{ row }">
             <div class="cell-stack">
-              <span class="cell-strong">{{ row.category?.name || '—' }}</span>
-              <span
-                v-if="row.category?.code"
-                class="cell-muted mono"
-              >{{ row.category.code }}</span>
+              <span class="cell-strong category-path">{{ expenseCategoryPath(row.category) || '—' }}</span>
+              <div
+                v-if="row.category"
+                class="category-meta"
+              >
+                <span class="cell-muted mono">{{ row.category.code }}</span>
+                <Badge :tone="costBehaviorTone(expenseCostBehavior(row.category))">
+                  {{ t(`expense_cost_behavior_${expenseCostBehavior(row.category)}`) }}
+                </Badge>
+              </div>
             </div>
           </template>
           <template #cell.description="{ row }">
@@ -707,6 +1064,15 @@ function sourceLabel(source: ExpenseSource | null) {
               :placeholder="t('expense_pick_category')"
               :error="!!formErrors.category_id"
             />
+            <div
+              v-if="selectedCategory"
+              class="category-context"
+            >
+              <Badge :tone="costBehaviorTone(expenseCostBehavior(selectedCategory))">
+                {{ t(`expense_cost_behavior_${expenseCostBehavior(selectedCategory)}`) }}
+              </Badge>
+              <span>{{ expenseCategoryPath(selectedCategory) }}</span>
+            </div>
           </Field>
           <Field
             :label="t('Amount')"
@@ -784,6 +1150,187 @@ function sourceLabel(source: ExpenseSource | null) {
           @click="save"
         >
           {{ t('expense_submit_request') }}
+        </Button>
+      </template>
+    </Modal>
+
+    <Modal
+      :open="reclassOpen"
+      :busy="reclassPreviewing || reclassApplying"
+      :title="t('expense_reclassify_title')"
+      :subtitle="t('expense_reclassify_subtitle')"
+      :width="720"
+      @close="closeReclassification"
+    >
+      <div
+        v-if="!reclassPreview"
+        class="reclass-steps"
+        aria-hidden="true"
+      >
+        <span class="is-active">1 · {{ t('expense_reclassify_choose') }}</span>
+        <span :class="{ 'is-active': !!reclassPreview }">2 · {{ t('expense_reclassify_review') }}</span>
+        <span>3 · {{ t('expense_reclassify_apply') }}</span>
+      </div>
+
+      <div
+        v-if="reclassError"
+        class="reclass-error"
+        role="alert"
+      >
+        <DesignIcon
+          name="alert"
+          :size="18"
+        />
+        <div>
+          <strong>{{ t(reclassNeedsReload ? 'expense_reclassify_needs_attention' : 'expense_reclassify_failed') }}</strong>
+          <p>{{ reclassError }}</p>
+        </div>
+        <Button
+          v-if="reclassNeedsReload"
+          variant="ghost"
+          size="sm"
+          icon="refresh"
+          @click="reloadReclassification"
+        >
+          {{ t('expense_reclassify_reload') }}
+        </Button>
+      </div>
+
+      <template v-if="!reclassPreview">
+        <div class="reclass-summary">
+          <div>
+            <span>{{ t('expense_selected_rows') }}</span>
+            <strong>{{ reviewRows.length }}</strong>
+          </div>
+          <div>
+            <span>{{ t('expense_selected_total') }}</span>
+            <strong class="mono">{{ formatCurrency(reviewRows.reduce((sum, row) => sum + Number(row.amount_uzs ?? 0), 0)) }}</strong>
+          </div>
+        </div>
+
+        <Field
+          :label="t('expense_reclassify_target')"
+          :hint="t('expense_reclassify_target_hint')"
+        >
+          <Select
+            v-model="reclassTargetId"
+            :options="categoryFormOptions"
+            :placeholder="t('expense_reclassify_choose_target')"
+            autofocus
+          />
+        </Field>
+
+        <div
+          v-if="reclassTarget"
+          class="target-card"
+        >
+          <div class="target-card__icon">
+            <DesignIcon
+              name="tag"
+              :size="20"
+            />
+          </div>
+          <div>
+            <strong>{{ expenseCategoryPath(reclassTarget) }}</strong>
+            <div class="category-meta">
+              <Badge :tone="costBehaviorTone(expenseCostBehavior(reclassTarget))">
+                {{ t(`expense_cost_behavior_${expenseCostBehavior(reclassTarget)}`) }}
+              </Badge>
+              <span>{{ t(`expense_reporting_group_${reclassTarget.reporting_group}`) }}</span>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <template v-else>
+        <div class="preview-hero">
+          <div>
+            <span>{{ t('expense_preview_rows') }}</span>
+            <strong>{{ reclassPreviewCount }}</strong>
+          </div>
+          <div>
+            <span>{{ t('expense_preview_total') }}</span>
+            <strong class="mono">{{ formatCurrency(reclassPreviewTotal) }}</strong>
+          </div>
+        </div>
+
+        <div class="preview-target">
+          <span>{{ t('expense_reclassify_new_category') }}</span>
+          <strong>{{ reclassPreviewTargetPath }}</strong>
+          <div class="category-meta">
+            <Badge :tone="costBehaviorTone(reclassPreviewBehavior)">
+              {{ t(`expense_cost_behavior_${reclassPreviewBehavior}`) }}
+            </Badge>
+            <span v-if="reclassPreviewReportingGroup">
+              {{ t(`expense_reporting_group_${reclassPreviewReportingGroup}`) }}
+            </span>
+          </div>
+        </div>
+
+        <div
+          v-if="reclassPreview.current_category_breakdown?.length || reclassPreview.source_breakdown?.length"
+          class="preview-breakdowns"
+        >
+          <div v-if="reclassPreview.current_category_breakdown?.length">
+            <h4>{{ t('expense_current_categories') }}</h4>
+            <div
+              v-for="entry in reclassPreview.current_category_breakdown"
+              :key="entry.category_id ?? entry.id ?? entry.code ?? entry.name"
+              class="breakdown-row"
+            >
+              <span>{{ entry.path?.join(' / ') || entry.name || entry.code }}</span>
+              <strong class="mono">{{ entry.count }} · {{ formatCurrency(entry.amount_uzs) }}</strong>
+            </div>
+          </div>
+          <div v-if="reclassPreview.source_breakdown?.length">
+            <h4>{{ t('expense_payment_sources') }}</h4>
+            <div
+              v-for="entry in reclassPreview.source_breakdown"
+              :key="entry.source_account ?? entry.code ?? entry.name"
+              class="breakdown-row"
+            >
+              <span>{{ sourceLabel(entry.source_account ?? null) }}</span>
+              <strong class="mono">{{ entry.count }} · {{ formatCurrency(entry.amount_uzs) }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <Field
+          class="reclass-reason"
+          :label="t('Reason')"
+          :hint="t('expense_reclassify_reason_hint')"
+          :error="reclassReasonAttempted && !reclassReason.trim() ? t('expense_reason_required') : ''"
+        >
+          <Textarea
+            ref="reclassReasonField"
+            v-model="reclassReason"
+            rows="2"
+            :placeholder="t('expense_reclassify_reason_placeholder')"
+            autofocus
+          />
+        </Field>
+      </template>
+
+      <template #footer>
+        <Button
+          v-if="!reclassPreview"
+          variant="primary"
+          icon="check"
+          :loading="reclassPreviewing"
+          :disabled="reclassPreviewing || !reclassTarget || !reviewRows.length"
+          @click="previewReclassification"
+        >
+          {{ t('expense_reclassify_preview_action') }}
+        </Button>
+        <Button
+          v-else
+          variant="primary"
+          icon="check"
+          :loading="reclassApplying"
+          :disabled="reclassApplying || !reclassReason.trim()"
+          @click="applyReclassification"
+        >
+          {{ t('expense_reclassify_confirm_action') }}
         </Button>
       </template>
     </Modal>
@@ -880,7 +1427,18 @@ function sourceLabel(source: ExpenseSource | null) {
       </div>
       <template v-else-if="details">
         <dl class="detail-grid">
-          <div><dt>{{ t('Category') }}</dt><dd>{{ details.category?.name || '—' }}</dd></div>
+          <div>
+            <dt>{{ t('Category') }}</dt><dd>
+              <span>{{ expenseCategoryPath(details.category) || '—' }}</span>
+              <Badge
+                v-if="details.category"
+                class="detail-behavior"
+                :tone="costBehaviorTone(expenseCostBehavior(details.category))"
+              >
+                {{ t(`expense_cost_behavior_${expenseCostBehavior(details.category)}`) }}
+              </Badge>
+            </dd>
+          </div>
           <div>
             <dt>{{ t('Amount') }}</dt><dd class="mono">
               {{ formatCurrency(details.amount_uzs) }}
@@ -949,6 +1507,20 @@ meta:
   margin-block-end: 16px;
 }
 
+.review-banner {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin-block-end: 16px;
+  padding: 14px 16px;
+  border: 1px solid color-mix(in srgb, var(--primary) 28%, var(--border));
+  border-radius: 14px;
+  background: linear-gradient(120deg, color-mix(in srgb, var(--primary) 10%, var(--surface)), var(--surface));
+}
+.review-banner__icon { display: grid; flex: 0 0 38px; width: 38px; height: 38px; place-items: center; border-radius: 11px; background: var(--primary); color: var(--on-primary, white); }
+.review-banner strong { display: block; color: var(--text); font-size: 14px; }
+.review-banner p { margin: 2px 0 0; color: var(--text-secondary); font-size: 13px; line-height: 1.45; }
+
 .toolbar--wrap {
   flex-wrap: wrap;
   gap: 12px;
@@ -958,6 +1530,7 @@ meta:
 .tb-filter { width: 190px; }
 .tb-filter--wide { width: 230px; }
 .tb-date { width: 165px; }
+.subcategories-toggle { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; color: var(--text-secondary); font-size: 12px; }
 
 .error-banner {
   display: flex;
@@ -973,6 +1546,14 @@ meta:
 }
 
 .cell-stack { display: flex; flex-direction: column; min-width: 0; gap: 2px; }
+.category-path { overflow-wrap: anywhere; }
+.expense-table :deep(.dtable) { min-inline-size: 1318px; }
+.expense-table :deep(.dtable thead th:last-child),
+.expense-table :deep(.dtable tbody td:last-child) { position: sticky; z-index: 3; inset-inline-end: 0; background: var(--surface); box-shadow: -10px 0 18px -18px color-mix(in srgb, var(--text) 40%, transparent); }
+.expense-table :deep(.dtable thead th:last-child) { z-index: 4; background: var(--surface-2); }
+.category-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; color: var(--text-secondary); font-size: 11px; }
+.category-context { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-block-start: 8px; color: var(--text-secondary); font-size: 12px; }
+.detail-behavior { margin-inline-start: 7px; }
 .truncate { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 300px; }
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .span-2 { grid-column: span 2; }
@@ -1011,6 +1592,38 @@ meta:
 .timeline__item { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; padding: 10px 0; border-block-start: 1px solid rgba(var(--v-theme-on-surface), .08); }
 .timeline__item p { grid-column: 2 / -1; margin: 0; overflow-wrap: anywhere; }
 
+.reclass-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-block-end: 18px; }
+.reclass-steps span { padding: 8px 10px; border-radius: 8px; background: var(--surface-2); color: var(--text-tertiary); font-size: 11px; font-weight: 650; text-align: center; }
+.reclass-steps span.is-active { background: var(--primary-weak); color: var(--primary); }
+.reclass-error { display: flex; align-items: flex-start; gap: 10px; margin-block-end: 14px; padding: 12px; border: 1px solid color-mix(in srgb, var(--color-negative) 35%, var(--border)); border-radius: 10px; background: color-mix(in srgb, var(--color-negative) 8%, var(--surface)); color: var(--color-negative); }
+.reclass-error > div { flex: 1; min-width: 0; }
+.reclass-error strong { display: block; font-size: 13px; }
+.reclass-error p { margin: 2px 0 0; overflow-wrap: anywhere; color: var(--text-secondary); font-size: 12px; }
+.reclass-summary,
+.preview-hero { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-block-end: 16px; }
+.preview-hero { margin-block-end: 12px; }
+.reclass-summary > div,
+.preview-hero > div { display: grid; gap: 5px; padding: 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-2); }
+.reclass-summary span,
+.preview-hero span,
+.preview-target > span { color: var(--text-tertiary); font-size: 11px; font-weight: 650; letter-spacing: .04em; text-transform: uppercase; }
+.reclass-summary strong,
+.preview-hero strong { color: var(--text); font-size: 20px; }
+.target-card { display: flex; align-items: center; gap: 12px; margin-block-start: 14px; padding: 14px; border: 1px solid var(--primary-border); border-radius: 12px; background: var(--primary-weak); }
+.target-card__icon { display: grid; flex: 0 0 38px; width: 38px; height: 38px; place-items: center; border-radius: 10px; background: var(--surface); color: var(--primary); }
+.target-card > div:last-child { min-width: 0; }
+.target-card strong { display: block; margin-block-end: 5px; overflow-wrap: anywhere; }
+.preview-target { display: grid; gap: 5px; margin-block-end: 12px; padding: 13px; border: 1px solid var(--primary-border); border-radius: 12px; background: var(--primary-weak); }
+.preview-target > strong { overflow-wrap: anywhere; font-size: 16px; }
+.preview-breakdowns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-block-end: 12px; }
+.preview-breakdowns > div { min-width: 0; padding: 10px; border: 1px solid var(--border); border-radius: 10px; }
+.preview-breakdowns h4 { margin: 0 0 8px; font-size: 12px; }
+.breakdown-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; padding: 5px 0; border-block-start: 1px solid var(--border-soft, var(--border)); font-size: 12px; }
+.breakdown-row span { min-width: 0; overflow-wrap: anywhere; }
+.breakdown-row strong { flex: 0 0 auto; font-size: 11px; }
+.reclass-reason :deep(.control--textarea) { min-height: 70px; padding-block: 8px; }
+.reclass-reason :deep(textarea) { min-height: 48px; }
+
 @media (max-width: 1024px) {
   .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
@@ -1025,10 +1638,17 @@ meta:
   .span-2 { grid-column: span 1; }
   .timeline__item { grid-template-columns: auto 1fr; }
   .timeline__item .cell-muted { grid-column: 2; }
+  .preview-breakdowns { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 480px) {
   .kpi-grid { grid-template-columns: 1fr; }
+  .review-banner { align-items: flex-start; }
+  .reclass-steps { grid-template-columns: 1fr; }
+  .reclass-summary { grid-template-columns: 1fr; }
+  .preview-hero { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .preview-hero > div { padding: 11px; }
+  .preview-hero strong { font-size: 18px; }
   .error-banner { align-items: flex-start; flex-direction: column; }
 }
 </style>

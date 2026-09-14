@@ -91,6 +91,7 @@ declare global {
   const onUpdated: typeof import('vue')['onUpdated']
   const onWatcherCleanup: typeof import('vue')['onWatcherCleanup']
   const pausableWatch: typeof import('@vueuse/core')['pausableWatch']
+  const previousMonth: typeof import('../../composables/useComparison')['previousMonth']
   const previousPeriod: typeof import('../../composables/useComparison')['previousPeriod']
   const provide: typeof import('vue')['provide']
   const reactify: typeof import('@vueuse/core')['reactify']
@@ -458,6 +459,7 @@ declare module 'vue' {
     readonly onUpdated: UnwrapRef<typeof import('vue')['onUpdated']>
     readonly onWatcherCleanup: UnwrapRef<typeof import('vue')['onWatcherCleanup']>
     readonly pausableWatch: UnwrapRef<typeof import('@vueuse/core')['pausableWatch']>
+    readonly previousMonth: UnwrapRef<typeof import('../../composables/useComparison')['previousMonth']>
     readonly previousPeriod: UnwrapRef<typeof import('../../composables/useComparison')['previousPeriod']>
     readonly provide: UnwrapRef<typeof import('vue')['provide']>
     readonly reactify: UnwrapRef<typeof import('@vueuse/core')['reactify']>

@@ -6,6 +6,7 @@ import Input from '@/components/design/Input.vue'
 import BrandMark from '@/components/design/BrandMark.vue'
 import DesignIcon from '@/components/design/DesignIcon.vue'
 import { routeLabelForPath } from '@/navigation/routeLabels'
+import { EXPENSE_REQUEST_PERMISSIONS } from '@/navigation/access'
 import { useNavCountsStore } from '@/stores/navCounts'
 import { useUserAccess } from '@/composables/useUserAccess'
 
@@ -83,6 +84,7 @@ function badgeFor(id: string): string | undefined {
 // Keep route identities and backend permissions independent of presentation.
 const NAV: NavEntry[] = [
   { type: 'item', id: 'dashboard', label: 'Dashboard', icon: 'dashboard', to: '/' },
+  { type: 'item', id: 'compare-periods', label: 'Product comparison', icon: 'exchange', to: '/analytics/compare' },
   { type: 'item', id: 'ai', label: 'AI Assistant', icon: 'ai', to: '/ai-assistant' },
   { type: 'item', id: 'shifts', label: 'Shifts', icon: 'clock', to: '/shifts-analytics' },
   { type: 'section', label: 'Management' },
@@ -96,13 +98,13 @@ const NAV: NavEntry[] = [
   { type: 'item', id: 'loyalty', label: 'Loyalty', icon: 'gift', to: '/loyalty' },
   { type: 'section', label: 'Finance' },
   { type: 'item', id: 'cash', label: 'Cashbox Expense Categories', icon: 'register', to: '/cashbox/categories' },
+  { type: 'item', id: 'hr-expenses', label: 'Expenses', icon: 'coins', to: '/hr-expenses', anyPermission: EXPENSE_REQUEST_PERMISSIONS },
   { type: 'item', id: 'money-control', label: 'Money Control', icon: 'wallet', to: '/money-control', anyPermission: ['money.control.view'] },
   { type: 'item', id: 'treasury', label: 'Treasury', icon: 'store', to: '/treasury', anyPermission: ['treasury.account.view'] },
   { type: 'section', label: 'Analytics' },
   { type: 'item', id: 'product-statistics', label: 'Product sales analytics', icon: 'trend', to: '/analytics/product-statistics' },
   { type: 'item', id: 'product-performance', label: 'report_title', icon: 'receipt', to: '/reports/product-performance', allowedRoles: ['ADMIN', 'MANAGER'] },
   { type: 'item', id: 'menu-engineering', label: 'Menu Engineering', icon: 'chart', to: '/analytics/menu-engineering' },
-  { type: 'item', id: 'compare-periods', label: 'Compare Periods', icon: 'share', to: '/analytics/compare' },
   { type: 'item', id: 'demand-forecast', label: 'Demand Forecast', icon: 'trend', to: '/forecast/tomorrow' },
   { type: 'section', label: 'Stock' },
   { type: 'item', id: 'warehouse', label: 'Warehouse operations', icon: 'package', to: '/warehouse', anyPermission: WAREHOUSE_WORKSPACE_PERMISSIONS },
@@ -169,6 +171,8 @@ const WAREHOUSE_NAV: NavEntry[] = [
     anyPermission: ['stock.level.view', 'stock.inventory_control.view'],
   },
   { type: 'item', id: 'stock-transfers', label: 'Transfers', icon: 'share', to: '/stock/transfers', anyPermission: ['stock.transfer.view'] },
+  { type: 'section', label: 'Finance' },
+  { type: 'item', id: 'hr-expenses', label: 'Expenses', icon: 'coins', to: '/hr-expenses', anyPermission: EXPENSE_REQUEST_PERMISSIONS },
 ]
 
 const visibleNav = computed<NavEntry[]>(() => {
@@ -193,7 +197,7 @@ const visibleNav = computed<NavEntry[]>(() => {
 interface NavGroup { label: string; items: NavItem[] }
 const search = ref('')
 const searchInput = ref<{ focus: () => void } | null>(null)
-const collapsedGroups = ref<string[]>(['Finance', 'Analytics', 'Stock', 'Settings', 'Notifications'])
+const collapsedGroups = ref<string[]>(['Stock', 'Settings', 'Notifications'])
 const compact = computed(() => !!props.collapsed && !isMobile.value)
 const sectionIcons: Record<string, string> = { Management: 'grid', Finance: 'wallet', Analytics: 'chart', Stock: 'package', Settings: 'gear', Notifications: 'bell' }
 

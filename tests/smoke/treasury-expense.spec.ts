@@ -50,12 +50,36 @@ async function mockTreasuryApi(page: Page): Promise<ExpenseMutation[]> {
 
     if (path.endsWith('/expense-categories') && method === 'GET') {
       const requestedPage = Number(new URL(request.url()).searchParams.get('page') || 1)
-      const supplies = { id: 17, name: 'Supplies', sort_order: 1, is_active: true, allowed_sources: ['SAFE', 'BANK'] }
+
+      const facilities = {
+        id: 16,
+        name: 'Facilities',
+        path: ['Facilities'],
+        cost_behavior: 'MIXED',
+        sort_order: 1,
+        is_active: true,
+        is_selectable: false,
+        allowed_sources: ['SAFE', 'BANK'],
+      }
+
+      const supplies = {
+        id: 17,
+        name: 'Supplies',
+        parent_id: 16,
+        path: ['Facilities', 'Supplies'],
+        cost_behavior: 'VARIABLE',
+        sort_order: 2,
+        is_active: true,
+        is_selectable: true,
+        allowed_sources: ['SAFE', 'BANK'],
+      }
 
       const repairs = {
         id: 18,
         name: 'Repairs',
-        sort_order: 2,
+        path: ['Repairs'],
+        cost_behavior: 'ONE_TIME',
+        sort_order: 3,
         is_active: true,
         allowed_sources: ['SAFE', 'BANK'],
         requires_receipt: true,
@@ -65,8 +89,8 @@ async function mockTreasuryApi(page: Page): Promise<ExpenseMutation[]> {
       await route.fulfill({
         json: {
           data: {
-            categories: requestedPage === 1 ? [supplies] : [repairs],
-            pagination: { page: requestedPage, per_page: 1, total: 2, total_pages: 2 },
+            categories: requestedPage === 1 ? [facilities, supplies] : [repairs],
+            pagination: { page: requestedPage, per_page: 2, total: 3, total_pages: 2 },
           },
         },
       })
@@ -115,6 +139,8 @@ test.describe('treasury expense workflow', () => {
     await expect(submit).toBeDisabled()
 
     await dialog.getByRole('combobox', { name: 'Category' }).click()
+    await expect(page.getByRole('option', { name: 'Facilities', exact: true })).toHaveCount(0)
+    await expect(page.getByRole('option', { name: /Facilities \/ Supplies.*Variable/ })).toBeVisible()
     await page.getByRole('option', { name: 'Supplies' }).click()
     await dialog.getByLabel('Description').fill('Cleaning materials')
     await submit.click()

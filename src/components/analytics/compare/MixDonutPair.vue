@@ -68,6 +68,7 @@ const rows = computed(() => {
           <EChart
             :option="optA"
             :height="150"
+            :aria-label="`${title} · ${labelA}`"
           />
           <span class="mix__cap">{{ labelA }}</span>
         </div>
@@ -75,6 +76,7 @@ const rows = computed(() => {
           <EChart
             :option="optB"
             :height="150"
+            :aria-label="`${title} · ${labelB}`"
           />
           <span class="mix__cap">{{ labelB }}</span>
         </div>

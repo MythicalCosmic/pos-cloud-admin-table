@@ -14,6 +14,7 @@ import TimeSeriesExplorer from '@/components/dashboard/TimeSeriesExplorer.vue'
 import OrderChannelChart, { type ChannelPoint } from '@/components/dashboard/OrderChannelChart.vue'
 import ReportState from '@/components/dashboard/ReportState.vue'
 import ReportSkeleton from '@/components/dashboard/ReportSkeleton.vue'
+import TodaySalesPulse from '@/components/dashboard/TodaySalesPulse.vue'
 import { fmtNum } from '@/components/design/utils/format'
 import { useApiError } from '@/composables/useApiError'
 import { useFormatters } from '@/composables/useFormatters'
@@ -758,6 +759,8 @@ onBeforeUnmount(() => { dashboardRequestId++ })
           </Card>
         </div>
       </section>
+
+      <TodaySalesPulse />
 
       <div
         class="overview-context"

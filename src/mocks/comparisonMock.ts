@@ -28,10 +28,52 @@ function iso(d: Date): string {
 }
 function dayList(start: string, end: string): string[] {
   const out: string[] = []
-  const s = parse(start)
-  const e = parse(end)
-  for (let d = new Date(s); d <= e; d.setDate(d.getDate() + 1)) out.push(iso(new Date(d)))
+  const endDate = parse(end)
+  let cursor = parse(start)
+
+  while (cursor <= endDate) {
+    out.push(iso(cursor))
+
+    const next = new Date(cursor)
+
+    next.setDate(next.getDate() + 1)
+    cursor = next
+  }
+
   return out
+}
+
+function aggregateSeries(points: TimeseriesPoint[], granularity: ComparisonParams['granularity']): TimeseriesPoint[] {
+  if (granularity === 'day')
+    return points
+
+  if (granularity === 'week') {
+    const buckets: TimeseriesPoint[] = []
+    for (let offset = 0; offset < points.length; offset += 7) {
+      const group = points.slice(offset, offset + 7)
+
+      buckets.push({
+        index: buckets.length + 1,
+        date: group[0]?.date ?? '',
+        value: group.reduce((total, point) => total + point.value, 0),
+      })
+    }
+
+    return buckets
+  }
+
+  const months = new Map<string, TimeseriesPoint[]>()
+  for (const point of points) {
+    const key = point.date.slice(0, 7)
+
+    months.set(key, [...(months.get(key) ?? []), point])
+  }
+
+  return [...months.values()].map((group, index) => ({
+    index: index + 1,
+    date: group[0]?.date ?? '',
+    value: group.reduce((total, point) => total + point.value, 0),
+  }))
 }
 
 function kpi(a: number, b: number, isUpGood: boolean): KpiCell {
@@ -40,15 +82,16 @@ function kpi(a: number, b: number, isUpGood: boolean): KpiCell {
 }
 
 const CATS = ['Lavashlar', 'Pitsalar', 'Non burgerlar', 'Hot doglar', 'Ichimliklar', 'Souslar', 'Choylar', 'Tovuq']
+
 const PROD_BY_CAT: Record<string, string[]> = {
-  Lavashlar: ['Lavash katta', 'Tandir lavash', 'Lavash kichik', 'Lavash tovuqli', 'Lavash combo'],
-  Pitsalar: ['Pitsa peperoni', 'Pitsa 4 pishloq', 'Pitsa go\'shtli', 'Pitsa margarita', 'Pitsa achchiq'],
+  'Lavashlar': ['Lavash katta', 'Tandir lavash', 'Lavash kichik', 'Lavash tovuqli', 'Lavash combo'],
+  'Pitsalar': ['Pitsa peperoni', 'Pitsa 4 pishloq', 'Pitsa go\'shtli', 'Pitsa margarita', 'Pitsa achchiq'],
   'Non burgerlar': ['Non burger standart', 'Non burger dubl', 'Non burger tovuq', 'Non burger cheese'],
   'Hot doglar': ['Hot Dog mini', 'Hot Dog Kanada', 'Hot Dog klassik', 'Hot Dog jumbo'],
-  Ichimliklar: ['Milliy cola 0.5', 'Milliy cola 1.5', 'Be Fresh 450', 'Suv 0.5', 'Fanta 1L'],
-  Souslar: ['Ketchup', 'Mayonez', 'Cheese sous', 'Achchiq sous'],
-  Choylar: ['Qora choy', 'Ko\'k choy', 'Limonli choy'],
-  Tovuq: ['Tovuq lavash', 'Qanotlar', 'Strips', 'Naggets'],
+  'Ichimliklar': ['Milliy cola 0.5', 'Milliy cola 1.5', 'Be Fresh 450', 'Suv 0.5', 'Fanta 1L'],
+  'Souslar': ['Ketchup', 'Mayonez', 'Cheese sous', 'Achchiq sous'],
+  'Choylar': ['Qora choy', 'Ko\'k choy', 'Limonli choy'],
+  'Tovuq': ['Tovuq lavash', 'Qanotlar', 'Strips', 'Naggets'],
 }
 
 export function getComparisonMock(params: ComparisonParams): ComparisonResponse {
@@ -64,6 +107,7 @@ export function getComparisonMock(params: ComparisonParams): ComparisonResponse 
       const noise = 0.75 + rng() * 0.5
       return { index: i + 1, date, value: Math.round(base * weekend * noise + amp * Math.sin(i / 3)) }
     })
+
   const aSeries = mkSeries(aDays, 12_000_000, 2_500_000)
   const bSeries = mkSeries(bDays, 10_800_000, 2_200_000)
   const aRev = aSeries.reduce((s, p) => s + p.value, 0)
@@ -96,9 +140,12 @@ export function getComparisonMock(params: ComparisonParams): ComparisonResponse 
     const ar = Math.round((aRev / CATS.length) * (0.6 + rng() * 0.9))
     const br = Math.round((bRev / CATS.length) * (0.6 + rng() * 0.9))
     return {
-      id: i + 1, name,
-      a_revenue: ar, b_revenue: br,
-      a_qty: Math.round(ar / 30_000), b_qty: Math.round(br / 30_000),
+      id: i + 1,
+      name,
+      a_revenue: ar,
+      b_revenue: br,
+      a_qty: Math.round(ar / 30_000),
+      b_qty: Math.round(br / 30_000),
       delta_pct: computeDelta(ar, br).deltaPct,
     }
   })
@@ -109,10 +156,16 @@ export function getComparisonMock(params: ComparisonParams): ComparisonResponse 
     for (const pname of PROD_BY_CAT[cat] ?? []) {
       const ar = Math.round((aRev / 42) * (0.4 + rng() * 1.4))
       const br = Math.round((bRev / 42) * (0.4 + rng() * 1.4))
+
       products.push({
-        id: products.length + 1, name: pname, category: cat,
-        a_qty: Math.round(ar / 28_000), b_qty: Math.round(br / 28_000),
-        a_revenue: ar, b_revenue: br, delta_pct: computeDelta(ar, br).deltaPct,
+        id: products.length + 1,
+        name: pname,
+        category: cat,
+        a_qty: Math.round(ar / 28_000),
+        b_qty: Math.round(br / 28_000),
+        a_revenue: ar,
+        b_revenue: br,
+        delta_pct: computeDelta(ar, br).deltaPct,
       })
     }
   }
@@ -120,8 +173,10 @@ export function getComparisonMock(params: ComparisonParams): ComparisonResponse 
 
   // ---- movers ----
   const withDelta = products.map(p => ({ name: p.name, a: p.a_revenue, b: p.b_revenue, ...computeDelta(p.a_revenue, p.b_revenue) }))
+
   const gainers = [...withDelta].sort((x, y) => y.delta - x.delta).slice(0, 6)
     .map<MoverRow>(m => ({ name: m.name, a: m.a, b: m.b, delta: m.delta, delta_pct: m.deltaPct }))
+
   const losers = [...withDelta].sort((x, y) => x.delta - y.delta).slice(0, 6)
     .map<MoverRow>(m => ({ name: m.name, a: m.a, b: m.b, delta: m.delta, delta_pct: m.deltaPct }))
 
@@ -130,15 +185,18 @@ export function getComparisonMock(params: ComparisonParams): ComparisonResponse 
     a: Array.from({ length: 24 }, (_, h) => ({ hour: h, value: hourShape(h, aOrders, rng, 13) })),
     b: Array.from({ length: 24 }, (_, h) => ({ hour: h, value: hourShape(h, bOrders, rng, 12) })),
   }
+
   const by_weekday = {
     a: Array.from({ length: 7 }, (_, w) => ({ weekday: w, value: Math.round(aRev / 7 * (0.7 + rng() * 0.7)) })),
     b: Array.from({ length: 7 }, (_, w) => ({ weekday: w, value: Math.round(bRev / 7 * (0.7 + rng() * 0.7)) })),
   }
+
   const mkMatrix = (dailyOrders: number, peak: number) =>
-    Array.from({ length: 7 }, (_, w) => Array.from({ length: 24 }, (_, h) => {
+    Array.from({ length: 7 }, (_weekday, w) => Array.from({ length: 24 }, (_hour, h) => {
       const weekend = (w === 4 || w === 5) ? 1.3 : 1
       return Math.round(hourShape(h, dailyOrders, rng, peak) * weekend)
     }))
+
   const hour_weekday = { a: mkMatrix(aOrders, 13), b: mkMatrix(bOrders, 12) }
 
   // ---- mixes ----
@@ -146,6 +204,7 @@ export function getComparisonMock(params: ComparisonParams): ComparisonResponse 
     const methods = ['cash', 'card', 'digital']
     return methods.map((method, i) => ({ method, value: Math.round(total * split[i]), share: Math.round(split[i] * 1000) / 10 }))
   }
+
   const otMix = (total: number, split: number[]): MixSlice[] => {
     const types = ['dine_in', 'takeaway', 'delivery']
     return types.map((type, i) => ({ type, value: Math.round(total * split[i]), share: Math.round(split[i] * 1000) / 10 }))
@@ -157,7 +216,11 @@ export function getComparisonMock(params: ComparisonParams): ComparisonResponse 
     period_a: { start: params.a_start, end: params.a_end, days: aDays.length },
     period_b: { start: params.b_start, end: params.b_end, days: bDays.length },
     kpis,
-    revenue_timeseries: { granularity: params.granularity, a: aSeries, b: bSeries },
+    revenue_timeseries: {
+      granularity: params.granularity,
+      a: aggregateSeries(aSeries, params.granularity),
+      b: aggregateSeries(bSeries, params.granularity),
+    },
     categories,
     products: products.slice(0, 40),
     top_gainers: gainers,
@@ -178,7 +241,8 @@ export function getComparisonMock(params: ComparisonParams): ComparisonResponse 
 function hourShape(h: number, dailyOrders: number, rng: () => number, peak: number): number {
   // Restaurant curve: closed early morning, lunch + dinner humps.
   const open = h >= 9 && h <= 23
-  if (!open) return 0
+  if (!open)
+    return 0
   const lunch = Math.exp(-((h - 13) ** 2) / 6)
   const dinner = Math.exp(-((h - peak + 6) ** 2) / 8)
   const base = (lunch + dinner) * (dailyOrders / 30)

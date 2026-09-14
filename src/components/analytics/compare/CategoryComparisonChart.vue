@@ -1,24 +1,39 @@
 <script setup lang="ts">
-/* Category revenue A vs B. Two views:
-   - Grouped: horizontal bars, A and B side by side per category.
-   - Delta: a single diverging bar of Δ% (gainers right/green, losers left/red). */
-import ChartCard from '@/components/design/ChartCard.vue'
+import type { EChartsOption } from 'echarts'
 import EChart from './EChart.vue'
+import ChartCard from '@/components/design/ChartCard.vue'
 import { useEChartTheme } from '@/composables/useEChartTheme'
 import { abbrUZS, fmtUZS } from '@/composables/useCurrency'
-import type { EChartsOption } from 'echarts'
 import type { CategoryRow } from '@/types/comparison'
 
+/* Category revenue A vs B, as grouped revenue or a diverging delta view. */
+interface Props { categories: CategoryRow[]; labelA: string; labelB: string }
+
+const props = defineProps<Props>()
 const { t } = useI18n({ useScope: 'global' })
 const { tokens, axisLabel, axisLine, splitLine, tooltip, legend } = useEChartTheme()
-
-interface Props { categories: CategoryRow[], labelA: string, labelB: string }
-const props = defineProps<Props>()
-
 const view = ref<'grouped' | 'delta'>('grouped')
 
 const sorted = computed(() => [...props.categories].sort((a, b) => a.a_revenue - b.a_revenue))
 const names = computed(() => sorted.value.map(c => c.name))
+
+function formatChange(value: number | null | undefined): string {
+  if (value === null)
+    return t('New')
+
+  if (value === undefined)
+    return '—'
+
+  const sign = value >= 0 ? '+' : '−'
+
+  return `${sign}${Math.abs(Math.round(value * 10) / 10)}%`
+}
+
+function deltaTooltip(params: any): string {
+  const category = sorted.value[params[0]?.dataIndex ?? 0]
+
+  return `<b>${category?.name}</b><br/>${t('Change')}: ${formatChange(category?.delta_pct)}`
+}
 
 const option = computed<EChartsOption>(() => {
   const base = {
@@ -31,20 +46,18 @@ const option = computed<EChartsOption>(() => {
       axisTick: { show: false },
     },
   }
+
   if (view.value === 'delta') {
     const data = sorted.value.map(c => ({
       value: c.delta_pct ?? 0,
       itemStyle: { color: (c.delta_pct ?? 0) >= 0 ? tokens.value.positive : tokens.value.negative },
     }))
+
     return {
       ...base,
       tooltip: tooltip({
         trigger: 'axis',
-        formatter: (p: any) => {
-          const c = sorted.value[p[0]?.dataIndex ?? 0]
-          const pct = c?.delta_pct
-          return `<b>${c?.name}</b><br/>${t('Change')}: ${pct === null ? t('New') : `${pct! >= 0 ? '+' : '−'}${Math.abs(Math.round(pct! * 10) / 10)}%`}`
-        },
+        formatter: deltaTooltip,
       }),
       xAxis: {
         type: 'value',
@@ -84,11 +97,29 @@ const height = computed(() => Math.max(240, names.value.length * 38 + 40))
   >
     <template #actions>
       <div class="seg">
-        <button type="button" class="seg__btn" :class="{ 'is-active': view === 'grouped' }" @click="view = 'grouped'">{{ t('Side by side') }}</button>
-        <button type="button" class="seg__btn" :class="{ 'is-active': view === 'delta' }" @click="view = 'delta'">{{ t('Change') }}</button>
+        <button
+          type="button"
+          class="seg__btn"
+          :class="{ 'is-active': view === 'grouped' }"
+          @click="view = 'grouped'"
+        >
+          {{ t('Side by side') }}
+        </button>
+        <button
+          type="button"
+          class="seg__btn"
+          :class="{ 'is-active': view === 'delta' }"
+          @click="view = 'delta'"
+        >
+          {{ t('Change') }}
+        </button>
       </div>
     </template>
-    <EChart :option="option" :height="height" />
+    <EChart
+      :option="option"
+      :height="height"
+      :aria-label="t('Revenue by category')"
+    />
   </ChartCard>
 </template>
 

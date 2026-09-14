@@ -17,6 +17,12 @@ import StateFill from '@/components/design/StateFill.vue'
 import { useUserAccess } from '@/composables/useUserAccess'
 import { listAllExpenseCategories } from '@/services/expenseControlApi'
 import type { ExpenseCategory } from '@/types/expenseControl'
+import {
+  expenseCategoryAllowsSource,
+  expenseCategoryPath,
+  expenseCostBehavior,
+  isSelectableExpenseCategory,
+} from '@/utils/expenseCategories'
 
 const { t, te } = useI18n({ useScope: 'global' })
 const { snackbar, snackbarMsg, snackbarColor, notify } = useNotify()
@@ -381,20 +387,15 @@ const expenseCategoriesError = ref('')
 let expenseCategoriesRequestId = 0
 
 const availableExpenseCategories = computed(() => expenseCategories.value.filter(category => {
-  if (category.is_active === false)
+  if (!isSelectableExpenseCategory(category))
     return false
 
-  if (!Array.isArray(category.allowed_sources))
-    return true
-
-  return category.allowed_sources
-    .map(source => String(source).toUpperCase())
-    .includes(expenseForm.value.account)
+  return expenseCategoryAllowsSource(category, expenseForm.value.account as 'SAFE' | 'BANK')
 }))
 
 const expenseCategoryOptions = computed(() => availableExpenseCategories.value.map(category => ({
   value: String(category.id),
-  label: category.name,
+  label: `${expenseCategoryPath(category)} · ${t(`expense_cost_behavior_${expenseCostBehavior(category)}`)}`,
 })))
 
 const selectedExpenseCategory = computed(() => availableExpenseCategories.value.find(category =>
@@ -579,6 +580,21 @@ function deltaDisplay(t_: any) {
   const colorClass = v >= 0 ? 'text-success-strong' : 'text-error-strong'
 
   return { text: `${sign}${formatCurrency(Math.abs(v))}`, colorClass }
+}
+
+function treasuryCategorySnapshot(row: any) {
+  const category = row.category_snapshot ?? row.expense?.category ?? row.category
+
+  if (!category || typeof category !== 'object')
+    return null
+
+  return category
+}
+
+function treasuryCategoryLabel(row: any): string {
+  const category = treasuryCategorySnapshot(row)
+
+  return category ? expenseCategoryPath(category) : String(row.category || '')
 }
 </script>
 
@@ -894,7 +910,17 @@ function deltaDisplay(t_: any) {
         </template>
 
         <template #cell.category="{ row }">
-          <span :class="row.category ? '' : 'cell-muted'">{{ row.category || t('em_dash') }}</span>
+          <div class="treasury-category-cell">
+            <span :class="treasuryCategoryLabel(row) ? '' : 'cell-muted'">
+              {{ treasuryCategoryLabel(row) || t('em_dash') }}
+            </span>
+            <Badge
+              v-if="treasuryCategorySnapshot(row)"
+              tone="neutral"
+            >
+              {{ t(`expense_cost_behavior_${expenseCostBehavior(treasuryCategorySnapshot(row))}`) }}
+            </Badge>
+          </div>
         </template>
 
         <template #cell.description="{ row }">
@@ -1050,6 +1076,15 @@ function deltaDisplay(t_: any) {
               :placeholder="expenseCategoriesLoading ? t('Loading') : t('Select category')"
               :disabled="expenseCategoriesLoading || !expenseCategoryOptions.length"
             />
+            <div
+              v-if="selectedExpenseCategory"
+              class="treasury-category-context"
+            >
+              <Badge tone="neutral">
+                {{ t(`expense_cost_behavior_${expenseCostBehavior(selectedExpenseCategory)}`) }}
+              </Badge>
+              <span>{{ expenseCategoryPath(selectedExpenseCategory) }}</span>
+            </div>
           </Field>
         </div>
         <div style="grid-column: span 2;">
@@ -1166,6 +1201,10 @@ function deltaDisplay(t_: any) {
   text-decoration: none;
 }
 .treasury-ref-link:hover { text-decoration: underline; }
+
+.treasury-category-cell { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
+.treasury-category-cell > span { min-width: 0; overflow-wrap: anywhere; }
+.treasury-category-context { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; margin-block-start: 8px; color: var(--text-secondary); font-size: 12px; }
 
 .text-success-strong { color: rgb(var(--v-theme-success-strong)); }
 .text-error-strong { color: rgb(var(--v-theme-error-strong)); }

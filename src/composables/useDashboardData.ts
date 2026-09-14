@@ -52,7 +52,11 @@ export interface DashTodayPayload {
     cancelled?: number
     open?: number
     units_sold?: number
-    peak_hour?: number | null
+    peak_hour?: number | string | {
+      hour?: number | string | null
+      orders?: number | string | null
+      revenue?: number | string | null
+    } | null
     avg_prep_seconds?: number | null
     money_entered?: string | number
   }
@@ -67,6 +71,7 @@ export interface DashTodayPayload {
     product_id?: number
     product_name?: string
     quantity?: number
+    qty_sold?: number
     revenue?: string | number
   }>
   low_stock_count?: number | null

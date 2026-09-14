@@ -59,6 +59,14 @@ export default [
     subject: 'all',
   },
   {
+    title: 'Expenses',
+    icon: { icon: 'bx-wallet' },
+    to: 'hr-expenses',
+    action: 'manage',
+    subject: 'all',
+    anyPermission: ['expense.request.view_all', 'expense.request.view_own', 'expense.request.create'],
+  },
+  {
     title: 'Money Control',
     icon: { icon: 'bx-wallet' },
     to: 'money-control',
