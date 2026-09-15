@@ -481,6 +481,7 @@ test.describe('Money Control', () => {
 
     await expect(page.getByRole('heading', { name: 'Money Control' })).toBeVisible()
     await expect(page.locator('.money-control-filters')).toBeVisible()
+    await page.locator('.money-control-filters').getByRole('button', { name: 'Search & filters', exact: true }).click()
     await expect(page.locator('.money-control-filters').getByRole('button', { name: 'From', exact: true })).toBeVisible()
     await expect(page.locator('.money-control-summary')).toBeVisible()
     await expect(page.getByText('Safe balance', { exact: true })).toBeVisible()

@@ -30,11 +30,13 @@ test('sidebar search exposes grouped destinations and restores the current route
   await expect(search).toHaveValue('')
   await expect(sidebar.locator('a[aria-current="page"]')).toBeVisible()
   const finance = sidebar.getByRole('button', { name: 'Finance', exact: true })
-  await expect(finance).toHaveAttribute('aria-expanded', 'false')
-  await finance.click()
+  await expect(finance).toHaveAttribute('aria-expanded', 'true')
   await expect(sidebar.locator('a[href="/treasury"]')).toBeVisible()
+  await finance.click()
+  await expect(finance).toHaveAttribute('aria-expanded', 'false')
+  await expect(sidebar.locator('a[href="/treasury"]')).toBeHidden()
   await page.reload()
-  await expect(sidebar.getByRole('button', { name: 'Finance', exact: true })).toHaveAttribute('aria-expanded', 'true')
+  await expect(sidebar.getByRole('button', { name: 'Finance', exact: true })).toHaveAttribute('aria-expanded', 'false')
 })
 
 test('compact navigation keeps accessible labels and expands correctly on mobile', async ({ page }) => {
