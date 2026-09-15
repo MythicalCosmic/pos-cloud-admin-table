@@ -11,6 +11,21 @@ interface Option {
   label: string
   keywords?: string
   disabled?: boolean
+
+  /** Visual nesting level for grouped option lists. */
+  depth?: number
+
+  /** Secondary line shown under the label. */
+  description?: string
+
+  /** Muted trailing value, such as a record count. */
+  meta?: string
+
+  /** Renders the option as a group heading. Combine with `disabled` for non-selectable groups. */
+  group?: boolean
+
+  /** Trigger text while this option is selected. Defaults to `label`. */
+  selectedLabel?: string
 }
 
 interface Props {
@@ -64,6 +79,10 @@ const filtered = computed(() => {
   return props.options.filter(option => `${option.label} ${option.keywords ?? ''}`.toLocaleLowerCase().includes(needle))
 })
 
+function firstEnabledIndex(): number {
+  return Math.max(0, filtered.value.findIndex(option => !option.disabled))
+}
+
 function recalcMenu() {
   if (!root.value)
     return
@@ -87,7 +106,10 @@ async function show() {
   if (props.disabled)
     return
   query.value = ''
-  activeIndex.value = Math.max(0, props.options.findIndex(option => String(option.value) === String(props.modelValue)))
+
+  const selectedIndex = props.options.findIndex(option => String(option.value) === String(props.modelValue))
+
+  activeIndex.value = selectedIndex >= 0 ? selectedIndex : firstEnabledIndex()
   recalcMenu()
   open.value = true
   await nextTick()
@@ -139,6 +161,19 @@ function scrollActiveIntoView() {
     ?.scrollIntoView({ block: 'nearest' })
 }
 
+function moveActive(delta: 1 | -1) {
+  const options = filtered.value
+  const length = options.length
+
+  for (let step = 1; step <= length; step++) {
+    const index = (activeIndex.value + delta * step + length * step) % length
+    if (!options[index].disabled) {
+      activeIndex.value = index
+      break
+    }
+  }
+}
+
 function onTriggerKey(event: KeyboardEvent) {
   if (['Enter', ' ', 'ArrowDown'].includes(event.key)) {
     event.preventDefault()
@@ -165,13 +200,9 @@ function onSearchKey(event: KeyboardEvent) {
   }
   if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
     event.preventDefault()
-
-    const length = filtered.value.length
-    if (!length)
+    if (!filtered.value.length)
       return
-    const delta = event.key === 'ArrowDown' ? 1 : -1
-
-    activeIndex.value = (activeIndex.value + delta + length) % length
+    moveActive(event.key === 'ArrowDown' ? 1 : -1)
     nextTick(scrollActiveIntoView)
     return
   }
@@ -185,7 +216,7 @@ function onSearchKey(event: KeyboardEvent) {
 }
 
 watch(query, () => {
-  activeIndex.value = 0
+  activeIndex.value = firstEnabledIndex()
   nextTick(scrollActiveIntoView)
 })
 onClickOutside(root, () => hide(), { ignore: [menu] })
@@ -233,7 +264,7 @@ onBeforeUnmount(() => {
       class="search-select__label"
       :class="{ 'is-placeholder': !selected }"
     >
-      {{ selected?.label ?? placeholder ?? '' }}
+      {{ selected?.selectedLabel ?? selected?.label ?? placeholder ?? '' }}
     </span>
     <DesignIcon
       name="search"
@@ -291,13 +322,29 @@ onBeforeUnmount(() => {
             :disabled="option.disabled"
             type="button"
             class="search-select__option"
-            :class="{ 'is-active': String(option.value) === String(modelValue), 'is-focused': index === activeIndex }"
+            :class="{
+              'is-active': String(option.value) === String(modelValue),
+              'is-focused': index === activeIndex,
+              'is-group': option.group,
+              'is-nested': (option.depth ?? 0) > 0,
+            }"
+            :style="option.depth ? { paddingInlineStart: `${12 + option.depth * 22}px` } : undefined"
             role="option"
             :aria-selected="String(option.value) === String(modelValue)"
             @mouseenter="activeIndex = index"
             @click="choose(option)"
           >
-            <span>{{ option.label }}</span>
+            <span class="search-select__text">
+              <span>{{ option.label }}</span>
+              <small
+                v-if="option.description"
+                class="search-select__description"
+              >{{ option.description }}</small>
+            </span>
+            <span
+              v-if="option.meta"
+              class="search-select__meta"
+            >{{ option.meta }}</span>
             <DesignIcon
               v-if="String(option.value) === String(modelValue)"
               name="check"
@@ -371,6 +418,7 @@ onBeforeUnmount(() => {
 }
 
 .search-select__option {
+  position: relative;
   display: flex;
   width: 100%;
   align-items: center;
@@ -389,5 +437,11 @@ onBeforeUnmount(() => {
 .search-select__option.is-focused { background: rgb(var(--v-theme-surface-inset)); }
 .search-select__option.is-active { color: rgb(var(--v-theme-primary)); font-weight: 600; }
 .search-select__option.is-clear { color: rgb(var(--v-theme-text-secondary)); }
+.search-select__option.is-group { margin-block-start: 2px; font-weight: 650; }
+.search-select__option.is-group:disabled { color: rgb(var(--v-theme-text-secondary)); cursor: default; }
+.search-select__option.is-nested::before { position: absolute; width: 1px; background: rgb(var(--v-theme-border)); content: ''; inset-block: 4px; inset-inline-start: 20px; }
+.search-select__text { display: grid; flex: 1; min-width: 0; gap: 1px; overflow-wrap: anywhere; }
+.search-select__description { color: rgb(var(--v-theme-text-tertiary)); font-size: 11px; font-weight: 500; line-height: 1.35; }
+.search-select__meta { flex: 0 0 auto; color: rgb(var(--v-theme-text-tertiary)); font-family: var(--font-mono); font-size: 11px; font-variant-numeric: tabular-nums; font-weight: 500; }
 .search-select__empty { padding: 20px 10px; text-align: center; color: rgb(var(--v-theme-text-secondary)); font-size: 13px; }
 </style>

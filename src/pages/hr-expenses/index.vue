@@ -19,14 +19,19 @@ import DesignIcon from '@/components/design/DesignIcon.vue'
 import Field from '@/components/design/Field.vue'
 import IconAction from '@/components/design/IconAction.vue'
 import Input from '@/components/design/Input.vue'
+import DateRangePicker from '@/components/design/DateRangePicker.vue'
+import type { DateRangeValue } from '@/components/design/DateRangePicker.vue'
 import Kpi from '@/components/design/Kpi.vue'
 import MoneyInput from '@/components/design/MoneyInput.vue'
 import Modal from '@/components/design/Modal.vue'
 import PageHeader from '@/components/design/PageHeader.vue'
+import SearchSelect from '@/components/design/SearchSelect.vue'
+import Segmented from '@/components/design/Segmented.vue'
 import Select from '@/components/design/Select.vue'
-import Switch from '@/components/design/Switch.vue'
 import Textarea from '@/components/design/Textarea.vue'
+import { fmtNum } from '@/components/design/utils/format'
 import {
+  type ExpenseListParams,
   approveExpense,
   cancelExpense,
   createExpense,
@@ -41,13 +46,17 @@ import {
 import { useUserAccess } from '@/composables/useUserAccess'
 import {
   EXPENSE_COST_BEHAVIORS,
+  EXPENSE_REPORTING_GROUPS,
   expenseCategoryAllowsSource,
+  expenseCategoryFilterOptions,
   expenseCategoryPath,
+  expenseCategoryRequestOptions,
   expenseCostBehavior,
   isSelectableExpenseCategory,
 } from '@/utils/expenseCategories'
 
 const { t } = useI18n({ useScope: 'global' })
+const route = useRoute()
 const router = useRouter()
 const { snackbar, snackbarMsg, snackbarColor, notify } = useNotify()
 const { formatCurrency, formatDate } = useFormatters()
@@ -77,19 +86,6 @@ const itemsPerPage = ref(20)
 const totals = ref<ExpenseTotals>({ row_count: 0, amount_uzs: 0, by_status: {} })
 const categories = ref<ExpenseCategory[]>([])
 
-const statusFilter = ref<ExpenseStatus | ''>('')
-const categoryFilter = ref('')
-const includeSubcategories = ref(false)
-const costBehaviorFilter = ref<ExpenseCostBehavior | ''>('')
-const reportingGroupFilter = ref('')
-const sourceFilter = ref<ExpenseSource | ''>('')
-const dateFrom = ref('')
-const dateTo = ref('')
-const search = ref('')
-const reviewMode = ref(false)
-const reviewSelection = ref<Set<string | number>>(new Set())
-let expenseRequestId = 0
-
 const EXPENSE_STATUSES: ExpenseStatus[] = [
   'PENDING',
   'APPROVED',
@@ -99,46 +95,167 @@ const EXPENSE_STATUSES: ExpenseStatus[] = [
   'VOIDED',
 ]
 
-const statusFilterOptions = computed(() => [
-  { value: '', label: t('expense_status_filter_all') },
-  ...EXPENSE_STATUSES.map(value => ({ value, label: t(`expense_status_${value}`) })),
+const EXPENSE_SOURCES: ExpenseSource[] = ['DRAWER', 'SAFE', 'BANK']
+const FILTER_QUERY_KEYS = ['status', 'category', 'from', 'to', 'source', 'behavior', 'group', 'q']
+
+function queryText(key: string): string {
+  const value = route.query[key]
+
+  return String(Array.isArray(value) ? value[0] ?? '' : value ?? '').trim()
+}
+
+function queryChoice<T extends string>(key: string, allowed: readonly T[]): T | '' {
+  const value = queryText(key).toUpperCase() as T
+
+  return allowed.includes(value) ? value : ''
+}
+
+function queryDate(key: string): string {
+  const value = queryText(key)
+
+  return (/^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value))) ? value : ''
+}
+
+function allTime(): DateRangeValue {
+  return { from: '', to: '', preset: 'all' }
+}
+
+const initialFrom = queryDate('from')
+const initialTo = queryDate('to')
+const hasInitialRange = !!(initialFrom && initialTo && initialFrom <= initialTo)
+
+const statusFilter = ref<ExpenseStatus | ''>(queryChoice('status', EXPENSE_STATUSES))
+const categoryFilter = ref(/^\d+$/.test(queryText('category')) ? queryText('category') : '')
+const costBehaviorFilter = ref<ExpenseCostBehavior | ''>(queryChoice('behavior', EXPENSE_COST_BEHAVIORS))
+const reportingGroupFilter = ref<string>(queryChoice('group', EXPENSE_REPORTING_GROUPS))
+const sourceFilter = ref<ExpenseSource | ''>(queryChoice('source', EXPENSE_SOURCES))
+const dateRange = ref<DateRangeValue>(hasInitialRange ? { from: initialFrom, to: initialTo } : allTime())
+const search = ref(queryText('q'))
+const showMoreFilters = ref(!!(costBehaviorFilter.value || reportingGroupFilter.value))
+const scopeTotals = ref<ExpenseTotals>({ row_count: 0, amount_uzs: 0, by_status: {} })
+const reviewMode = ref(false)
+const reviewSelection = ref<Set<string | number>>(new Set())
+let expenseRequestId = 0
+
+function translate(key: string, values?: Record<string, unknown>) {
+  return values ? t(key, values) : t(key)
+}
+
+const statusTabs = computed(() => [
+  { value: '', label: `${t('All')} · ${fmtNum(scopeTotals.value.row_count)}` },
+  ...EXPENSE_STATUSES.map(value => ({
+    value,
+    label: `${t(`expense_status_${value}`)} · ${fmtNum(scopeTotals.value.by_status?.[value]?.count ?? 0)}`,
+  })),
 ])
 
-const categoryFilterOptions = computed(() => [
-  { value: '', label: t('expense_filter_all_categories') },
-  ...categories.value.map(category => ({ value: String(category.id), label: expenseCategoryPath(category) })),
-])
+const categoryFilterOptions = computed(() => expenseCategoryFilterOptions(categories.value, translate))
+const selectedFilterCategory = computed(() => categoryFilterOptions.value.find(option => option.value === categoryFilter.value))
 
 const availableRequestCategories = computed(() => categories.value.filter(category =>
   isSelectableExpenseCategory(category)
   && (expenseCategoryAllowsSource(category, 'SAFE') || expenseCategoryAllowsSource(category, 'BANK')),
 ))
 
-const categoryFormOptions = computed(() => availableRequestCategories.value.map(category => ({
-  value: String(category.id),
-  label: `${expenseCategoryPath(category)} · ${t(`expense_cost_behavior_${expenseCostBehavior(category)}`)}`,
+const categoryFormOptions = computed(() => expenseCategoryRequestOptions(
+  categories.value,
+  translate,
+  category => expenseCategoryAllowsSource(category, 'SAFE') || expenseCategoryAllowsSource(category, 'BANK'),
+))
+
+// Each Select placeholder is its "all" choice, so it is not repeated as an option.
+const costBehaviorFilterOptions = computed(() => EXPENSE_COST_BEHAVIORS.map(value => ({
+  value,
+  label: t(`expense_cost_behavior_${value}`),
 })))
 
-const costBehaviorFilterOptions = computed(() => [
-  { value: '', label: t('expense_cost_behavior_all') },
-  ...EXPENSE_COST_BEHAVIORS.map(value => ({ value, label: t(`expense_cost_behavior_${value}`) })),
-])
+const reportingGroupFilterOptions = computed(() => [...new Set(categories.value.map(category => category.reporting_group).filter(Boolean))].map(value => ({
+  value,
+  label: t(`expense_reporting_group_${value}`),
+})))
 
-const reportingGroupFilterOptions = computed(() => [
-  { value: '', label: t('expense_reporting_group_all') },
-  ...[...new Set(categories.value.map(category => category.reporting_group).filter(Boolean))].map(value => ({
-    value,
-    label: t(`expense_reporting_group_${value}`),
-  })),
-])
+const sourceFilterOptions = computed(() => EXPENSE_SOURCES.map(value => ({
+  value,
+  label: t(`supplier_source_${value}`),
+})))
 
-const sourceFilterOptions = computed(() => [
-  { value: '', label: t('expense_source_all') },
-  ...(['DRAWER', 'SAFE', 'BANK'] as ExpenseSource[]).map(value => ({
-    value,
-    label: t(`supplier_source_${value}`),
-  })),
-])
+const moreFilterCount = computed(() => [costBehaviorFilter.value, reportingGroupFilter.value].filter(Boolean).length)
+
+interface FilterChip {
+  key: string
+  label: string
+  value: string
+  clear: () => void
+}
+
+const activeFilterChips = computed<FilterChip[]>(() => {
+  const chips: FilterChip[] = []
+  const { from, to } = dateRange.value
+
+  if (search.value.trim())
+    chips.push({ key: 'q', label: t('Search'), value: search.value.trim(), clear: () => { search.value = '' } })
+  if (categoryFilter.value) {
+    chips.push({
+      key: 'category',
+      label: t('Category'),
+      value: selectedFilterCategory.value?.selectedLabel ?? selectedFilterCategory.value?.label ?? `#${categoryFilter.value}`,
+      clear: () => { categoryFilter.value = '' },
+    })
+  }
+  if (from && to) {
+    chips.push({
+      key: 'dates',
+      label: t('expense_filter_dates'),
+      value: from === to ? formatDate(from) : `${formatDate(from)} – ${formatDate(to)}`,
+      clear: () => { dateRange.value = allTime() },
+    })
+  }
+  if (sourceFilter.value)
+    chips.push({ key: 'source', label: t('pay_field_source_account'), value: t(`supplier_source_${sourceFilter.value}`), clear: () => { sourceFilter.value = '' } })
+  if (costBehaviorFilter.value)
+    chips.push({ key: 'behavior', label: t('expense_cost_behavior'), value: t(`expense_cost_behavior_${costBehaviorFilter.value}`), clear: () => { costBehaviorFilter.value = '' } })
+  if (reportingGroupFilter.value)
+    chips.push({ key: 'group', label: t('expense_reporting_group'), value: t(`expense_reporting_group_${reportingGroupFilter.value}`), clear: () => { reportingGroupFilter.value = '' } })
+
+  return chips
+})
+
+function clearFilters() {
+  search.value = ''
+  categoryFilter.value = ''
+  dateRange.value = allTime()
+  sourceFilter.value = ''
+  costBehaviorFilter.value = ''
+  reportingGroupFilter.value = ''
+}
+
+const filterQuery = computed(() => {
+  const query: Record<string, string> = {}
+
+  const values: Array<[string, string]> = [
+    ['status', statusFilter.value],
+    ['category', categoryFilter.value],
+    ['from', dateRange.value.from],
+    ['to', dateRange.value.to],
+    ['source', sourceFilter.value],
+    ['behavior', costBehaviorFilter.value],
+    ['group', reportingGroupFilter.value],
+    ['q', search.value.trim()],
+  ]
+
+  for (const [key, value] of values) {
+    if (value)
+      query[key] = value
+  }
+
+  return query
+})
+
+watch(filterQuery, query => {
+  const preserved = Object.fromEntries(Object.entries(route.query).filter(([key]) => !FILTER_QUERY_KEYS.includes(key)))
+
+  router.replace({ query: { ...preserved, ...query } }).catch(() => { /* A newer filter change superseded this URL update. */ })
+})
 
 const tableRows = computed(() => reviewMode.value
   ? items.value.filter(row => row.status === 'PENDING')
@@ -219,29 +336,38 @@ function applyExpenseError(requestId: number, error: unknown) {
   totals.value = { row_count: 0, amount_uzs: 0, by_status: {} }
 }
 
+function expenseFilters(): ExpenseListParams {
+  return {
+    category_id: categoryFilter.value ? Number(categoryFilter.value) : undefined,
+
+    // A group includes its subcategories; for a subcategory this adds no other rows.
+    include_subcategories: categoryFilter.value ? true : undefined,
+    cost_behavior: costBehaviorFilter.value || undefined,
+    reporting_group: reportingGroupFilter.value || undefined,
+    source_account: sourceFilter.value || undefined,
+    date_from: dateRange.value.from || undefined,
+    date_to: dateRange.value.to || undefined,
+    search: search.value.trim() || undefined,
+  }
+}
+
 async function load() {
   if (!canView.value)
     return
   const requestId = ++expenseRequestId
+  const filters = expenseFilters()
 
   loading.value = true
   loadError.value = ''
   try {
-    const result = await listExpenses({
-      page: page.value,
-      per_page: itemsPerPage.value,
-      status: statusFilter.value,
-      category_id: categoryFilter.value ? Number(categoryFilter.value) : undefined,
-      include_subcategories: Boolean(categoryFilter.value && includeSubcategories.value) || undefined,
-      cost_behavior: costBehaviorFilter.value || undefined,
-      reporting_group: reportingGroupFilter.value || undefined,
-      source_account: sourceFilter.value || undefined,
-      date_from: dateFrom.value || undefined,
-      date_to: dateTo.value || undefined,
-      search: search.value.trim() || undefined,
-    })
+    const [result, scope] = await Promise.all([
+      listExpenses({ ...filters, page: page.value, per_page: itemsPerPage.value, status: statusFilter.value || undefined }),
+      statusFilter.value ? listExpenses({ ...filters, page: 1, per_page: 1 }) : null,
+    ])
 
     applyExpenseResult(requestId, result)
+    if (requestId === expenseRequestId)
+      scopeTotals.value = scope?.totals ?? result.totals
   }
   catch (error: unknown) {
     applyExpenseError(requestId, error)
@@ -256,7 +382,10 @@ async function loadCategories() {
   if (!canViewCategories.value && !canCreate.value && !canReclassify.value)
     return
   try {
-    categories.value = await listAllExpenseCategories()
+    categories.value = await listAllExpenseCategories({
+      // Historical expenses can still be filtered by categories that are no longer active.
+      include_inactive: hasPermission('expense.category.manage') ? true : undefined,
+    })
   }
   catch (error: any) {
     notify(apiError(error), 'error')
@@ -265,7 +394,7 @@ async function loadCategories() {
 
 onMounted(() => Promise.all([load(), loadCategories()]))
 watch([page, itemsPerPage], load)
-watch([statusFilter, categoryFilter, includeSubcategories, costBehaviorFilter, reportingGroupFilter, sourceFilter, dateFrom, dateTo], () => {
+watch([statusFilter, categoryFilter, costBehaviorFilter, reportingGroupFilter, sourceFilter, dateRange], () => {
   page.value = 1
   reviewSelection.value = new Set()
   load()
@@ -309,24 +438,12 @@ function statusAmount(status: ExpenseStatus) {
   return Number(totals.value.by_status?.[status]?.amount_uzs ?? 0)
 }
 
-function defaultRequestSource(category: ExpenseCategory | undefined): '' | 'SAFE' | 'BANK' {
-  if (!category)
-    return ''
-  if (expenseCategoryAllowsSource(category, 'SAFE'))
-    return 'SAFE'
-  if (expenseCategoryAllowsSource(category, 'BANK'))
-    return 'BANK'
-
-  return ''
-}
-
 function openCreate() {
-  const first = availableRequestCategories.value[0]
-
+  // Require a deliberate category choice instead of preselecting the first one.
   form.value = {
-    category_id: first?.id ?? null,
+    category_id: null,
     amount_uzs: 0,
-    requested_source: defaultRequestSource(first),
+    requested_source: '',
     description: '',
     expense_date: new Date().toISOString().slice(0, 10),
     receipt_number: '',
@@ -813,88 +930,131 @@ async function reloadReclassification() {
         <Kpi :data="{ label: t('Pending'), value: statusAmount('PENDING'), icon: 'clock', tone: 'warning', money: true }" />
         <Kpi :data="{ label: t('Approved'), value: statusAmount('APPROVED'), icon: 'calendar', tone: 'info', money: true }" />
         <Kpi :data="{ label: t('Paid'), value: statusAmount('PAID'), icon: 'check', tone: 'success', money: true }" />
-        <Kpi :data="{ label: t('Total'), value: totals.amount_uzs, icon: 'wallet', tone: 'primary', money: true, sub: `${totals.row_count} ${t('expense_count_suffix')}` }" />
+        <Kpi :data="{ label: t('Total'), value: scopeTotals.amount_uzs, icon: 'wallet', tone: 'primary', money: true, sub: `${fmtNum(scopeTotals.row_count)} ${t('expense_count_suffix')}` }" />
       </div>
 
       <Card>
-        <WorkspaceToolbar class="toolbar toolbar--wrap">
-          <div class="tb-search">
-            <Input
-              v-model="search"
-              icon="search"
-              :placeholder="t('Search description or category')"
-            />
-          </div>
-          <div class="tb-filter">
-            <Select
-              v-model="statusFilter"
-              icon="filter"
-              :options="statusFilterOptions"
-              :placeholder="t('expense_status_filter_all')"
-              :disabled="reviewMode"
-            />
-          </div>
-          <div class="tb-filter tb-filter--wide">
-            <Select
-              v-model="categoryFilter"
-              icon="folder"
-              :options="categoryFilterOptions"
-              :placeholder="t('expense_filter_all_categories')"
-            />
-          </div>
-          <label
-            v-if="categoryFilter"
-            class="subcategories-toggle"
-          >
-            <Switch v-model="includeSubcategories" />
-            <span>{{ t('expense_include_subcategories') }}</span>
-          </label>
-          <div class="tb-filter">
-            <Select
-              v-model="costBehaviorFilter"
-              :options="costBehaviorFilterOptions"
-              :aria-label="t('expense_cost_behavior')"
-            />
-          </div>
-          <div class="tb-filter tb-filter--wide">
-            <Select
-              v-model="reportingGroupFilter"
-              :options="reportingGroupFilterOptions"
-              :aria-label="t('expense_reporting_group')"
-            />
-          </div>
-          <div class="tb-filter">
-            <Select
-              v-model="sourceFilter"
-              :options="sourceFilterOptions"
-              :aria-label="t('pay_field_source_account')"
-            />
-          </div>
-          <div class="tb-date">
-            <Field :label="t('expense_date_from')">
+        <div
+          v-if="!reviewMode"
+          class="status-tabs"
+        >
+          <Segmented
+            :model-value="statusFilter"
+            :options="statusTabs"
+            :aria-label="t('expense_status_tabs_label')"
+            @update:model-value="value => statusFilter = value as ExpenseStatus | ''"
+          />
+        </div>
+
+        <WorkspaceToolbar class="toolbar expense-filters">
+          <div class="expense-filters__row">
+            <div class="tb-search">
               <Input
-                v-model="dateFrom"
-                type="date"
+                v-model="search"
+                icon="search"
+                :placeholder="t('Search description or category')"
               />
-            </Field>
-          </div>
-          <div class="tb-date">
-            <Field :label="t('expense_date_to')">
-              <Input
-                v-model="dateTo"
-                type="date"
+            </div>
+            <div class="tb-category">
+              <SearchSelect
+                v-model="categoryFilter"
+                icon="folder"
+                :options="categoryFilterOptions"
+                :placeholder="t('expense_filter_all_categories')"
+                :aria-label="t('Category')"
               />
-            </Field>
+            </div>
+            <div class="tb-dates">
+              <DateRangePicker
+                v-model="dateRange"
+                :enable-time="false"
+                :placeholder="t('All time')"
+                :aria-label="t('expense_filter_dates')"
+              />
+            </div>
+            <div class="tb-filter">
+              <Select
+                v-model="sourceFilter"
+                :options="sourceFilterOptions"
+                :placeholder="t('expense_source_all')"
+                :aria-label="t('pay_field_source_account')"
+              />
+            </div>
+            <Button
+              class="more-filters"
+              variant="ghost"
+              icon="sliders"
+              :aria-expanded="showMoreFilters"
+              @click="showMoreFilters = !showMoreFilters"
+            >
+              {{ t(showMoreFilters ? 'expense_filter_fewer' : 'expense_filter_more') }}
+              <span
+                v-if="moreFilterCount"
+                class="more-filters__count"
+              >{{ moreFilterCount }}</span>
+            </Button>
+            <IconAction
+              icon="refresh"
+              :title="t('expcat_action_refresh')"
+              :disabled="loading"
+              @click="load"
+            />
           </div>
-          <Button
-            variant="ghost"
-            icon="refresh"
-            :disabled="loading"
-            @click="load"
+          <div
+            v-if="showMoreFilters"
+            class="expense-filters__row expense-filters__row--more"
           >
-            {{ t('expcat_action_refresh') }}
-          </Button>
+            <div class="tb-filter tb-filter--wide">
+              <Select
+                v-model="costBehaviorFilter"
+                :options="costBehaviorFilterOptions"
+                :placeholder="t('expense_cost_behavior_all')"
+                :aria-label="t('expense_cost_behavior')"
+              />
+            </div>
+            <div class="tb-filter tb-filter--wide">
+              <Select
+                v-model="reportingGroupFilter"
+                :options="reportingGroupFilterOptions"
+                :placeholder="t('expense_reporting_group_all')"
+                :aria-label="t('expense_reporting_group')"
+              />
+            </div>
+          </div>
         </WorkspaceToolbar>
+
+        <div
+          v-if="activeFilterChips.length"
+          class="toolbar filter-chip-row"
+        >
+          <div class="chips">
+            <span
+              v-for="chip in activeFilterChips"
+              :key="chip.key"
+              class="chip"
+            >
+              <span>{{ chip.label }}: <b>{{ chip.value }}</b></span>
+              <button
+                type="button"
+                class="chip__x"
+                :aria-label="`${t('Remove')}: ${chip.label}`"
+                @click="chip.clear"
+              >
+                <DesignIcon
+                  name="close"
+                  :size="13"
+                />
+              </button>
+            </span>
+            <button
+              type="button"
+              class="chip--clear"
+              @click="clearFilters"
+            >
+              {{ t('Clear all') }}
+            </button>
+          </div>
+        </div>
 
         <div
           v-if="loadError"
@@ -941,21 +1101,33 @@ async function reloadReclassification() {
             {{ formatDate(row.expense_date) }}
           </template>
           <template #cell.category="{ row }">
-            <div class="cell-stack">
-              <span class="cell-strong category-path">{{ expenseCategoryPath(row.category) || '—' }}</span>
-              <div
-                v-if="row.category"
-                class="category-meta"
+            <div
+              v-if="row.category"
+              class="expense-category"
+              :title="row.category.code"
+            >
+              <span
+                v-if="row.category.parent?.name"
+                class="expense-category__parent"
               >
-                <span class="cell-muted mono">{{ row.category.code }}</span>
-                <Badge :tone="costBehaviorTone(expenseCostBehavior(row.category))">
-                  {{ t(`expense_cost_behavior_${expenseCostBehavior(row.category)}`) }}
-                </Badge>
-              </div>
+                <DesignIcon
+                  name="folder"
+                  :size="12"
+                />
+                {{ row.category.parent.name }}
+              </span>
+              <span class="cell-strong expense-category__name">{{ row.category.name }}</span>
+              <Badge :tone="costBehaviorTone(expenseCostBehavior(row.category))">
+                {{ t(`expense_cost_behavior_${expenseCostBehavior(row.category)}`) }}
+              </Badge>
             </div>
+            <span
+              v-else
+              class="cell-muted"
+            >{{ t('expense_uncategorized') }}</span>
           </template>
           <template #cell.description="{ row }">
-            <span class="cell-muted truncate">{{ row.description || '—' }}</span>
+            <span class="cell-muted expense-description">{{ row.description || '—' }}</span>
           </template>
           <template #cell.amount_uzs="{ row }">
             <span class="mono">{{ formatCurrency(row.amount_uzs ?? row.amount ?? 0) }}</span>
@@ -1058,8 +1230,9 @@ async function reloadReclassification() {
             class="span-2"
             :error="formErrors.category_id"
           >
-            <Select
+            <SearchSelect
               v-model="categoryIdString"
+              icon="tag"
               :options="categoryFormOptions"
               :placeholder="t('expense_pick_category')"
               :error="!!formErrors.category_id"
@@ -1212,8 +1385,9 @@ async function reloadReclassification() {
           :label="t('expense_reclassify_target')"
           :hint="t('expense_reclassify_target_hint')"
         >
-          <Select
+          <SearchSelect
             v-model="reclassTargetId"
+            icon="tag"
             :options="categoryFormOptions"
             :placeholder="t('expense_reclassify_choose_target')"
             autofocus
@@ -1521,16 +1695,21 @@ meta:
 .review-banner strong { display: block; color: var(--text); font-size: 14px; }
 .review-banner p { margin: 2px 0 0; color: var(--text-secondary); font-size: 13px; line-height: 1.45; }
 
-.toolbar--wrap {
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.tb-search { flex: 1 1 220px; min-width: 200px; }
-.tb-filter { width: 190px; }
-.tb-filter--wide { width: 230px; }
-.tb-date { width: 165px; }
-.subcategories-toggle { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; color: var(--text-secondary); font-size: 12px; }
+.status-tabs { overflow-x: auto; padding: 14px 16px 2px; }
+.expense-filters { display: grid; gap: 10px; }
+.expense-filters__row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.expense-filters__row--more { padding-block-start: 10px; border-block-start: 1px dashed var(--border); }
+.tb-search { flex: 1 1 220px; min-width: 180px; }
+.tb-category { flex: 0 1 260px; min-width: 220px; }
+.tb-dates { flex: 0 0 auto; }
+.tb-filter { width: 170px; }
+.tb-filter--wide { width: 240px; }
+.more-filters__count { display: inline-grid; min-width: 18px; height: 18px; margin-inline-start: 4px; padding-inline: 5px; place-items: center; border-radius: 99px; background: var(--primary); color: var(--on-primary); font-size: 11px; font-weight: 700; }
+.filter-chip-row { padding-block: 0 12px; }
+.expense-category { display: grid; justify-items: start; min-width: 0; gap: 3px; }
+.expense-category__parent { display: inline-flex; align-items: center; gap: 4px; color: var(--text-tertiary); font-size: 11px; font-weight: 600; }
+.expense-category__name { overflow-wrap: anywhere; }
+.expense-description { display: -webkit-box; max-width: 320px; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow-wrap: anywhere; }
 
 .error-banner {
   display: flex;
@@ -1630,9 +1809,10 @@ meta:
 
 @media (max-width: 768px) {
   .tb-search,
+  .tb-category,
+  .tb-dates,
   .tb-filter,
-  .tb-filter--wide,
-  .tb-date { width: 100%; flex: 1 1 100%; }
+  .tb-filter--wide { width: 100%; min-width: 0; flex: 1 1 100%; }
   .form-grid,
   .detail-grid { grid-template-columns: 1fr; }
   .span-2 { grid-column: span 1; }

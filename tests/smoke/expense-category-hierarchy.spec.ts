@@ -249,19 +249,30 @@ test('manages hierarchy, cost behavior, group safety, and long mobile labels', a
   await page.goto('/hr-expense-categories')
   await expect(page.getByRole('heading', { name: 'Expense Categories' })).toBeVisible()
 
-  const categoryTableBody = page.locator('tbody:visible')
+  const groupRow = page.locator('li.category-row').filter({ has: page.getByText('FACILITIES', { exact: true }) })
+  const childRow = page.locator('li.category-row--child').filter({ has: page.getByText('ELECTRICITY', { exact: true }) })
 
-  await expect(categoryTableBody.getByText('Facilities / Electricity and building utilities with a deliberately long name', { exact: true })).toBeVisible()
-  await expect(categoryTableBody.getByText('Variable', { exact: true }).first()).toBeVisible()
+  await expect(groupRow.getByText('Subcategories: 1', { exact: true })).toBeVisible()
+  await expect(childRow).toHaveCount(0)
+  await groupRow.getByRole('button', { name: 'Show subcategories' }).click()
+  await expect(childRow.getByText('Electricity and building utilities with a deliberately long name', { exact: true })).toBeVisible()
+  await expect(childRow.getByText('Variable', { exact: true })).toBeVisible()
   await page.screenshot({ path: '/tmp/alpha-expense-category-hierarchy-desktop.png', fullPage: true, animations: 'disabled' })
 
-  const groupRow = categoryTableBody.locator('tr').filter({
-    has: page.getByText('FACILITIES', { exact: true }),
-  })
-
-  await expect(groupRow.getByText('Group', { exact: true })).toBeVisible()
-  await expect(groupRow.getByText('Deactivate active subcategories before deactivating this category.', { exact: true })).toBeVisible()
   await expect(groupRow.getByTitle('Deactivate active subcategories before deactivating this category.')).toBeDisabled()
+  await groupRow.getByRole('button', { name: 'Hide subcategories' }).click()
+  await expect(childRow).toHaveCount(0)
+  await groupRow.getByRole('button', { name: 'Show subcategories' }).click()
+  await expect(childRow).toBeVisible()
+
+  await groupRow.getByTitle('Add subcategory').click()
+
+  const subcategoryDialog = page.getByRole('dialog', { name: 'Create expense category' })
+
+  await expect(subcategoryDialog.getByRole('combobox', { name: 'Parent category' })).toContainText('Facilities')
+  await subcategoryDialog.getByTitle('Close').click()
+  await expect(subcategoryDialog).not.toBeVisible()
+
   await groupRow.getByTitle('Edit').click()
 
   const editGroupDialog = page.getByRole('dialog', { name: 'Edit expense category' })
@@ -270,10 +281,9 @@ test('manages hierarchy, cost behavior, group safety, and long mobile labels', a
   await expect(editGroupDialog.locator('button[role="switch"]').last()).toBeDisabled()
   await editGroupDialog.getByTitle('Close').click()
 
-  const rootLeafRow = categoryTableBody.locator('tr').filter({
-    has: page.getByText('RENT', { exact: true }),
-  })
+  const rootLeafRow = page.locator('li.category-row').filter({ has: page.getByText('RENT', { exact: true }) })
 
+  await expect(rootLeafRow.getByText('No subcategories', { exact: true })).toBeVisible()
   await rootLeafRow.getByTitle('Edit').click()
 
   const editLeafDialog = page.getByRole('dialog', { name: 'Edit expense category' })
@@ -302,8 +312,17 @@ test('manages hierarchy, cost behavior, group safety, and long mobile labels', a
   expect(createCall?.body).toMatchObject({ parent_id: 10, cost_behavior: 'VARIABLE' })
 
   await page.locator('.tb-filter').getByRole('combobox', { name: 'Cost behavior' }).click()
-  await page.getByRole('option', { name: 'Variable', exact: true }).click()
-  await expect.poll(() => calls.some(call => call.method === 'GET' && call.query.includes('cost_behavior=VARIABLE'))).toBe(true)
+  await page.getByRole('option', { name: 'Fixed', exact: true }).click()
+  await expect(rootLeafRow).toBeVisible()
+  await expect(groupRow).toHaveCount(0)
+
+  await page.locator('.tb-filter').getByRole('combobox', { name: 'Cost behavior' }).click()
+  await page.getByRole('option', { name: 'All cost behaviors', exact: true }).click()
+  await page.getByPlaceholder('Search by name').fill('deliberately')
+  await expect(groupRow).toBeVisible()
+  await expect(childRow).toBeVisible()
+  await expect(rootLeafRow).toHaveCount(0)
+  await page.getByPlaceholder('Search by name').fill('')
 
   await page.setViewportSize({ width: 390, height: 844 })
   await page.evaluate(() => {
@@ -337,7 +356,11 @@ test('uses selectable paths, server filters, and a retry-safe dry-run-first recl
   const calls = await setup(page, { failFirstApply: true })
 
   await page.goto('/hr-expenses')
-  await expect(page.locator('tbody:visible').getByText('Facilities / Electricity', { exact: true }).first()).toBeVisible()
+
+  const firstRecord = page.locator('tbody:visible tr').first()
+
+  await expect(firstRecord.getByText('Facilities', { exact: true })).toBeVisible()
+  await expect(firstRecord.getByText('Electricity', { exact: true })).toBeVisible()
 
   await page.getByRole('button', { name: 'New Expense' }).click()
 
@@ -345,13 +368,23 @@ test('uses selectable paths, server filters, and a retry-safe dry-run-first recl
   const categorySelect = createDialog.getByRole('combobox', { name: 'Category' })
 
   await categorySelect.click()
-  await expect(page.getByRole('option', { name: 'Facilities', exact: true })).toHaveCount(0)
-  await expect(page.getByRole('option', { name: /Facilities \/ Electricity.*Variable/ })).toBeVisible()
+  await expect(page.getByRole('option', { name: 'Facilities', exact: true })).toBeDisabled()
+  await expect(page.getByRole('option', { name: /Electricity and building utilities.*Variable/ })).toBeVisible()
+  await page.keyboard.press('Escape')
   await createDialog.getByTitle('Close').click()
 
-  await page.getByRole('combobox', { name: 'All categories' }).click()
-  await page.getByRole('option', { name: 'Facilities', exact: true }).click()
-  await page.getByText('Include subcategories', { exact: true }).click()
+  await page.locator('.expense-filters').getByRole('combobox', { name: 'Category' }).click()
+  await page.locator('.search-select__menu input[type="search"]').fill('electricity')
+  await expect(page.getByRole('option', { name: /^Electricity and building utilities/ })).toBeVisible()
+  await page.getByRole('option', { name: /^Facilities/ }).click()
+  await expect(page.locator('.chip').filter({ hasText: 'Facilities · all subcategories' })).toBeVisible()
+  await expect(page).toHaveURL(/category=10/)
+
+  await page.getByRole('tab', { name: /^Pending/ }).click()
+  await expect(page).toHaveURL(/status=PENDING/)
+  await page.getByRole('tab', { name: /^All/ }).click()
+
+  await page.getByRole('button', { name: 'More filters' }).click()
   await page.getByRole('combobox', { name: 'Cost behavior' }).click()
   await page.getByRole('option', { name: 'Variable', exact: true }).click()
   await page.getByRole('combobox', { name: 'Reporting group' }).click()

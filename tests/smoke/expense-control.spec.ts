@@ -159,8 +159,7 @@ test('uses the canonical expense request, approval, payment, and category-deacti
   const createModal = page.getByRole('dialog', { name: 'New Expense' })
   const categorySelect = createModal.getByRole('combobox', { name: 'Category' })
 
-  await categorySelect.click()
-  await page.getByRole('option', { name: 'Pick a category' }).click()
+  await expect(categorySelect).toContainText('Pick a category')
   await createModal.getByRole('button', { name: 'Submit request' }).click()
   await expect(createModal.getByText('Choose an expense category.')).toBeVisible()
   expect(businessCalls.filter(call => call.method === 'POST' && call.path === '/api/admins/expenses')).toHaveLength(0)
@@ -232,7 +231,7 @@ test('uses the canonical expense request, approval, payment, and category-deacti
 
   expect(categoryCreateCall?.body.budget_limit).toBeNull()
 
-  const categoryRow = page.locator('tbody tr').filter({ hasText: 'Utilities' })
+  const categoryRow = page.locator('li.category-row').filter({ hasText: 'Utilities' })
 
   await categoryRow.getByTitle('Deactivate').click()
   await page.getByRole('dialog', { name: 'Deactivate' }).getByRole('button', { name: 'Deactivate' }).click()
