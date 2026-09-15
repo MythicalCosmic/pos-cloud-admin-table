@@ -5849,6 +5849,7 @@
   "Loading comparison": "Загрузка сравнения",
   "Comparison preview": "Демонстрация сравнения",
   "This page is using deterministic preview data because the comparison endpoint is not available yet.": "Страница использует явно отмеченные демонстрационные данные, потому что API сравнения пока недоступен.",
+  "This page is using deterministic preview data because the comparison endpoint cannot compare a single product yet.": "Страница использует явно отмеченные демонстрационные данные, потому что API сравнения пока не поддерживает сравнение отдельного товара.",
   "Selected product": "Выбранный товар",
   "See what changed between your sales periods": "Посмотрите, что изменилось между периодами продаж",
   "New sales appeared in the current period": "В текущем периоде появились новые продажи",

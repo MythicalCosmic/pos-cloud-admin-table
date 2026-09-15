@@ -5938,6 +5938,7 @@
   "Loading comparison": "Loading comparison",
   "Comparison preview": "Comparison preview",
   "This page is using deterministic preview data because the comparison endpoint is not available yet.": "This page is using deterministic preview data because the comparison endpoint is not available yet.",
+  "This page is using deterministic preview data because the comparison endpoint cannot compare a single product yet.": "This page is using deterministic preview data because the comparison endpoint cannot compare a single product yet.",
   "Selected product": "Selected product",
   "See what changed between your sales periods": "See what changed between your sales periods",
   "New sales appeared in the current period": "New sales appeared in the current period",

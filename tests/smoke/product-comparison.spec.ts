@@ -286,3 +286,19 @@ test('labels only an unavailable endpoint as preview data and preserves real ser
   await expect(structuredNotFoundPage.getByText('Comparison could not be loaded', { exact: true })).toBeVisible()
   await expect(structuredNotFoundPage.getByText('Comparison preview', { exact: true })).toHaveCount(0)
 })
+
+test('never presents full-catalog totals as the selected product', async ({ page }) => {
+  await setup(page)
+  await page.route(url => url.pathname.endsWith('/analytics/comparison'), async route => {
+    const payload: Record<string, unknown> = comparisonPayload()
+
+    delete payload.selection
+    await route.fulfill({ json: { data: payload } })
+  })
+  await page.goto('/analytics/compare?a_start=2026-09-01&a_end=2026-09-14&b_start=2026-08-01&b_end=2026-08-14&mode=custom&gran=day&avg=0&product_id=42')
+
+  await expect(page.getByText('Comparison preview', { exact: true })).toBeVisible()
+  await expect(page.getByText('This page is using deterministic preview data because the comparison endpoint cannot compare a single product yet.', { exact: true })).toBeVisible()
+  await expect(page.getByText('Preview data', { exact: true })).toBeVisible()
+  await expect(page.getByText('Live comparison', { exact: true })).toHaveCount(0)
+})

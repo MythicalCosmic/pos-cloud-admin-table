@@ -1,10 +1,6 @@
 <script setup lang="ts">
-/* Grid of KPI scorecards. Renders only the metrics the payload carries
-   (gross_profit / margin appear only when COGS data exists). */
 import KpiScorecard from './KpiScorecard.vue'
 import type { KpiCell, KpiKey } from '@/types/comparison'
-
-const { t } = useI18n({ useScope: 'global' })
 
 interface Props {
   kpis: Partial<Record<KpiKey, KpiCell>>
@@ -13,9 +9,21 @@ interface Props {
   avgMode?: boolean
   revenueSpark?: number[] // Period A daily revenue for the money-metric sparkline
 }
-const props = withDefaults(defineProps<Props>(), { avgMode: false })
 
-interface CatItem { key: KpiKey, labelKey: string, money: boolean, unit?: string, formulaKey: string, spark?: boolean }
+const props = withDefaults(defineProps<Props>(), { avgMode: false })
+const { t } = useI18n({ useScope: 'global' })
+
+interface CatItem {
+  key: KpiKey
+  labelKey: string
+  money: boolean
+  unit?: string
+  formulaKey: string
+  spark?: boolean
+}
+
+// Renders only metrics present in the payload. Profit and margin remain absent
+// when the backend has no authoritative cost basis.
 const CATALOG: CatItem[] = [
   { key: 'gross_revenue', labelKey: 'Gross revenue', money: true, unit: 'UZS', formulaKey: 'formula_gross_revenue', spark: true },
   { key: 'net_revenue', labelKey: 'Net revenue', money: true, unit: 'UZS', formulaKey: 'formula_net_revenue', spark: true },
@@ -29,10 +37,11 @@ const CATALOG: CatItem[] = [
   { key: 'margin_pct', labelKey: 'Gross margin', money: false, unit: '%', formulaKey: 'formula_margin' },
 ]
 
-const cards = computed(() =>
-  CATALOG.filter(c => props.kpis[c.key] !== undefined)
-    .map(c => ({ ...c, cell: props.kpis[c.key]! })),
-)
+const cards = computed(() => CATALOG.flatMap(catalogItem => {
+  const cell = props.kpis[catalogItem.key]
+
+  return cell === undefined ? [] : [{ ...catalogItem, cell }]
+}))
 </script>
 
 <template>
@@ -56,9 +65,14 @@ const cards = computed(() =>
 <style scoped>
 .kpirow {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-  gap: var(--sp-3);
+  overflow: hidden;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  padding: 1px;
+  border-radius: 22px;
+  background: var(--border);
+  box-shadow: 0 18px 48px color-mix(in srgb, var(--text) 7%, transparent);
 }
-@media (max-width: 900px) { .kpirow { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 520px) { .kpirow { grid-template-columns: 1fr; } }
+@media (max-width: 1380px) { .kpirow { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .kpirow { grid-template-columns: minmax(0, 1fr); border-radius: 18px; } }
 </style>

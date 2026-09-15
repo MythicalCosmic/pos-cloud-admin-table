@@ -5849,6 +5849,7 @@
   "Loading comparison": "Taqqoslash yuklanmoqda",
   "Comparison preview": "Taqqoslash namunasi",
   "This page is using deterministic preview data because the comparison endpoint is not available yet.": "Taqqoslash API hali mavjud emasligi sababli sahifada aniq belgilangan namuna ma’lumotlari ishlatilmoqda.",
+  "This page is using deterministic preview data because the comparison endpoint cannot compare a single product yet.": "Taqqoslash API hali alohida mahsulotni taqqoslay olmagani sababli sahifada aniq belgilangan namuna ma’lumotlari ishlatilmoqda.",
   "Selected product": "Tanlangan mahsulot",
   "See what changed between your sales periods": "Savdo davrlari orasida nima o‘zgarganini ko‘ring",
   "New sales appeared in the current period": "Joriy davrda yangi savdolar paydo bo‘ldi",
