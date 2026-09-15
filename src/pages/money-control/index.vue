@@ -826,10 +826,13 @@ onMounted(() => {
           <h2 class="card__title">
             {{ t('moneyControl.positionTitle') }}
           </h2>
-          <div class="card__sub">
+          <div
+            v-if="cashPosition.calculation.asOfDate"
+            class="card__sub"
+          >
             {{ t('moneyControl.positionSubtitle', {
               day: cashPosition.calculation.elapsedDays,
-              date: cashPosition.calculation.asOfDate ? formatDate(cashPosition.calculation.asOfDate) : '—',
+              date: formatDate(cashPosition.calculation.asOfDate),
             }) }}
           </div>
         </div>
@@ -954,7 +957,7 @@ onMounted(() => {
                 <span class="position-step__index">2</span>
                 <div>
                   <h3>{{ t('moneyControl.positionPayroll') }}</h3>
-                  <p>
+                  <p v-if="cashPosition.payroll.elapsedDays">
                     {{ t('moneyControl.positionPayrollSub', {
                       day: cashPosition.payroll.elapsedDays,
                       employees: cashPosition.payroll.employeeCount,
