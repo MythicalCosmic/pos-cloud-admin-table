@@ -573,10 +573,10 @@ onBeforeUnmount(() => { salesRequestId++ })
 
       <DailyLedger
         v-if="data"
-        :dates="data.dayLabels"
-        :revenue="data.revenue30"
-        :expenses="data.expense30"
-        :channels="data.channelDays"
+        :dates="data.dayLabels ?? []"
+        :revenue="toNumArr(data.revenue30)"
+        :expenses="toNumArr(data.expense30)"
+        :channels="data.channelDays ?? []"
       />
 
       <!-- Row 3: expense summary + order-type chart. -->

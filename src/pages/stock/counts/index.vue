@@ -826,7 +826,7 @@ const itemFilterOptions = computed(() => [
     <!-- ============ ACTION CONFIRM modal ============ -->
     <Modal
       :open="actionDialog"
-      :title="t(actionLabels[actionType] ?? actionType)"
+      :title="actionType ? t(actionLabels[actionType] ?? actionType) : ''"
       :width="440"
       @close="actionDialog = false"
     >

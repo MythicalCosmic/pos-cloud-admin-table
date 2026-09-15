@@ -247,7 +247,7 @@ const kpiPaid = computed(() => ({
 const kpiTotal = computed(() => ({
   label: t('Total'),
   value: summary.value?.total_net ?? null,
-  icon: 'trending-up',
+  icon: 'trend',
   tone: 'primary' as const,
   money: true,
   sub: summary.value?.count != null ? t('{n} employees', { n: summary.value.count }) : undefined,

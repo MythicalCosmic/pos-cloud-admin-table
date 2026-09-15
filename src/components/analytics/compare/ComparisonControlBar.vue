@@ -302,7 +302,7 @@ function updateBaseline(value: DateRangeValue) {
 .cbar__state { align-self: start; padding: 4px 7px; border-radius: 999px; color: var(--text-tertiary); background: var(--surface-2); font-size: 9px; font-weight: 700; }
 .cbar__state.is-dirty { color: var(--warning-strong); background: var(--warning-weak); }
 
-.cbar__body { display: grid; gap: 15px; padding: 18px; }
+.cbar__body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 15px; padding: 18px; }
 .cbar__product :deep(.search-select),
 .cbar__product :deep(.search-select__trigger) { inline-size: 100%; }
 .cbar__product :deep(.search-select__trigger) { min-block-size: 46px; border-radius: 13px; background: var(--surface-2); }

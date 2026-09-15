@@ -929,7 +929,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
     <!-- Action Confirm Modal (plan / start / cancel / hold / resume) -->
     <Modal
       :open="actionDialog"
-      :title="t(actionTitleKey[actionType] ?? actionType)"
+      :title="actionType ? t(actionTitleKey[actionType] ?? actionType) : ''"
       :subtitle="actionItem?.order_number ?? ''"
       :width="440"
       @close="actionDialog = false"

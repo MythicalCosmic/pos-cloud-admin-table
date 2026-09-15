@@ -756,7 +756,7 @@ function goPage(p: number | '…') {
         </label>
         <Segmented
           v-model="catalogView"
-          :options="[{ value: 'cards', label: t('Cards'), icon: 'grid' }, { value: 'table', label: t('Table'), icon: 'list' }]"
+          :options="[{ value: 'cards', label: t('products_view_cards'), icon: 'grid' }, { value: 'table', label: t('products_view_table'), icon: 'list' }]"
           :aria-label="t('View')"
         />
       </div>
