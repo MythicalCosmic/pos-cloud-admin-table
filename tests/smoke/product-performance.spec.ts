@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises'
 
 interface State { empty?: boolean; error?: string; exportError?: string; gate?: Promise<void>; exportGate?: Promise<void>; rows?: number; categoryError?: boolean }
 const amount = (cents: bigint) => `${cents / 100n}.${String(cents % 100n).padStart(2, '0')}`
-const grouped = (decimal: string) => decimal.replace(/\B(?=(\d{3})+(?!\d))/g, '\u202f')
+const grouped = (decimal: string) => decimal.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 const baseRows = (count = 27) => Array.from({ length: count }, (_, i) => ({
   rank: i + 1, product_id: i + 1, product_name: i === 0 ? 'Signature burger with caramelized onions' : `Product ${i + 1}`, category_id: i % 2 ? 5 : 4, category_name: i % 2 ? 'Drinks' : 'Burgers and signature kitchen dishes', units_sold: 1, units_refunded: 0, net_units: 1, orders_sold: 1, refund_events: 0,
   selling_price_per_unit: '120000.5500', minimum_selling_price: '120000.55', maximum_selling_price: '120000.55', current_catalog_price: '125000.00', gross_sales_revenue: '120000.55', refund_amount: '0.00', total_revenue: '120000.55', ingredient_cost_per_unit: i === count - 1 ? null : '45000.2500', gross_ingredient_cost: i === count - 1 ? null : '45000.25', ingredient_cost_credit: '0.00', total_ingredient_cost: i === count - 1 ? null : '45000.25', gross_profit_per_item: i === count - 1 ? null : '75000.3000', gross_profit: i === count - 1 ? null : '75000.30', gross_profit_margin_pct: i === count - 1 ? null : '62.50', cost_source: i === count - 1 ? 'MISSING' : 'ACTUAL_STOCK', cost_complete: i !== count - 1, cost_coverage_pct: i === count - 1 ? '0.00' : '100.00',
@@ -75,7 +75,7 @@ async function noOverflow(page: Page) {
 test('server totals, exact decimal money, incomplete costs and paginated rows remain distinct', async ({ page }) => {
   const calls = await setup(page)
   await page.goto('/reports/product-performance')
-  await expect(page.locator('[data-metric="revenue"] .report-stat__value')).toContainText('3\u202f240\u202f014.85')
+  await expect(page.locator('[data-metric="revenue"] .report-stat__value')).toContainText('3,240,014.85')
   await expect(page.locator('[data-metric="cost"] .report-stat__value')).toHaveText('—')
   await expect(page.locator('[data-metric="profit"] .report-stat__value')).toHaveText('—')
   await expect(page.locator('.report-cost-warning')).toContainText('incomplete historical ingredient cost: 1')
@@ -84,12 +84,12 @@ test('server totals, exact decimal money, incomplete costs and paginated rows re
   expect(jsonCalls(calls)[0].searchParams.get('sort')).toBe('highest_revenue')
   await page.locator('.pagination .pglist button').filter({ hasText: /^2$/ }).click()
   await expect(page.locator('.product-report-table tbody tr')).toHaveCount(2)
-  await expect(page.locator('[data-metric="revenue"] .report-stat__value')).toContainText('3\u202f240\u202f014.85')
+  await expect(page.locator('[data-metric="revenue"] .report-stat__value')).toContainText('3,240,014.85')
   const unknown = page.locator('.product-report-table tbody tr').filter({ hasText: 'Product 27' })
   await expect(unknown).toContainText('Incomplete')
   await expect(unknown).toContainText('—')
   await page.getByRole('button', { name: /^Daily/ }).click()
-  await expect(page.locator('.report-aggregate-table')).toContainText('3\u202f240\u202f014.85')
+  await expect(page.locator('.report-aggregate-table')).toContainText('3,240,014.85')
 })
 
 test('all sorts and category filters are server driven and reset page one', async ({ page }) => {
@@ -105,7 +105,7 @@ test('all sorts and category filters are server driven and reset page one', asyn
   }
   await select(page, 'Category', 'Drinks')
   await expect(page.locator('.product-report-table tbody tr')).toHaveCount(13)
-  await expect(page.locator('[data-metric="revenue"] .report-stat__value')).toContainText('1\u202f560\u202f007.15')
+  await expect(page.locator('[data-metric="revenue"] .report-stat__value')).toContainText('1,560,007.15')
   await expect(page.locator('.report-cost-warning')).toHaveCount(0)
 })
 
@@ -177,7 +177,7 @@ test('changing search cancels the previous request and retains only the latest t
   await page.getByRole('textbox', { name: 'Search', exact: true }).fill('Product 2')
   await canceled
   await expect(page.locator('.product-report-table tbody tr')).toHaveCount(9)
-  await expect(page.locator('[data-metric="revenue"] .report-stat__value')).toContainText('1\u202f080\u202f004.95')
+  await expect(page.locator('[data-metric="revenue"] .report-stat__value')).toContainText('1,080,004.95')
   release()
   await expect.poll(() => slowFinished).toBe(true)
   await expect(page.locator('.product-report-table tbody tr')).toHaveCount(9)

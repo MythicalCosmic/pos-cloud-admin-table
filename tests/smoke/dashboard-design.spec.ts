@@ -18,7 +18,7 @@ const categories = [
   { category: 'Seasonal specials', revenue: Math.round(revenue * 0.01) },
 ]
 
-const grouped = (value: number) => String(value).replace(/\B(?=(\d{3})+(?!\d))/g, '\u202F')
+const grouped = (value: number) => String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 
 interface FixtureState {
   fail?: boolean
@@ -966,9 +966,9 @@ test('today orders remain independent of range totals and distinguish zero from 
   await expect(card.locator('.today-orders__count')).toHaveText('42')
   const pulse = page.getByRole('region', { name: 'Today at a glance', exact: true })
   await expect(pulse).toContainText('13:00–14:00')
-  await expect(pulse).toContainText('11 orders · 690 000 UZS')
+  await expect(pulse).toContainText('11 orders · 690,000 UZS')
   await expect(pulse).toContainText('Signature lavash with grilled chicken')
-  await expect(pulse).toContainText('28 sold · 1 400 000 UZS')
+  await expect(pulse).toContainText('28 sold · 1,400,000 UZS')
   await pulse.screenshot({ path: '/tmp/alpha-dashboard-today-pulse.png', animations: 'disabled' })
   await expect(page.getByRole('button', { name: 'Refresh', exact: true })).toBeEnabled()
   expect(calls.filter(url => url.pathname.endsWith('/dashboard/today'))).toHaveLength(1)

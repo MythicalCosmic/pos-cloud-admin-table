@@ -413,7 +413,7 @@ test('uses selectable paths, server filters, and a retry-safe dry-run-first recl
   await page.getByRole('option', { name: /Rent.*Fixed/ }).click()
   await reviewDialog.getByRole('button', { name: 'Preview changes' }).click()
   await expect(reviewDialog.getByText('Exact UZS total', { exact: true })).toBeVisible()
-  await expect(reviewDialog.getByText('400 000', { exact: true }).first()).toBeVisible()
+  await expect(reviewDialog.getByText('400,000', { exact: true }).first()).toBeVisible()
   await page.screenshot({ path: '/tmp/alpha-expense-reclassification-preview.png', animations: 'disabled' })
 
   await page.setViewportSize({ width: 390, height: 844 })

@@ -8,7 +8,9 @@ interface MoneyInputOptions {
 function moneyParts(value: string | null | undefined, options: MoneyInputOptions) {
   const raw = String(value ?? '')
   const allowFraction = options.allowFraction ?? false
-  const separatorIndex = allowFraction ? raw.search(/[.,]/) : -1
+
+  // Commas group thousands, so only a dot starts the fraction.
+  const separatorIndex = allowFraction ? raw.indexOf('.') : -1
   const integerSource = separatorIndex >= 0 ? raw.slice(0, separatorIndex) : raw
   const fractionSource = separatorIndex >= 0 ? raw.slice(separatorIndex + 1) : ''
   const maxFractionDigits = options.maxFractionDigits ?? 4
@@ -55,7 +57,7 @@ export function parseMoneyInput(
 
 /**
  * Format whole-number UZS while keeping the stored value safe for the API.
- * Uses the canonical formatter, including narrow no-break-space grouping.
+ * Uses the canonical formatter, including comma thousands grouping.
  */
 export function formatWholeMoneyInput(value: string | null | undefined): string {
   return formatMoneyInput(value)

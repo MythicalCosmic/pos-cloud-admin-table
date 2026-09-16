@@ -118,7 +118,7 @@ const secondaryKpis = computed(() => {
   if (D.dayLabels.length) {
     const total = D.orders30.reduce((sum, value) => sum + value, 0)
 
-    rows.push({ label: isHourly.value ? t('Average orders per hour') : t('Average orders per day'), value: new Intl.NumberFormat(String(locale.value), { maximumFractionDigits: 1 }).format(total / D.dayLabels.length), tone: 'primary' })
+    rows.push({ label: isHourly.value ? t('Average orders per hour') : t('Average orders per day'), value: new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 }).format(total / D.dayLabels.length), tone: 'primary' })
   }
   rows.push({ label: t('Gross Margin'), value: D.grossMargin === null ? '—' : `${D.grossMargin}%`, tone: 'primary' })
   if (D.repeatRate > 0)

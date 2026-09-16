@@ -6,7 +6,7 @@ function bucket(total: number, count: number) {
 
 // Amounts render with the locale's (narrow) no-break group separator.
 function money(value: string) {
-  return new RegExp(value.split(' ').join('[\\s\\u00A0\\u202F]'))
+  return new RegExp(value.split(' ').join(','))
 }
 
 const summary = {

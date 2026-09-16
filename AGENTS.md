@@ -36,7 +36,8 @@ original durable UX and dialog feedback has been incorporated below.
   business values. Compare Periods is the approved, visibly labeled demo-data
   exception until its backend endpoint is available.
 - Use tabular figures for money/quantities and existing UZS formatters with
-  narrow no-break-space grouping. Do not fork number formatters.
+  comma thousands grouping (1,240,000; owner decision 2026-09-16) and a
+  narrow no-break space before the unit. Do not fork number formatters.
 
 ## Architecture and file placement
 

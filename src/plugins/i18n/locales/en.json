@@ -6056,5 +6056,21 @@
   "owner_warning_action_SUPPLIER_PURCHASES_RECORDED_AS_EXPENSES": "Suppliers",
   "owner_warning_action_SUPPLIER_LEDGER_OVERLAP_POSSIBLE": "Suppliers",
   "owner_warning_action_UNCLASSIFIED_EXPENSES": "Review expenses",
-  "owner_warning_action_EXPENSES_NOT_PAID_THROUGH_TREASURY": "Unpaid expenses"
+  "owner_warning_action_EXPENSES_NOT_PAID_THROUGH_TREASURY": "Unpaid expenses",
+  "staff_no_login": "No sign-in",
+  "expense_supplier_scope": "Supplier purchases",
+  "expense_supplier_scope_exclude": "Expenses without supplier purchases",
+  "expense_supplier_scope_all": "Including supplier purchases",
+  "expense_supplier_scope_only": "Supplier purchases only",
+  "supplier_purchases_tab": "Paid purchases",
+  "supplier_purchases_title": "Paid purchases",
+  "supplier_purchases_sub": "Purchases from this supplier paid from the safe, the bank or a till",
+  "supplier_purchases_total": "Total paid",
+  "supplier_purchases_count": "Purchases",
+  "supplier_purchases_paid_from": "Paid from",
+  "supplier_purchases_source_SAFE": "Safe",
+  "supplier_purchases_source_BANK": "Bank",
+  "supplier_purchases_source_DRAWER": "Till",
+  "supplier_purchases_empty": "No paid purchases in this period",
+  "supplier_purchases_failed": "Could not load purchases"
 }

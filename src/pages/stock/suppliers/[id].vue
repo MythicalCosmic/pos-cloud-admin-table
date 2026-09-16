@@ -30,6 +30,7 @@ import Select from '@/components/design/Select.vue'
 import StateFill from '@/components/design/StateFill.vue'
 import Switch from '@/components/design/Switch.vue'
 import { useUserAccess } from '@/composables/useUserAccess'
+import SupplierPurchasesPanel from '@/components/stock/suppliers/SupplierPurchasesPanel.vue'
 
 const { t } = useI18n({ useScope: 'global' })
 const { snackbar, snackbarMsg, snackbarColor, notify } = useNotify()
@@ -72,7 +73,7 @@ const supplierId = computed(() => String(route.params.id ?? ''))
 // ============================================================
 const supplier = ref<any>(null)
 const loading = ref(false)
-const tab = ref<'overview' | 'items' | 'ledger'>('overview')
+const tab = ref<'overview' | 'items' | 'ledger' | 'purchases'>('overview')
 let supplierRouteVersion = 0
 let supplierRequestId = 0
 let supplierItemsRequestId = 0
@@ -964,6 +965,7 @@ const tabOptions = computed(() => [
   ...(canViewSupplierBalance.value
     ? [{ value: 'ledger', label: t('tab_ledger'), icon: 'receipt' }]
     : []),
+  { value: 'purchases', label: t('supplier_purchases_tab'), icon: 'wallet' },
 ])
 
 watch(() => payForm.value.source_account, source => {
@@ -1125,7 +1127,7 @@ function backToList() {
       <Segmented
         :model-value="tab"
         :options="tabOptions"
-        @update:model-value="(v) => tab = v as 'overview' | 'items' | 'ledger'"
+        @update:model-value="(v) => tab = v as 'overview' | 'items' | 'ledger' | 'purchases'"
       />
     </div>
 
@@ -1408,6 +1410,12 @@ function backToList() {
         </template>
       </DataTable>
     </Card>
+
+    <!-- Paid purchases tab -->
+    <SupplierPurchasesPanel
+      v-else-if="tab === 'purchases'"
+      :supplier-id="supplierId"
+    />
 
     <!-- Ledger tab -->
     <Card v-else-if="tab === 'ledger'">

@@ -124,12 +124,12 @@ test('dashboard CSV neutralizes formula-like names without changing negative num
 
 test('shared exact money formatting preserves cents, weighted prices and unsafe-sized integers', () => {
   const { fmtMoney } = loadSource('components/design/utils/format.ts')
-  assert.equal(fmtMoney('9007199254740993.12', { exact: true }), '9\u202f007\u202f199\u202f254\u202f740\u202f993.12')
-  assert.equal(fmtMoney('109701.4925', { exact: true }), '109\u202f701.4925')
-  assert.equal(fmtMoney('120000.5500', { exact: true }), '120\u202f000.55')
-  assert.equal(fmtMoney('7250000.00', { exact: true }), '7\u202f250\u202f000')
+  assert.equal(fmtMoney('9007199254740993.12', { exact: true }), '9,007,199,254,740,993.12')
+  assert.equal(fmtMoney('109701.4925', { exact: true }), '109,701.4925')
+  assert.equal(fmtMoney('120000.5500', { exact: true }), '120,000.55')
+  assert.equal(fmtMoney('7250000.00', { exact: true }), '7,250,000')
   assert.equal(fmtMoney(null, { exact: true }), '—')
   assert.equal(fmtMoney(undefined, { exact: true }), '—')
   assert.equal(fmtMoney('0.00', { exact: true }), '0')
-  assert.equal(fmtMoney(1234.56), '1\u202f235')
+  assert.equal(fmtMoney(1234.56), '1,235')
 })

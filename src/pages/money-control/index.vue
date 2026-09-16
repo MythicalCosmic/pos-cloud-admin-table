@@ -56,7 +56,7 @@ interface ExpenseTableRow extends ExpenseCategorySummaryRow {
   sharePercent: number | null
 }
 
-const { t, locale } = useI18n({ useScope: 'global' })
+const { t } = useI18n({ useScope: 'global' })
 const { formatCurrency, formatDate } = useFormatters()
 const { notify } = useNotify()
 
@@ -108,20 +108,11 @@ const partiallyUnavailable = computed(() =>
   && [overviewState.value, inventoryState.value].includes('integration-unavailable'),
 )
 
-const localeTag = computed(() => {
-  if (locale.value === 'ru')
-    return 'ru-RU'
-  if (locale.value === 'uz')
-    return 'uz-UZ'
-
-  return 'en-GB'
-})
-
-const quantityFormatter = computed(() => new Intl.NumberFormat(localeTag.value, {
+const quantityFormatter = computed(() => new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 3,
 }))
 
-const percentFormatter = computed(() => new Intl.NumberFormat(localeTag.value, {
+const percentFormatter = computed(() => new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 1,
   minimumFractionDigits: 0,
 }))

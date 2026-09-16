@@ -83,6 +83,7 @@ export interface ExpenseRecord {
   uuid: string
   category: ExpenseCategorySnapshot | null
   category_id: number | null
+  supplier?: { id: number; name: string } | null
   amount: string
   amount_uzs: number
   fee_uzs: number

@@ -208,11 +208,10 @@ const ROLE_TONE: Record<string, 'primary' | 'info' | 'neutral' | 'success' | 'wa
 // ============================================================
 // Formatters
 // ============================================================
-const NB = ' ' // narrow no-break space
 function fmtNum(n: number | null | undefined): string {
   if (n === null || n === undefined || Number.isNaN(Number(n))) return '—'
   const neg = Number(n) < 0
-  const s = Math.round(Math.abs(Number(n))).toString().replace(/\B(?=(\d{3})+(?!\d))/g, NB)
+  const s = Math.round(Math.abs(Number(n))).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
   return (neg ? '−' : '') + s
 }
 function fmtAbbr(n: number | null | undefined): string {

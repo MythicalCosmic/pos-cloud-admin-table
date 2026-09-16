@@ -110,7 +110,7 @@ const heroKpis = computed<HeroKpiData[]>(() => {
   const totalOrders = orderBuckets.reduce((sum, value) => sum + value, 0)
   const bucketCount = Math.max(1, D.dayLabels.length || orderBuckets.length)
 
-  const averageOrders = new Intl.NumberFormat(String(locale.value), {
+  const averageOrders = new Intl.NumberFormat('en-US', {
     maximumFractionDigits: 1,
   }).format(totalOrders / bucketCount)
 

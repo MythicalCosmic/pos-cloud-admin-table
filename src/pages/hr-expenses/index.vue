@@ -96,7 +96,9 @@ const EXPENSE_STATUSES: ExpenseStatus[] = [
 ]
 
 const EXPENSE_SOURCES: ExpenseSource[] = ['DRAWER', 'SAFE', 'BANK']
-const FILTER_QUERY_KEYS = ['status', 'category', 'from', 'to', 'source', 'behavior', 'group', 'q']
+const FILTER_QUERY_KEYS = ['status', 'category', 'from', 'to', 'source', 'behavior', 'group', 'suppliers', 'q']
+const SUPPLIER_SCOPES = ['all', 'only'] as const
+type SupplierScope = typeof SUPPLIER_SCOPES[number] | ''
 
 function queryText(key: string): string {
   const value = route.query[key]
@@ -129,9 +131,12 @@ const categoryFilter = ref(/^\d+$/.test(queryText('category')) ? queryText('cate
 const costBehaviorFilter = ref<ExpenseCostBehavior | ''>(queryChoice('behavior', EXPENSE_COST_BEHAVIORS))
 const reportingGroupFilter = ref<string>(queryChoice('group', EXPENSE_REPORTING_GROUPS))
 const sourceFilter = ref<ExpenseSource | ''>(queryChoice('source', EXPENSE_SOURCES))
+
+// Supplier purchases live on the supplier pages; by default the list shows the other expenses.
+const supplierScope = ref<SupplierScope>(SUPPLIER_SCOPES.find(value => value === queryText('suppliers')) ?? '')
 const dateRange = ref<DateRangeValue>(hasInitialRange ? { from: initialFrom, to: initialTo } : allTime())
 const search = ref(queryText('q'))
-const showMoreFilters = ref(!!(costBehaviorFilter.value || reportingGroupFilter.value))
+const showMoreFilters = ref(!!(costBehaviorFilter.value || reportingGroupFilter.value || supplierScope.value))
 const scopeTotals = ref<ExpenseTotals>({ row_count: 0, amount_uzs: 0, by_status: {} })
 const reviewMode = ref(false)
 const reviewSelection = ref<Set<string | number>>(new Set())
@@ -179,7 +184,12 @@ const sourceFilterOptions = computed(() => EXPENSE_SOURCES.map(value => ({
   label: t(`supplier_source_${value}`),
 })))
 
-const moreFilterCount = computed(() => [costBehaviorFilter.value, reportingGroupFilter.value].filter(Boolean).length)
+const moreFilterCount = computed(() => [costBehaviorFilter.value, reportingGroupFilter.value, supplierScope.value].filter(Boolean).length)
+
+const supplierScopeOptions = computed(() => [
+  { value: 'all', label: t('expense_supplier_scope_all') },
+  { value: 'only', label: t('expense_supplier_scope_only') },
+])
 
 interface FilterChip {
   key: string
@@ -216,6 +226,8 @@ const activeFilterChips = computed<FilterChip[]>(() => {
     chips.push({ key: 'behavior', label: t('expense_cost_behavior'), value: t(`expense_cost_behavior_${costBehaviorFilter.value}`), clear: () => { costBehaviorFilter.value = '' } })
   if (reportingGroupFilter.value)
     chips.push({ key: 'group', label: t('expense_reporting_group'), value: t(`expense_reporting_group_${reportingGroupFilter.value}`), clear: () => { reportingGroupFilter.value = '' } })
+  if (supplierScope.value)
+    chips.push({ key: 'suppliers', label: t('expense_supplier_scope'), value: t(`expense_supplier_scope_${supplierScope.value}`), clear: () => { supplierScope.value = '' } })
 
   return chips
 })
@@ -227,6 +239,7 @@ function clearFilters() {
   sourceFilter.value = ''
   costBehaviorFilter.value = ''
   reportingGroupFilter.value = ''
+  supplierScope.value = ''
 }
 
 const filterQuery = computed(() => {
@@ -240,6 +253,7 @@ const filterQuery = computed(() => {
     ['source', sourceFilter.value],
     ['behavior', costBehaviorFilter.value],
     ['group', reportingGroupFilter.value],
+    ['suppliers', supplierScope.value],
     ['q', search.value.trim()],
   ]
 
@@ -348,6 +362,7 @@ function expenseFilters(): ExpenseListParams {
     date_from: dateRange.value.from || undefined,
     date_to: dateRange.value.to || undefined,
     search: search.value.trim() || undefined,
+    supplier_purchases: supplierScope.value === 'all' ? undefined : (supplierScope.value === 'only' ? 'only' : 'exclude'),
   }
 }
 
@@ -394,7 +409,7 @@ async function loadCategories() {
 
 onMounted(() => Promise.all([load(), loadCategories()]))
 watch([page, itemsPerPage], load)
-watch([statusFilter, categoryFilter, costBehaviorFilter, reportingGroupFilter, sourceFilter, dateRange], () => {
+watch([statusFilter, categoryFilter, costBehaviorFilter, reportingGroupFilter, sourceFilter, supplierScope, dateRange], () => {
   page.value = 1
   reviewSelection.value = new Set()
   load()
@@ -1020,6 +1035,14 @@ async function reloadReclassification() {
                 :aria-label="t('expense_reporting_group')"
               />
             </div>
+            <div class="tb-filter tb-filter--wide">
+              <Select
+                v-model="supplierScope"
+                :options="supplierScopeOptions"
+                :placeholder="t('expense_supplier_scope_exclude')"
+                :aria-label="t('expense_supplier_scope')"
+              />
+            </div>
           </div>
         </WorkspaceToolbar>
 
@@ -1128,6 +1151,14 @@ async function reloadReclassification() {
           </template>
           <template #cell.description="{ row }">
             <span class="cell-muted expense-description">{{ row.description || '—' }}</span>
+            <RouterLink
+              v-if="row.supplier"
+              class="expense-supplier"
+              :to="`/stock/suppliers/${row.supplier.id}`"
+              @click.stop
+            >
+              {{ row.supplier.name }}
+            </RouterLink>
           </template>
           <template #cell.amount_uzs="{ row }">
             <span class="mono">{{ formatCurrency(row.amount_uzs ?? row.amount ?? 0) }}</span>
@@ -1831,4 +1862,6 @@ meta:
   .preview-hero strong { font-size: 18px; }
   .error-banner { align-items: flex-start; flex-direction: column; }
 }
+.expense-supplier { display: inline-block; margin-top: 2px; font-size: 12px; font-weight: 600; color: var(--primary); text-decoration: none; }
+.expense-supplier:hover { text-decoration: underline; }
 </style>

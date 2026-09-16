@@ -24,10 +24,12 @@ import Select from '@/components/design/Select.vue'
 import StateFill from '@/components/design/StateFill.vue'
 import { buildCsv } from '@/utils/csv'
 import { formatMonthNumber } from '@/utils/monthLabels'
+import { realEmail, staffName } from '@/utils/staff'
+import { fmtDate } from '@/components/design/utils/format'
 
 const { t } = useI18n({ useScope: 'global' })
 const { snackbar, snackbarMsg, snackbarColor, notify } = useNotify()
-const { formatCurrency, formatDate } = useFormatters()
+const { formatCurrency } = useFormatters()
 
 // ============================================================
 // State
@@ -65,10 +67,6 @@ const STATUS_TONE: Record<string, 'success' | 'warning' | 'error' | 'info' | 'ne
 async function load() {
   loading.value = true
   try {
-    // KNOWN LIMITATION: BE salary_views.salaries only forwards `page` and `per_page`
-    // to SalaryService.list. The status / employee_id / year / month params below
-    // are silently dropped server-side until the BE view is updated to forward them
-    // (the service signature already accepts these filters).
     const params: any = { page: page.value, per_page: itemsPerPage.value }
     if (statusFilter.value)
       params.status = statusFilter.value
@@ -612,8 +610,7 @@ function employeeName(row: any): string {
   const u = row?.employee?.user
   if (!u)
     return '—'
-  const full = `${u.first_name ?? ''} ${u.last_name ?? ''}`.trim()
-  return full || u.email || '—'
+  return staffName(u, row.employee?.position) || realEmail(u.email) || '—'
 }
 </script>
 
@@ -789,11 +786,25 @@ function employeeName(row: any): string {
         </template>
 
         <template #cell.bonus="{ row }">
-          <span class="num-tabular t-success">{{ formatCurrency(row.bonus ?? 0) }}</span>
+          <span
+            v-if="Number(row.bonus)"
+            class="num-tabular t-success"
+          >{{ formatCurrency(row.bonus) }}</span>
+          <span
+            v-else
+            class="cell-muted"
+          >—</span>
         </template>
 
         <template #cell.deduction="{ row }">
-          <span class="num-tabular t-error">{{ formatCurrency(row.deduction ?? 0) }}</span>
+          <span
+            v-if="Number(row.deduction)"
+            class="num-tabular t-error"
+          >{{ formatCurrency(row.deduction) }}</span>
+          <span
+            v-else
+            class="cell-muted"
+          >—</span>
         </template>
 
         <template #cell.net_salary="{ row }">
@@ -815,7 +826,10 @@ function employeeName(row: any): string {
         </template>
 
         <template #cell.paid_at="{ row }">
-          <span v-if="row.paid_at">{{ formatDate(row.paid_at) }}</span>
+          <span
+            v-if="row.paid_at"
+            class="nowrap"
+          >{{ fmtDate(row.paid_at) }}</span>
           <span
             v-else
             class="cell-muted"

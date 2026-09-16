@@ -5967,5 +5967,21 @@
   "owner_warning_action_SUPPLIER_PURCHASES_RECORDED_AS_EXPENSES": "Поставщики",
   "owner_warning_action_SUPPLIER_LEDGER_OVERLAP_POSSIBLE": "Поставщики",
   "owner_warning_action_UNCLASSIFIED_EXPENSES": "Расходы на проверку",
-  "owner_warning_action_EXPENSES_NOT_PAID_THROUGH_TREASURY": "Неоплаченные расходы"
+  "owner_warning_action_EXPENSES_NOT_PAID_THROUGH_TREASURY": "Неоплаченные расходы",
+  "staff_no_login": "Без входа в систему",
+  "expense_supplier_scope": "Закупки у поставщиков",
+  "expense_supplier_scope_exclude": "Расходы без закупок",
+  "expense_supplier_scope_all": "Вместе с закупками",
+  "expense_supplier_scope_only": "Только закупки у поставщиков",
+  "supplier_purchases_tab": "Оплаченные закупки",
+  "supplier_purchases_title": "Оплаченные закупки",
+  "supplier_purchases_sub": "Закупки у этого поставщика, оплаченные из сейфа, банка или кассы",
+  "supplier_purchases_total": "Всего оплачено",
+  "supplier_purchases_count": "Количество закупок",
+  "supplier_purchases_paid_from": "Откуда оплачено",
+  "supplier_purchases_source_SAFE": "Сейф",
+  "supplier_purchases_source_BANK": "Банк",
+  "supplier_purchases_source_DRAWER": "Касса",
+  "supplier_purchases_empty": "За этот период оплаченных закупок нет",
+  "supplier_purchases_failed": "Не удалось загрузить закупки"
 }

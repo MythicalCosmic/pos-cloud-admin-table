@@ -25,13 +25,13 @@ import Modal from '@/components/design/Modal.vue'
 import PageHeader from '@/components/design/PageHeader.vue'
 import Select from '@/components/design/Select.vue'
 import Switch from '@/components/design/Switch.vue'
-import { fmtNum } from '@/components/design/utils/format'
+import { fmtDate, fmtNum } from '@/components/design/utils/format'
 import { buildCsv } from '@/utils/csv'
 import EmployeeHistoryModal from '@/components/hr/EmployeeHistoryModal.vue'
+import { realEmail, staffName } from '@/utils/staff'
 
 const { t } = useI18n({ useScope: 'global' })
 const { snackbar, snackbarMsg, snackbarColor, notify } = useNotify()
-const { formatDate } = useFormatters()
 
 // ============================================================
 // State
@@ -622,10 +622,10 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
       >
         <template #cell.name="{ row }">
           <div class="cell-strong">
-            {{ `${row.user?.first_name ?? ''} ${row.user?.last_name ?? ''}`.trim() || '—' }}
+            {{ staffName(row.user, row.position) || '—' }}
           </div>
           <div class="cell-muted" style="font-size:12px;">
-            {{ row.user?.email || '—' }}
+            {{ realEmail(row.user?.email) || ((row.user?.role && row.user.role !== 'USER') ? t(`role_${row.user.role}`) : t('staff_no_login')) }}
           </div>
         </template>
 
@@ -656,7 +656,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
         </template>
 
         <template #cell.hire_date="{ row }">
-          <span class="cell-muted">{{ row.hire_date ? formatDate(row.hire_date) : '—' }}</span>
+          <span class="cell-muted nowrap">{{ row.hire_date ? fmtDate(row.hire_date) : '—' }}</span>
         </template>
 
         <template #cell.is_active="{ row }">

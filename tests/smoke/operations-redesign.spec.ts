@@ -226,7 +226,7 @@ test('phone filters preserve their values and employee records expose every colu
   await expect(record).toContainText('Alexandra')
   await record.getByRole('button', { name: 'Details', exact: true }).focus()
   await page.keyboard.press('Enter')
-  await expect(record).toContainText('7\u202f800\u202f000')
+  await expect(record).toContainText('7,800,000')
   await expect(record).toContainText('2025')
   await expect(record.locator('.mobile-record__fields > div')).toHaveCount(8)
   await page.getByRole('button', { name: 'Search & filters', exact: true }).click()

@@ -7,7 +7,8 @@ import type { DataTableColumn } from '@/components/design/DataTable.vue'
 import Badge from '@/components/design/Badge.vue'
 import DataTable from '@/components/design/DataTable.vue'
 import Modal from '@/components/design/Modal.vue'
-import { fmtNum } from '@/components/design/utils/format'
+import { fmtDate, fmtNum } from '@/components/design/utils/format'
+import { staffName } from '@/utils/staff'
 import defaultAxios, { hrApi } from '@/plugins/axios'
 
 const props = defineProps<{
@@ -18,7 +19,7 @@ const props = defineProps<{
 const emit = defineEmits<{ (e: 'close'): void }>()
 
 const { t } = useI18n({ useScope: 'global' })
-const { formatDate, formatDateShort } = useFormatters()
+const { formatDate } = useFormatters()
 
 const salaries = ref<any[]>([])
 const payments = ref<any[]>([])
@@ -32,10 +33,7 @@ const STATUS_TONE: Record<string, 'success' | 'warning' | 'info' | 'neutral'> = 
   PAID: 'success',
 }
 
-const name = computed(() => {
-  const u = props.employee?.user
-  return `${u?.first_name ?? ''} ${u?.last_name ?? ''}`.trim() || '—'
-})
+const name = computed(() => staffName(props.employee?.user, props.employee?.position) || '—')
 
 const paidTotal = computed(() => salaries.value
   .filter(s => s.status === 'PAID')
@@ -91,7 +89,7 @@ async function load() {
     const res = await hrApi.get('/salaries/', { params: { employee_id: employee.id, per_page: 100 } })
     const d = res.data?.data ?? res.data
 
-    salaries.value = [...(d?.salaries ?? [])].sort((a, b) =>
+    salaries.value = (d?.salaries ?? []).filter((s: any) => s.employee_id === employee.id).sort((a: any, b: any) =>
       (b.period_year - a.period_year) || (b.period_month - a.period_month))
   }
   catch {
@@ -162,7 +160,7 @@ watch(() => [props.open, props.employee?.id], ([open]) => {
         </div>
         <div>
           <dt>{{ t('employee_history_last_paid') }}</dt>
-          <dd>{{ lastPaid ? formatDateShort(lastPaid) : '—' }}</dd>
+          <dd>{{ lastPaid ? fmtDate(lastPaid) : '—' }}</dd>
         </div>
       </dl>
 
@@ -184,6 +182,7 @@ watch(() => [props.open, props.employee?.id], ([open]) => {
           row-key="id"
           :loading="loading"
           :per-page="12"
+          hide-single-page
           expandable
           :empty-title="t('employee_history_no_salaries')"
           empty-icon="wallet"
@@ -206,7 +205,7 @@ watch(() => [props.open, props.employee?.id], ([open]) => {
             </Badge>
           </template>
           <template #cell.paid_at="{ row }">
-            <span class="cell-muted">{{ row.paid_at ? formatDateShort(row.paid_at) : '—' }}</span>
+            <span class="cell-muted">{{ row.paid_at ? fmtDate(row.paid_at) : '—' }}</span>
           </template>
           <template #expanded="{ row }">
             <p class="emp-history__notes">
@@ -226,6 +225,7 @@ watch(() => [props.open, props.employee?.id], ([open]) => {
           row-key="id"
           :loading="loading"
           :per-page="10"
+          hide-single-page
           :empty-title="t('employee_history_no_payments')"
           empty-icon="wallet"
         >

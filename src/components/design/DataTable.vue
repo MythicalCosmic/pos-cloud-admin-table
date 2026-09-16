@@ -81,6 +81,9 @@ interface Props {
   mobileSummary?: string[]
   mobileTitleKey?: string
   actionsWidth?: string
+
+  /** Hide the pagination footer when every row fits on one page (short, embedded tables). */
+  hideSinglePage?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -785,7 +788,7 @@ function skeletonWidth(c: number) {
 
     <!-- Pagination footer (decision #3: delegated to <Pagination>) -->
     <Pagination
-      v-if="!loading && totalItems > 0"
+      v-if="!loading && totalItems > 0 && !(hideSinglePage && totalItems <= pp)"
       :page="curPage"
       :per-page="pp"
       :pages="totalPages"

@@ -36,6 +36,7 @@ export interface ExpenseListParams {
   date_from?: string
   date_to?: string
   search?: string
+  supplier_purchases?: 'exclude' | 'only'
 }
 
 type AllCategoryListParams = Omit<CategoryListParams, 'page' | 'per_page'>

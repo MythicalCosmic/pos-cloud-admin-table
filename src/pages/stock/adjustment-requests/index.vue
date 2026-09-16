@@ -110,7 +110,7 @@ function formatQuantity(value: string | number): string {
   if (!Number.isFinite(number))
     return String(value)
 
-  return new Intl.NumberFormat('en-US', { maximumFractionDigits: 4 }).format(number).replace(/,/g, '\u202F')
+  return new Intl.NumberFormat('en-US', { maximumFractionDigits: 4 }).format(number)
 }
 
 async function load() {

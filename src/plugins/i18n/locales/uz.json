@@ -5967,5 +5967,21 @@
   "owner_warning_action_SUPPLIER_PURCHASES_RECORDED_AS_EXPENSES": "Yetkazib beruvchilar",
   "owner_warning_action_SUPPLIER_LEDGER_OVERLAP_POSSIBLE": "Yetkazib beruvchilar",
   "owner_warning_action_UNCLASSIFIED_EXPENSES": "Tekshirish kerak xarajatlar",
-  "owner_warning_action_EXPENSES_NOT_PAID_THROUGH_TREASURY": "To'lanmagan xarajatlar"
+  "owner_warning_action_EXPENSES_NOT_PAID_THROUGH_TREASURY": "To'lanmagan xarajatlar",
+  "staff_no_login": "Tizimga kirmaydi",
+  "expense_supplier_scope": "Yetkazib beruvchi xaridlari",
+  "expense_supplier_scope_exclude": "Xaridlarsiz xarajatlar",
+  "expense_supplier_scope_all": "Xaridlar bilan birga",
+  "expense_supplier_scope_only": "Faqat yetkazib beruvchi xaridlari",
+  "supplier_purchases_tab": "To'langan xaridlar",
+  "supplier_purchases_title": "To'langan xaridlar",
+  "supplier_purchases_sub": "Seyf, bank yoki kassadan shu yetkazib beruvchiga to'langan xaridlar",
+  "supplier_purchases_total": "Jami to'langan",
+  "supplier_purchases_count": "Xaridlar soni",
+  "supplier_purchases_paid_from": "Qayerdan to'langan",
+  "supplier_purchases_source_SAFE": "Seyf",
+  "supplier_purchases_source_BANK": "Bank",
+  "supplier_purchases_source_DRAWER": "Kassa",
+  "supplier_purchases_empty": "Bu davrda to'langan xarid yo'q",
+  "supplier_purchases_failed": "Xaridlarni yuklab bo'lmadi"
 }

@@ -402,7 +402,7 @@ const headline = computed(() => {
   if (kpi.delta_pct === null)
     return t('Sales changed between the selected periods')
 
-  const percent = new Intl.NumberFormat(String(locale.value), { maximumFractionDigits: 1 }).format(Math.abs(kpi.delta_pct))
+  const percent = new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 }).format(Math.abs(kpi.delta_pct))
   if (kpi.delta_pct > 0)
     return t('Sales grew by {percent}%', { percent })
   if (kpi.delta_pct < 0)
@@ -444,7 +444,7 @@ const primaryDeltaLabel = computed(() => {
   if (value === null)
     return t('New')
 
-  const formatted = new Intl.NumberFormat(String(locale.value), { maximumFractionDigits: 1 }).format(Math.abs(value))
+  const formatted = new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 }).format(Math.abs(value))
 
   return `${value > 0 ? '+' : value < 0 ? '−' : ''}${formatted}%`
 })

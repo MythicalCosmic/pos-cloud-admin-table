@@ -159,7 +159,7 @@ const localeTag = computed(() => {
   return 'en-GB'
 })
 
-const quantityFormatter = computed(() => new Intl.NumberFormat(localeTag.value, {
+const quantityFormatter = computed(() => new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 2,
 }))
 

@@ -175,13 +175,12 @@ function fmtSec(s: number | null | undefined): string {
 
 // ============================================================
 // Number formatters (mirror bundle Fmt helpers)
-// NB = U+202F narrow no-break space — kept literal per convention
+// Comma thousands grouping, matching the shared formatter
 // ============================================================
-const NB = ' '
 function fmtNum(n: number | null | undefined): string {
   if (n === null || n === undefined || Number.isNaN(Number(n))) return '—'
   const neg = Number(n) < 0
-  const s = Math.round(Math.abs(Number(n))).toString().replace(/\B(?=(\d{3})+(?!\d))/g, NB)
+  const s = Math.round(Math.abs(Number(n))).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
   return (neg ? '−' : '') + s
 }
 function fmtMoney(n: number | null | undefined): string { return fmtNum(n) }

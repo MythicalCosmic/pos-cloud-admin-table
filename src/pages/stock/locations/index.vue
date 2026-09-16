@@ -442,14 +442,14 @@ function fmtDecimal(v: any) {
   if (v == null || v === '') return '—'
   const n = Number(v)
   if (!Number.isFinite(n)) return '—'
-  return n.toLocaleString('en-US', { maximumFractionDigits: 4 }).replace(/,/g, '\u202f')
+  return n.toLocaleString('en-US', { maximumFractionDigits: 4 })
 }
 
 function fmtNumber(v: any) {
   if (v == null) return '—'
   const n = Number(v)
   if (!Number.isFinite(n)) return '—'
-  return n.toLocaleString('en-US').replace(/,/g, '\u202f')
+  return n.toLocaleString('en-US')
 }
 
 // ---- filters / chips ----

@@ -368,10 +368,10 @@ test.describe('Money Control', () => {
     await expect(page.getByText('Raw material value', { exact: true })).toBeVisible()
 
     // Full-format mode must show grouped UZS figures rather than abbreviations.
-    await expect(page.getByText(/12[\s\u202F]500[\s\u202F]000/).first()).toBeVisible()
-    await expect(page.getByText(/31[\s\u202F]250[\s\u202F]000/).first()).toBeVisible()
-    await expect(page.getByText(/8[\s\u202F]400[\s\u202F]000/).first()).toBeVisible()
-    await expect(page.getByText(/15[\s\u202F]600[\s\u202F]000/).first()).toBeVisible()
+    await expect(page.getByText(/12,500,000/).first()).toBeVisible()
+    await expect(page.getByText(/31,250,000/).first()).toBeVisible()
+    await expect(page.getByText(/8,400,000/).first()).toBeVisible()
+    await expect(page.getByText(/15,600,000/).first()).toBeVisible()
 
     const rawMaterials = page.locator('.raw-materials-card')
 
@@ -389,7 +389,7 @@ test.describe('Money Control', () => {
     await expect(supplierBalances.getByRole('link', { name: 'Tashkent Dairy' })).toBeVisible()
     await expect(
       supplierBalances.locator('tbody tr').filter({ hasText: 'Tashkent Dairy' }),
-    ).toContainText(/-600[\s\u202F]000/)
+    ).toContainText(/-600,000/)
     await expect(expenseCategories.getByText('Supplies', { exact: true })).toBeVisible()
     await expect(expenseCategories.getByText('Repairs', { exact: true })).toBeVisible()
     await expect(page.getByText('Backend integration is not connected yet')).toHaveCount(0)
@@ -421,7 +421,7 @@ test.describe('Money Control', () => {
     await mockPopulatedMoneyControlApi(page)
     await page.goto('/money-control')
 
-    await expect(page.getByText(/12[\s\u202F]500[\s\u202F]000/).first()).toBeVisible()
+    await expect(page.getByText(/12,500,000/).first()).toBeVisible()
 
     await page.locator('.money-control-filters').getByRole('button', { name: 'From', exact: true }).click()
     const calendar = page.locator('dialog.calendar-popover[open]')
@@ -431,7 +431,7 @@ test.describe('Money Control', () => {
     await expect(calendar.getByRole('button', { name: 'December', exact: true })).toBeDisabled()
     await page.keyboard.press('Escape')
     await expect(page.locator('.money-control-summary')).toBeVisible()
-    await expect(page.getByText(/12[\s\u202F]500[\s\u202F]000/).first()).toBeVisible()
+    await expect(page.getByText(/12,500,000/).first()).toBeVisible()
 
   })
 
@@ -469,7 +469,7 @@ test.describe('Money Control', () => {
     await expect(page.locator('.raw-materials-card')).toHaveCount(0)
     await expect(page.locator('.money-control-table-grid')).toHaveCount(0)
     await expect(page.locator('.kpi-card')).toHaveCount(0)
-    await expect(page.getByText(/\d[\s\u202F]\d{3}[\s\u202F]\d{3}\s*UZS/)).toHaveCount(0)
+    await expect(page.getByText(/\d,\d{3},\d{3}\s*UZS/)).toHaveCount(0)
   })
 
   test('keeps the populated workspace usable on mobile in light and dark themes', async ({ page }) => {

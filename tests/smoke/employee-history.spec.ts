@@ -81,15 +81,17 @@ test('staff pages are reachable and a worker shows salary and payment history', 
   await expect(page.locator('aside').getByRole('link', { name: 'Employees' })).toBeVisible()
   await expect(page.locator('aside').getByRole('link', { name: 'Salaries' })).toBeVisible()
 
-  await page.getByText('abbrorbek.staff@local').click()
+  await expect(page.getByText('abbrorbek.staff@local')).toHaveCount(0)
+  await expect(page.getByText('No sign-in', { exact: true })).toBeVisible()
+  await page.getByText('Abbrorbek', { exact: true }).click()
 
-  const dialog = page.getByRole('dialog', { name: 'Abbrorbek Fast food' })
+  const dialog = page.getByRole('dialog', { name: 'Abbrorbek', exact: true })
 
   await expect(dialog).toBeVisible()
   expect(salaryQueries.at(-1)?.searchParams.get('employee_id')).toBe('7')
-  await expect(dialog.getByText('08.2026')).toBeVisible()
-  await expect(dialog.getByText('07.2026')).toBeVisible()
-  await expect(dialog.getByText(/8[\s  ]180[\s  ]000/)).toBeVisible()
+  await expect(dialog.getByText('08.2026', { exact: true })).toBeVisible()
+  await expect(dialog.getByText('07.2026', { exact: true })).toBeVisible()
+  await expect(dialog.getByText(/8,180,000/)).toBeVisible()
   await expect(dialog.getByText('Salary payment for record 72.')).toBeVisible()
   await expect(dialog.getByText('[AUGUST-2026')).toHaveCount(0)
   await page.screenshot({ path: '/tmp/alpha-employee-history.png', animations: 'disabled' })
@@ -103,11 +105,13 @@ test('salary history still shows when Safe & Bank history is not permitted', asy
   await setup(page, { treasury: 'forbidden' })
 
   await page.goto('/hr-employees')
-  await page.getByText('abbrorbek.staff@local').click()
+  await expect(page.getByText('abbrorbek.staff@local')).toHaveCount(0)
+  await expect(page.getByText('No sign-in', { exact: true })).toBeVisible()
+  await page.getByText('Abbrorbek', { exact: true }).click()
 
-  const dialog = page.getByRole('dialog', { name: 'Abbrorbek Fast food' })
+  const dialog = page.getByRole('dialog', { name: 'Abbrorbek', exact: true })
 
-  await expect(dialog.getByText('08.2026')).toBeVisible()
+  await expect(dialog.getByText('08.2026', { exact: true })).toBeVisible()
   await expect(dialog.getByText('Safe and bank payments')).toHaveCount(0)
   await expect(dialog.getByRole('alert')).toHaveCount(0)
 })

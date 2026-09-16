@@ -178,7 +178,7 @@ test('uses the canonical expense request, approval, payment, and category-deacti
   const amount = createModal.getByRole('textbox', { name: 'Amount' })
 
   await amount.fill('100000')
-  await expect(amount).toHaveValue(/100[\s\u202F]000/)
+  await expect(amount).toHaveValue(/100,000/)
   await createModal.getByRole('textbox', { name: 'Description' }).fill('Monthly electricity')
   await createModal.getByRole('button', { name: 'Submit request' }).click()
 
@@ -218,7 +218,7 @@ test('uses the canonical expense request, approval, payment, and category-deacti
 
   await categoryModal.getByRole('textbox', { name: 'Category name' }).fill('Office supplies')
   await budget.fill('100000')
-  await expect(budget).toHaveValue(/100[\s\u202F]000/)
+  await expect(budget).toHaveValue(/100,000/)
   await budget.clear()
   await expect(budget).toHaveValue('')
   await budget.fill('0')

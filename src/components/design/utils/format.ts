@@ -1,15 +1,19 @@
 /**
  * Number/currency formatters — port of .tmp-design-bundle/project/app/format.js.
- * UZS, U+202F (narrow no-break space) thousands grouping, abbreviate large
- * values (1 240 000 -> 1.24M). Used by the design components.
+ * UZS with comma thousands grouping (1,240,000), abbreviate large values
+ * (1,240,000 -> 1.24M). Used by the design components.
  */
 // ---- Global number-format mode (persisted to localStorage) ----
 import { computed, ref } from 'vue'
 
+// Narrow no-break space between an amount and its unit ("1,240,000 UZS").
 const NB = ' '
 
+// Thousands separator, chosen by the owner (2026-09-16).
+export const GROUP = ','
+
 function group(intStr: string): string {
-  return intStr.replace(/\B(?=(\d{3})+(?!\d))/g, NB)
+  return intStr.replace(/\B(?=(\d{3})+(?!\d))/g, GROUP)
 }
 
 export type NumberFormatMode = 'full' | 'short'
