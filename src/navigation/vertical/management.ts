@@ -10,6 +10,27 @@ export default [
     subject: 'all',
   },
   {
+    title: 'Employees',
+    icon: { icon: 'bx-id-card' },
+    to: 'hr-employees',
+    action: 'manage',
+    subject: 'all',
+  },
+  {
+    title: 'Salaries',
+    icon: { icon: 'bx-money' },
+    to: 'hr-salaries',
+    action: 'manage',
+    subject: 'all',
+  },
+  {
+    title: 'Departments',
+    icon: { icon: 'bx-buildings' },
+    to: 'hr-departments',
+    action: 'manage',
+    subject: 'all',
+  },
+  {
     title: 'Categories',
     icon: { icon: 'bx-category' },
     to: 'categories',

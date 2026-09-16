@@ -90,6 +90,30 @@ function signed(value: number) {
   return `${value < 0 ? '−' : ''}${formatCurrency(Math.abs(value))}`
 }
 
+// Warnings that make the profit figure itself incomplete. The rest describe
+// how data is recorded and link to the page where it can be tidied.
+const PROVISIONAL_WARNINGS = ['SALARY_RECORDS_MISSING', 'PAYROLL_RECORDED_AS_EXPENSES', 'SUPPLIER_LEDGER_OVERLAP_POSSIBLE']
+const provisional = computed(() => !!summary.value?.warnings.some(warning => PROVISIONAL_WARNINGS.includes(warning.code)))
+
+function warningLink(code: string) {
+  const range = summary.value?.range
+  const period = range ? { from: range.from, to: range.to } : {}
+  switch (code) {
+    case 'SALARY_RECORDS_MISSING':
+    case 'PAYROLL_RECORDED_AS_EXPENSES':
+      return { path: '/hr-salaries' }
+    case 'SUPPLIER_PURCHASES_RECORDED_AS_EXPENSES':
+    case 'SUPPLIER_LEDGER_OVERLAP_POSSIBLE':
+      return { path: '/stock/suppliers' }
+    case 'UNCLASSIFIED_EXPENSES':
+      return { path: '/hr-expenses', query: { ...period, group: 'REVIEW' } }
+    case 'EXPENSES_NOT_PAID_THROUGH_TREASURY':
+      return { path: '/hr-expenses', query: { ...period, status: 'PENDING' } }
+    default:
+      return null
+  }
+}
+
 function warningText(warning: OwnerSummary['warnings'][number]) {
   return t(`owner_warning_${warning.code}`, {
     count: warning.count ?? 0,
@@ -182,7 +206,7 @@ function warningText(warning: OwnerSummary['warnings'][number]) {
               :size="15"
             />{{ t('owner_raw_profit') }}
             <span
-              v-if="summary.warnings.some(warning => ['SALARY_RECORDS_MISSING', 'PAYROLL_RECORDED_AS_EXPENSES', 'SUPPLIER_PURCHASES_RECORDED_AS_EXPENSES', 'SUPPLIER_LEDGER_OVERLAP_POSSIBLE'].includes(warning.code))"
+              v-if="provisional"
               class="badge t-warning"
             >{{ t('owner_profit_provisional') }}</span>
           </span>
@@ -220,7 +244,14 @@ function warningText(warning: OwnerSummary['warnings'][number]) {
             v-for="warning in summary.warnings"
             :key="warning.code"
           >
-            {{ warningText(warning) }}
+            <span>{{ warningText(warning) }}</span>
+            <RouterLink
+              v-if="warningLink(warning.code)"
+              :to="warningLink(warning.code)!"
+              class="owner-money__fix"
+            >
+              {{ t(`owner_warning_action_${warning.code}`) }}
+            </RouterLink>
           </li>
         </ul>
       </details>
@@ -261,6 +292,9 @@ function warningText(warning: OwnerSummary['warnings'][number]) {
 .owner-money__notes summary { display: flex; align-items: center; gap: 7px; min-height: 44px; padding: 0 14px; color: var(--warning-strong); cursor: pointer; font-size: 13px; font-weight: 600; }
 .owner-money__notes summary:focus-visible { outline: none; box-shadow: var(--shadow-focus); border-radius: 12px; }
 .owner-money__notes ul { display: grid; gap: 6px; margin: 0; padding: 0 14px 14px 36px; color: var(--text-secondary); font-size: 12px; line-height: 1.5; }
+.owner-money__fix { margin-left: 6px; color: var(--primary); font-weight: 600; text-decoration: none; white-space: nowrap; }
+.owner-money__fix:hover { text-decoration: underline; }
+.owner-money__fix:focus-visible { outline: none; box-shadow: var(--shadow-focus); border-radius: 4px; }
 
 @media (max-width: 1200px) {
   .owner-money__flow { grid-template-columns: repeat(2, minmax(0, 1fr)); }

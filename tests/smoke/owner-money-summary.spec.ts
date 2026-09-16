@@ -84,6 +84,8 @@ test('shows the money summary with an incomplete-data warning on the dashboard',
 
   await card.getByText('Data still incomplete · 3').click()
   await expect(card.getByText('No salary payments are recorded yet, so salaries are incomplete.')).toBeVisible()
+  await expect(card.getByRole('link', { name: 'Open salaries' }).first()).toHaveAttribute('href', '/hr-salaries')
+  await expect(card.getByRole('link', { name: 'Suppliers' })).toHaveAttribute('href', '/stock/suppliers')
   await page.screenshot({ path: '/tmp/alpha-owner-money-summary-desktop.png', fullPage: false, animations: 'disabled' })
 
   await page.setViewportSize({ width: 390, height: 844 })

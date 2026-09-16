@@ -27,6 +27,7 @@ import Select from '@/components/design/Select.vue'
 import Switch from '@/components/design/Switch.vue'
 import { fmtNum } from '@/components/design/utils/format'
 import { buildCsv } from '@/utils/csv'
+import EmployeeHistoryModal from '@/components/hr/EmployeeHistoryModal.vue'
 
 const { t } = useI18n({ useScope: 'global' })
 const { snackbar, snackbarMsg, snackbarColor, notify } = useNotify()
@@ -58,6 +59,7 @@ const paymentFreqs = ['MONTHLY', 'WEEKLY', 'BI_WEEKLY'] as const
 
 const dialog = ref(false)
 const editing = ref<any>(null)
+const historyFor = ref<any>(null)
 const saving = ref(false)
 const deleteDialog = ref(false)
 const deleting = ref<any>(null)
@@ -616,6 +618,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
         :per-page="itemsPerPage"
         :per-page-options="[10, 20, 50]"
         :initial-sort="{ key: 'hire_date', dir: 'desc' }"
+        @row-click="historyFor = $event"
       >
         <template #cell.name="{ row }">
           <div class="cell-strong">
@@ -664,6 +667,11 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
 
         <template #row-actions="{ row }">
           <IconAction
+            icon="clock"
+            :title="t('employee_history_open')"
+            @click="historyFor = row"
+          />
+          <IconAction
             icon="edit"
             tone="primary"
             :title="t('Edit')"
@@ -711,6 +719,12 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
         </template>
       </DataTable>
     </Card>
+
+    <EmployeeHistoryModal
+      :open="!!historyFor"
+      :employee="historyFor"
+      @close="historyFor = null"
+    />
 
     <!-- Create / Edit modal -->
     <Modal

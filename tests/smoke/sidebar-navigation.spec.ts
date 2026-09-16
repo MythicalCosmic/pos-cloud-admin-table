@@ -13,6 +13,9 @@ const expectedAdminNav = [
   '/discounts',
   '/discounts/secret-word',
   '/loyalty',
+  '/hr-employees',
+  '/hr-salaries',
+  '/hr-departments',
   '/cashbox/categories',
   '/hr-expenses',
   '/money-control',
@@ -92,6 +95,7 @@ test.describe('selected admin navigation', () => {
     expect(hrefs).toEqual(expectedAdminNav)
     expect(sections.map(section => section.trim())).toEqual([
       'Management',
+      'Staff',
       'Finance',
       'Analytics',
       'Stock',
