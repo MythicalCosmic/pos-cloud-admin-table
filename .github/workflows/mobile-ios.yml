@@ -1,0 +1,101 @@
+name: Owner app — iOS
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ios/**'
+      - 'capacitor.config.ts'
+      - 'vite.owner.config.ts'
+      - 'mobile/**'
+      - '.github/workflows/mobile-ios.yml'
+  workflow_dispatch:
+    inputs:
+      testflight:
+        description: 'Archive, sign and upload to TestFlight'
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: mobile-ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ios:
+    runs-on: macos-15
+    timeout-minutes: 60
+    env:
+      HAS_ASC_KEY: ${{ secrets.ASC_KEY_P8_BASE64 != '' }}
+      HAS_FIREBASE: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST_BASE64 != '' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: yarn
+
+      - name: Install dependencies
+        run: |
+          corepack enable
+          yarn install --frozen-lockfile
+
+      - name: Firebase config (push)
+        if: env.HAS_FIREBASE == 'true'
+        run: |
+          echo '${{ secrets.GOOGLE_SERVICE_INFO_PLIST_BASE64 }}' | base64 -d > ios/App/App/GoogleService-Info.plist
+          echo "VITE_OWNER_PUSH=1" >> "$GITHUB_ENV"
+
+      - name: Build owner web app
+        run: yarn build:owner
+
+      - name: Sync Capacitor
+        run: npx cap sync ios
+
+      # Always keep the project compiling, even before the Apple account exists.
+      - name: Simulator build
+        working-directory: ios/App
+        run: |
+          xcodebuild -project App.xcodeproj -scheme App -configuration Debug \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build CODE_SIGNING_ALLOWED=NO build | tail -20
+
+      - name: App Store Connect key
+        if: env.HAS_ASC_KEY == 'true' && inputs.testflight
+        run: |
+          mkdir -p "$RUNNER_TEMP/asc"
+          echo '${{ secrets.ASC_KEY_P8_BASE64 }}' | base64 -d > "$RUNNER_TEMP/asc/AuthKey.p8"
+
+      - name: Archive and export (automatic signing)
+        if: env.HAS_ASC_KEY == 'true' && inputs.testflight
+        working-directory: ios/App
+        run: |
+          version="$(cat ../../mobile/VERSION)"
+          auth=(-allowProvisioningUpdates
+            -authenticationKeyPath "$RUNNER_TEMP/asc/AuthKey.p8"
+            -authenticationKeyID '${{ secrets.ASC_KEY_ID }}'
+            -authenticationKeyIssuerID '${{ secrets.ASC_ISSUER_ID }}')
+          xcodebuild -project App.xcodeproj -scheme App -configuration Release \
+            -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/App.xcarchive" \
+            DEVELOPMENT_TEAM='${{ secrets.APPLE_TEAM_ID }}' CODE_SIGN_STYLE=Automatic \
+            MARKETING_VERSION="$version" CURRENT_PROJECT_VERSION='${{ github.run_number }}' \
+            "${auth[@]}" archive | tail -20
+          cat > "$RUNNER_TEMP/export.plist" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>teamID</key><string>${{ secrets.APPLE_TEAM_ID }}</string>
+            <key>destination</key><string>upload</string>
+            <key>signingStyle</key><string>automatic</string>
+          </dict></plist>
+          PLIST
+          xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/App.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/export.plist" -exportPath "$RUNNER_TEMP/export" \
+            "${auth[@]}" | tail -20
+
+      - name: Remove secrets
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/asc" ios/App/App/GoogleService-Info.plist

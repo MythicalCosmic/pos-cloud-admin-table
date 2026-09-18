@@ -1,0 +1,115 @@
+name: Owner app — Android
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/owner/**'
+      - 'android/**'
+      - 'capacitor.config.ts'
+      - 'vite.owner.config.ts'
+      - 'package.json'
+      - 'yarn.lock'
+      - 'mobile/**'
+      - '.github/workflows/mobile-android.yml'
+  workflow_dispatch:
+    inputs:
+      play_track:
+        description: 'Upload the signed AAB to this Play track (empty = no upload)'
+        required: false
+        default: ''
+        type: choice
+        options: ['', internal, alpha]
+
+concurrency:
+  group: mobile-android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      OWNER_VERSION_CODE: ${{ github.run_number }}
+      HAS_KEYSTORE: ${{ secrets.OWNER_KEYSTORE_BASE64 != '' }}
+      HAS_FIREBASE: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 != '' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: yarn
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Install dependencies
+        run: |
+          corepack enable
+          yarn install --frozen-lockfile
+
+      - name: Version
+        run: echo "OWNER_VERSION_NAME=$(cat mobile/VERSION)" >> "$GITHUB_ENV"
+
+      - name: Firebase config (push)
+        if: env.HAS_FIREBASE == 'true'
+        run: |
+          echo '${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}' | base64 -d > android/app/google-services.json
+          echo "VITE_OWNER_PUSH=1" >> "$GITHUB_ENV"
+
+      - name: Build owner web app
+        run: yarn build:owner
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - name: Debug APK
+        working-directory: android
+        run: ./gradlew --no-daemon assembleDebug
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: alpha-pos-owner-debug-${{ env.OWNER_VERSION_NAME }}-${{ github.run_number }}
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14
+
+      - name: Release keystore
+        if: env.HAS_KEYSTORE == 'true'
+        run: |
+          echo '${{ secrets.OWNER_KEYSTORE_BASE64 }}' | base64 -d > "$RUNNER_TEMP/owner.jks"
+          echo "OWNER_KEYSTORE_PATH=$RUNNER_TEMP/owner.jks" >> "$GITHUB_ENV"
+
+      - name: Signed release AAB
+        if: env.HAS_KEYSTORE == 'true'
+        working-directory: android
+        env:
+          OWNER_KEYSTORE_PASSWORD: ${{ secrets.OWNER_KEYSTORE_PASSWORD }}
+          OWNER_KEY_ALIAS: ${{ secrets.OWNER_KEY_ALIAS }}
+          OWNER_KEY_PASSWORD: ${{ secrets.OWNER_KEY_PASSWORD }}
+        run: ./gradlew --no-daemon bundleRelease
+
+      - uses: actions/upload-artifact@v4
+        if: env.HAS_KEYSTORE == 'true'
+        with:
+          name: alpha-pos-owner-release-${{ env.OWNER_VERSION_NAME }}-${{ github.run_number }}
+          path: android/app/build/outputs/bundle/release/app-release.aab
+          retention-days: 30
+
+      - name: Upload to Google Play
+        if: env.HAS_KEYSTORE == 'true' && inputs.play_track != ''
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: uz.alphapos.owner
+          releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
+          track: ${{ inputs.play_track }}
+          status: completed
+
+      - name: Remove secrets
+        if: always()
+        run: rm -f "$RUNNER_TEMP/owner.jks" android/app/google-services.json

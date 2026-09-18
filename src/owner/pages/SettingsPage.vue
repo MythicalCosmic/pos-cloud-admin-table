@@ -3,7 +3,7 @@ import { useTheme } from 'vuetify'
 import OwnerPage from '../components/OwnerPage.vue'
 import type { PushKind } from '../services/mobileApi'
 import { updateDevice } from '../services/mobileApi'
-import { appVersion, biometryAvailable, enablePush, haptic, isNative, unlockWithBiometry } from '../services/native'
+import { PUSH_READY, appVersion, biometryAvailable, enablePush, haptic, isNative, unlockWithBiometry } from '../services/native'
 import { BIOMETRIC_KEY, biometricLockEnabled, ownerState } from '../state'
 import Switch from '@/components/design/Switch.vue'
 import Segmented from '@/components/design/Segmented.vue'
@@ -154,9 +154,10 @@ onMounted(async () => {
         class="owner-settings__push"
       >
         <p class="owner-settings__sub">
-          {{ ownerState.pushPermission === 'denied' ? t('owner_app_push_denied') : t('owner_app_push_off') }}
+          {{ ownerState.pushPermission === 'denied' ? t('owner_app_push_denied') : PUSH_READY ? t('owner_app_push_off') : t('owner_app_push_unavailable') }}
         </p>
         <Button
+          v-if="PUSH_READY"
           variant="primary"
           size="lg"
           icon="bell"

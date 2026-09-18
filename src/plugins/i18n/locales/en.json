@@ -6149,5 +6149,6 @@
   "owner_app_push_off": "Notifications are off on this phone.",
   "owner_app_push_denied": "Notifications are blocked. Allow them for Alpha POS in the phone settings.",
   "owner_app_push_enable": "Turn on notifications",
-  "owner_app_version": "version {v}"
+  "owner_app_version": "version {v}",
+  "owner_app_push_unavailable": "Notifications will be available in the next version of the app."
 }

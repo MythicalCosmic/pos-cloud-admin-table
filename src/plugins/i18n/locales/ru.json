@@ -6060,5 +6060,6 @@
   "owner_app_push_off": "Уведомления на этом телефоне выключены.",
   "owner_app_push_denied": "Уведомления запрещены. Разрешите их для Alpha POS в настройках телефона.",
   "owner_app_push_enable": "Включить уведомления",
-  "owner_app_version": "версия {v}"
+  "owner_app_version": "версия {v}",
+  "owner_app_push_unavailable": "Уведомления появятся в следующей версии приложения."
 }

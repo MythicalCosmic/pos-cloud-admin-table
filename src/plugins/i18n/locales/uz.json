@@ -6060,5 +6060,6 @@
   "owner_app_push_off": "Bu telefonda bildirishnomalar o‘chiq.",
   "owner_app_push_denied": "Bildirishnomalar taqiqlangan. Telefon sozlamalarida Alpha POS uchun ruxsat bering.",
   "owner_app_push_enable": "Bildirishnomalarni yoqish",
-  "owner_app_version": "versiya {v}"
+  "owner_app_version": "versiya {v}",
+  "owner_app_push_unavailable": "Bildirishnomalar ilovaning keyingi versiyasida paydo bo‘ladi."
 }

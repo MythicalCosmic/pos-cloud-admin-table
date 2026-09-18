@@ -24,6 +24,13 @@ function ignore() {
 }
 const LOCK_AFTER_MS = 60 * 1000
 
+/**
+ * Push needs the Firebase config baked into the native project
+ * (google-services.json / GoogleService-Info.plist). Without it Android
+ * crashes on register(), so builds without Firebase keep push off.
+ */
+export const PUSH_READY = import.meta.env.VITE_OWNER_PUSH === '1'
+
 export function isNative() {
   return Capacitor.isNativePlatform()
 }
@@ -110,7 +117,7 @@ export async function appVersion() {
 
 /** Ask for notification permission and register this phone for pushes. */
 export async function enablePush(locale: string) {
-  if (!isNative()) {
+  if (!isNative() || !PUSH_READY) {
     ownerState.pushPermission = 'unavailable'
 
     return false
@@ -176,6 +183,18 @@ export async function initNative(router: Router, locale: () => string) {
       void App.minimizeApp()
   })
 
+  if (biometricLockEnabled())
+    ownerState.locked = true
+  await initPush(router, locale)
+}
+
+/** Push listeners, and re-register a phone that already granted permission. */
+async function initPush(router: Router, locale: () => string) {
+  if (!PUSH_READY) {
+    ownerState.pushPermission = 'unavailable'
+
+    return
+  }
   await PushNotifications.addListener('registration', token => {
     ownerState.pushToken = token.value
     void syncDevice(locale())
@@ -188,8 +207,6 @@ export async function initNative(router: Router, locale: () => string) {
       void router.push(route)
   })
 
-  if (biometricLockEnabled())
-    ownerState.locked = true
   const permission = await PushNotifications.checkPermissions().catch(() => null)
   if (permission?.receive === 'granted') {
     ownerState.pushPermission = 'granted'
