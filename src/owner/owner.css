@@ -1,0 +1,16 @@
+/* Owner-app shared utility styles. */
+.owner-eyebrow { color: var(--text-secondary); font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.owner-error { margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--error-weak); color: var(--error-strong); font-size: 14px; }
+.owner-list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.owner-row {
+  display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 12px 14px;
+  border: 1px solid var(--border); border-radius: 14px; background: var(--surface); color: var(--text); text-decoration: none;
+}
+.owner-row:active { background: var(--surface-2); }
+.owner-row__main { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.owner-row__title { font-size: 15px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.owner-row__sub { color: var(--text-secondary); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.owner-row__amount { font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.owner-section-title { margin: 22px 0 10px; font-size: 13px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-secondary); }
+.owner-empty { padding: 32px 12px; text-align: center; color: var(--text-secondary); font-size: 15px; }
+.owner-app .card { border-radius: 16px; }

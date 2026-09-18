@@ -33,6 +33,31 @@ const CONFIGURED_HOSTS = String(import.meta.env.VITE_ALLOWED_API_HOSTS ?? '')
 
 const ALLOWED_API_HOSTS = new Set([BUILD_HOST, ...CONFIGURED_HOSTS].filter(Boolean))
 
+/**
+ * What happens when a request finds the session gone (401) or the license
+ * inactive (503 license_*). The admin panel navigates with a full page load;
+ * the owner mobile app replaces these with in-app router navigation.
+ */
+interface RequestFailureHandlers {
+  unauthorized: () => void
+  license: (code: string) => void
+}
+
+const failureHandlers: RequestFailureHandlers = {
+  unauthorized: () => {
+    if (window.location.pathname !== '/login')
+      window.location.href = '/login'
+  },
+  license: () => {
+    if (!window.location.pathname.startsWith('/licensing'))
+      window.location.href = '/licensing/setup'
+  },
+}
+
+export function setRequestFailureHandlers(handlers: Partial<RequestFailureHandlers>) {
+  Object.assign(failureHandlers, handlers)
+}
+
 function isLoopbackHost(hostname: string): boolean {
   return hostname === 'localhost'
     || hostname === '127.0.0.1'
@@ -262,8 +287,7 @@ function attachInterceptors(instance: ReturnType<typeof axios.create>, suffix = 
         localStorage.removeItem('accessToken')
         localStorage.removeItem('userData')
         localStorage.removeItem('userAbilities')
-        if (window.location.pathname !== '/login')
-          window.location.href = '/login'
+        failureHandlers.unauthorized()
       }
 
       // License kill switch — backend returns 503 with a `code` like
@@ -272,11 +296,8 @@ function attachInterceptors(instance: ReturnType<typeof axios.create>, suffix = 
       // user to the setup wizard so they can recover without bouncing
       // through "something went wrong" toasts on every page.
       const code: string | undefined = error.response?.data?.code
-      if (error.response?.status === 503 && code && code.startsWith('license_')) {
-        const onLicensingPage = window.location.pathname.startsWith('/licensing')
-        if (!onLicensingPage)
-          window.location.href = '/licensing/setup'
-      }
+      if (error.response?.status === 503 && code && code.startsWith('license_'))
+        failureHandlers.license(code)
 
       return Promise.reject(error)
     },

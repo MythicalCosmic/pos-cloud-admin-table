@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="uz">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=alpha-3" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
+  <meta name="theme-color" content="#f4f7fc" />
+  <meta name="format-detection" content="telephone=no" />
+  <title>Alpha POS</title>
+  <style id="alpha-palette-tokens">__ALPHA_PALETTE_STYLES__</style>
+  <script>
+    // Resolve appearance before the first paint, even when storage is unavailable.
+    (function () {
+      var theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      var locale = 'uz';
+      var palette = 'blue';
+      var backgrounds = __ALPHA_PALETTE_BACKGROUNDS__;
+      try {
+        var saved = localStorage.getItem('alphapos-theme');
+        if (saved === 'dark' || saved === 'light') theme = saved;
+        var savedPalette = localStorage.getItem('alphapos-palette');
+        if (Object.prototype.hasOwnProperty.call(backgrounds, savedPalette)) palette = savedPalette;
+        var savedLocale = localStorage.getItem('appLocale');
+        if (['uz', 'ru', 'en'].indexOf(savedLocale) !== -1) locale = savedLocale;
+      } catch (error) {}
+      document.documentElement.setAttribute('data-theme', theme);
+      document.documentElement.setAttribute('data-palette', palette);
+      document.documentElement.style.colorScheme = theme;
+      document.documentElement.lang = locale;
+      document.querySelector('meta[name="theme-color"]').content = backgrounds[palette][theme];
+    })();
+  </script>
+  <link rel="stylesheet" href="/fonts.css" />
+</head>
+
+<body>
+  <div id="app"></div>
+  <noscript>
+    <p lang="uz">Alpha POS’ni ochish uchun JavaScript’ni yoqing.</p>
+  </noscript>
+  <script type="module" src="./main.ts"></script>
+</body>
+
+</html>

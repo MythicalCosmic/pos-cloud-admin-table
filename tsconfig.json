@@ -55,13 +55,16 @@
   },
   "include": [
     "vite.config.ts",
+    "vite.owner.config.ts",
     "src/**/*"
   ],
   "exclude": [
     "dist",
+    "dist-owner",
     "node_modules",
     "src/@iconify/*",
     "tests",
-    "playwright.config.ts"
+    "playwright.config.ts",
+    "playwright.owner.config.ts"
   ]
 }
