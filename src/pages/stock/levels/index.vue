@@ -23,6 +23,7 @@ import Switch from '@/components/design/Switch.vue'
 import { buildCsv } from '@/utils/csv'
 import { useUserAccess } from '@/composables/useUserAccess'
 import { availableStockQuantity, fetchStockLevelSnapshot } from '@/utils/stockLevels'
+import { useFormatters } from '@/composables/useFormatters'
 
 const { t } = useI18n({ useScope: 'global' })
 const route = useRoute()
@@ -106,12 +107,61 @@ function filterParams() {
   return params
 }
 
+// What the stock on hand is worth right now. The inventory-control endpoint
+// values the whole filtered set (weighted average cost), so one row is enough.
+const { formatCurrency: formatStockMoney } = useFormatters()
+
+const stockStats = ref<{
+  valueUzs: number
+  availableValueUzs: number
+  items: number
+  lowStock: number
+  outOfStock: number
+  asOf: string | null
+} | null>(null)
+
+const stockStatsLoading = ref(false)
+
+async function loadStockStats() {
+  stockStatsLoading.value = true
+  try {
+    const params: Record<string, string | number> = { per_page: 1 }
+
+    if (locationFilter.value)
+      params.location_id = locationFilter.value
+
+    if (categoryFilter.value)
+      params.category_id = categoryFilter.value
+
+    const res = await axios.get('/inventory-control/', { params })
+    const summary = readData<any>(res)?.summary ?? {}
+
+    stockStats.value = {
+      valueUzs: (Number(summary.inventory_value_uzs ?? 0) || 0),
+      availableValueUzs: (Number(summary.available_value_uzs ?? 0) || 0),
+      items: (Number(summary.raw_item_count ?? 0) || 0),
+      lowStock: (Number(summary.low_stock_count ?? 0) || 0),
+      outOfStock: (Number(summary.out_of_stock_count ?? 0) || 0),
+      asOf: summary.as_of ?? null,
+    }
+  }
+  catch {
+    stockStats.value = null
+  }
+  finally {
+    stockStatsLoading.value = false
+  }
+}
+
 async function loadLevels() {
   const requestId = ++levelsRequestId
   const params: any = { ...filterParams(), page: page.value, per_page: itemsPerPage.value }
+
   loading.value = true
   levelsLoadError.value = false
   try {
+    loadStockStats()
+
     const res = await axios.get('/levels/', { params })
     if (requestId !== levelsRequestId)
       return
@@ -640,6 +690,34 @@ async function exportCsv() {
       </template>
     </PageHeader>
 
+    <section
+      v-if="stockStats"
+      class="stock-stats"
+      :aria-label="t('stock_stats_title')"
+      :aria-busy="stockStatsLoading"
+    >
+      <div class="stock-stats__tile is-value">
+        <span>{{ t('stock_stats_value') }}</span>
+        <strong>{{ formatStockMoney(stockStats.valueUzs) }}</strong>
+        <small>{{ t('stock_stats_available', { amount: formatStockMoney(stockStats.availableValueUzs) }) }}</small>
+      </div>
+      <div class="stock-stats__tile">
+        <span>{{ t('stock_stats_items') }}</span>
+        <strong>{{ stockStats.items }}</strong>
+        <small>{{ t('stock_stats_items_hint') }}</small>
+      </div>
+      <div class="stock-stats__tile is-warn">
+        <span>{{ t('stock_stats_low') }}</span>
+        <strong>{{ stockStats.lowStock }}</strong>
+        <small>{{ t('stock_stats_low_hint') }}</small>
+      </div>
+      <div class="stock-stats__tile is-danger">
+        <span>{{ t('stock_stats_out') }}</span>
+        <strong>{{ stockStats.outOfStock }}</strong>
+        <small>{{ t('stock_stats_out_hint') }}</small>
+      </div>
+    </section>
+
     <div class="card">
       <!-- Toolbar -->
       <WorkspaceToolbar class="toolbar levels-toolbar">
@@ -934,6 +1012,18 @@ async function exportCsv() {
 </template>
 
 <style scoped>
+.stock-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+.stock-stats__tile { display: grid; gap: 4px; padding: 14px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface-2); }
+.stock-stats__tile > span { color: var(--text-secondary); font-size: 11px; font-weight: 650; letter-spacing: .03em; text-transform: uppercase; }
+.stock-stats__tile > strong { font-family: var(--font-mono); font-size: 22px; font-variant-numeric: tabular-nums; letter-spacing: -.02em; overflow-wrap: anywhere; }
+.stock-stats__tile > small { color: var(--text-tertiary); font-size: 11px; }
+.stock-stats__tile.is-value { border-color: var(--primary-border); background: var(--primary-weak); }
+.stock-stats__tile.is-warn > strong { color: var(--warning-strong); }
+.stock-stats__tile.is-danger > strong { color: var(--color-negative); }
+
+@media (max-width: 900px) { .stock-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 480px) { .stock-stats { grid-template-columns: minmax(0, 1fr); } }
+
 .row {
   display: flex;
   align-items: center;

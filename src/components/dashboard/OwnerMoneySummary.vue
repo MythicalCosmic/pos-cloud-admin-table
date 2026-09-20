@@ -86,6 +86,43 @@ const profitTone = computed(() => {
   return value > 0 ? 'is-positive' : value < 0 ? 'is-negative' : ''
 })
 
+// The three numbers the owner actually looks for, each given equal weight:
+// what the business earned, what the owner took out, and what is left.
+const outcomes = computed(() => {
+  const data = summary.value
+  if (!data)
+    return []
+
+  const left = data.profit.after_owner_withdrawals_uzs
+
+  return [
+    {
+      key: 'profit',
+      label: t('owner_raw_profit'),
+      value: data.profit.raw_profit_uzs,
+      icon: 'trend',
+      tone: profitTone.value,
+      detail: data.profit.raw_margin_pct !== null ? t('owner_margin', { pct: data.profit.raw_margin_pct }) : '',
+    },
+    {
+      key: 'withdrawals',
+      label: t('owner_withdrawals_taken'),
+      value: data.outside_profit.owner_withdrawals.total_uzs,
+      icon: 'wallet',
+      tone: 'is-withdrawal',
+      detail: t('owner_withdrawals_count', { count: data.outside_profit.owner_withdrawals.count }),
+    },
+    {
+      key: 'left',
+      label: t('owner_money_left'),
+      value: left,
+      icon: 'coins',
+      tone: left > 0 ? 'is-positive' : left < 0 ? 'is-negative' : '',
+      detail: t('owner_money_left_hint'),
+    },
+  ]
+})
+
 function signed(value: number) {
   return `${value < 0 ? '−' : ''}${formatCurrency(Math.abs(value))}`
 }
@@ -194,26 +231,31 @@ function warningText(warning: OwnerSummary['warnings'][number]) {
             class="owner-step__detail"
           >{{ step.detail }}</small>
         </div>
+      </div>
 
+      <div class="owner-money__outcome">
         <div
+          v-for="outcome in outcomes"
+          :key="outcome.key"
           class="owner-step owner-step--result"
-          :class="profitTone"
-          data-step="profit"
+          :class="outcome.tone"
+          :data-step="outcome.key"
         >
           <span class="owner-step__label">
             <DesignIcon
-              name="trend"
+              :name="outcome.icon"
               :size="15"
-            />{{ t('owner_raw_profit') }}
+            />{{ outcome.label }}
             <span
-              v-if="provisional"
+              v-if="provisional && outcome.key === 'profit'"
               class="badge t-warning"
             >{{ t('owner_profit_provisional') }}</span>
           </span>
-          <strong class="owner-step__value">{{ signed(summary.profit.raw_profit_uzs) }}</strong>
-          <small class="owner-step__detail">
-            <template v-if="summary.profit.raw_margin_pct !== null">{{ t('owner_margin', { pct: summary.profit.raw_margin_pct }) }} · </template>{{ t('owner_after_withdrawals') }}: {{ signed(summary.profit.after_owner_withdrawals_uzs) }}
-          </small>
+          <strong class="owner-step__value">{{ signed(outcome.value) }}</strong>
+          <small
+            v-if="outcome.detail"
+            class="owner-step__detail"
+          >{{ outcome.detail }}</small>
         </div>
       </div>
 
@@ -268,7 +310,8 @@ function warningText(warning: OwnerSummary['warnings'][number]) {
 .owner-money__error { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px; border: 1px solid var(--error-border); border-radius: 12px; background: var(--error-weak); color: var(--error-strong); font-size: 13px; }
 .owner-money__error span { flex: 1; min-width: 200px; }
 
-.owner-money__flow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(0, 1.3fr); gap: 10px; }
+.owner-money__flow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.owner-money__outcome { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .owner-money__skeleton { min-height: 96px; border-radius: 14px; }
 .owner-step { display: grid; align-content: start; min-width: 0; gap: 6px; padding: 14px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface-2); }
 .owner-step__label { display: inline-flex; align-items: center; gap: 6px; color: var(--text-secondary); font-size: 11px; font-weight: 650; letter-spacing: .03em; text-transform: uppercase; }
@@ -276,8 +319,12 @@ function warningText(warning: OwnerSummary['warnings'][number]) {
 .owner-step__detail { color: var(--text-tertiary); font-size: 11px; line-height: 1.4; overflow-wrap: anywhere; }
 .owner-step.is-income .owner-step__label svg { color: var(--color-positive); }
 .owner-step.is-cost .owner-step__label svg { color: var(--warning-strong); }
-.owner-step--result { border-color: var(--primary-border); background: var(--primary-weak); }
-.owner-step--result .owner-step__value { font-size: 24px; }
+.owner-step--result { padding: 18px; border-color: var(--primary-border); background: var(--primary-weak); }
+.owner-step--result .owner-step__label { font-size: 12px; }
+.owner-step--result .owner-step__value { font-size: 30px; font-weight: 600; }
+.owner-step--result.is-withdrawal { border-color: var(--warning-border); background: var(--warning-weak); }
+.owner-step--result.is-withdrawal .owner-step__value { color: var(--warning-strong); }
+.owner-step--result.is-withdrawal .owner-step__label svg { color: var(--warning-strong); }
 .owner-step--result.is-positive .owner-step__value { color: var(--color-positive); }
 .owner-step--result.is-negative .owner-step__value { color: var(--color-negative); }
 
@@ -298,13 +345,13 @@ function warningText(warning: OwnerSummary['warnings'][number]) {
 
 @media (max-width: 1200px) {
   .owner-money__flow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .owner-step--result { grid-column: 1 / -1; }
+  .owner-money__outcome { grid-template-columns: minmax(0, 1fr); }
 }
 
 @media (max-width: 560px) {
   .owner-money { padding: 16px 14px; }
   .owner-money__flow { grid-template-columns: minmax(0, 1fr); }
   .owner-step__value { font-size: 18px; }
-  .owner-step--result .owner-step__value { font-size: 22px; }
+  .owner-step--result .owner-step__value { font-size: 26px; }
 }
 </style>

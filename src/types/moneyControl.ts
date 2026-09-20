@@ -173,7 +173,17 @@ export interface CashPositionMonthlyCostRow {
   endDate: string | null
 }
 
+export interface CashPositionMonthlyCostGroup {
+  reportingGroup: string
+  plannedMonthlyUzs: DecimalValue
+  accruedToDateUzs: DecimalValue
+  paidCurrentPeriodUzs: DecimalValue
+  remainingUzs: DecimalValue
+  rowKeys: string[]
+}
+
 export interface CashPositionMonthlyCosts {
+  groups: CashPositionMonthlyCostGroup[]
   accruedEstimateUzs: DecimalValue
   paidCurrentPeriodUzs: DecimalValue
   dueEstimateUzs: DecimalValue

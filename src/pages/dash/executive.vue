@@ -15,6 +15,7 @@ import OrderChannelChart, { type ChannelPoint } from '@/components/dashboard/Ord
 import ReportState from '@/components/dashboard/ReportState.vue'
 import ReportSkeleton from '@/components/dashboard/ReportSkeleton.vue'
 import TodaySalesPulse from '@/components/dashboard/TodaySalesPulse.vue'
+import MonthlyBills from '@/components/dashboard/MonthlyBills.vue'
 import OwnerMoneySummary from '@/components/dashboard/OwnerMoneySummary.vue'
 import { fmtNum } from '@/components/design/utils/format'
 import { useApiError } from '@/composables/useApiError'
@@ -764,6 +765,8 @@ onBeforeUnmount(() => { dashboardRequestId++ })
       <TodaySalesPulse />
 
       <OwnerMoneySummary :range="sharedRange" />
+
+      <MonthlyBills />
 
       <div
         class="overview-context"

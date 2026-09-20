@@ -17,6 +17,7 @@ import PageHeader from '@/components/design/PageHeader.vue'
 import Select from '@/components/design/Select.vue'
 import Skeleton from '@/components/design/Skeleton.vue'
 import StateFill from '@/components/design/StateFill.vue'
+import { useDashboardData } from '@/composables/useDashboardData'
 import {
   classifyMoneyControlApiError,
   createCashPositionRecurringCost,
@@ -57,6 +58,30 @@ interface ExpenseTableRow extends ExpenseCategorySummaryRow {
 }
 
 const { t } = useI18n({ useScope: 'global' })
+
+// Today's takings belong next to the safe and bank balances: the cash in this
+// page's drawer figure is exactly what today's orders put there.
+const { today: todayPayload, fetchToday } = useDashboardData()
+
+onMounted(fetchToday)
+
+function todayNumber(value: unknown): number {
+  return typeof value === 'number' ? value : (Number(value ?? 0) || 0)
+}
+
+const todaySales = computed(() => {
+  const payload = todayPayload.value?.today
+  const breakdown = todayPayload.value?.payment_breakdown_today ?? {}
+
+  return {
+    revenue: todayNumber(payload?.revenue),
+    paidOrders: todayNumber(payload?.paid_orders),
+    orders: todayNumber(payload?.orders),
+    cash: todayNumber(breakdown.cash),
+    card: todayNumber(breakdown.card) + todayNumber(breakdown.payme),
+  }
+})
+
 const { formatCurrency, formatDate } = useFormatters()
 const { notify } = useNotify()
 
@@ -213,6 +238,22 @@ const summaryCards = computed(() => {
     return []
 
   return [
+    {
+      id: 'today-sales',
+      label: t('moneyControl.todaySales'),
+      sub: t('moneyControl.todaySalesSub', { orders: todaySales.value.paidOrders }),
+      value: todaySales.value.revenue,
+      icon: 'receipt',
+      tone: 'primary',
+    },
+    {
+      id: 'today-cash',
+      label: t('moneyControl.todayCash'),
+      sub: t('moneyControl.todayCashSub', { amount: formatCurrency(todaySales.value.card) }),
+      value: todaySales.value.cash,
+      icon: 'coins',
+      tone: 'success',
+    },
     {
       id: 'drawer',
       label: t('moneyControl.drawerAwaiting'),

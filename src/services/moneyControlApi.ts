@@ -1,5 +1,6 @@
 import type {
   CashPosition,
+  CashPositionMonthlyCostGroup,
   CashPositionMonthlyCostRow,
   CashPositionSupplierDebtRow,
   DecimalValue,
@@ -260,6 +261,21 @@ function normalizeCashPositionCost(value: unknown, index: number): CashPositionM
   }
 }
 
+function normalizeCashPositionCostGroup(value: unknown): CashPositionMonthlyCostGroup {
+  const row = record(value)
+
+  return {
+    reportingGroup: stringOrNull(row.reporting_group ?? row.reportingGroup) ?? 'OPERATING',
+    plannedMonthlyUzs: decimal(row.planned_monthly_uzs ?? row.plannedMonthlyUzs) ?? 0,
+    accruedToDateUzs: decimal(row.accrued_to_date_uzs ?? row.accruedToDateUzs) ?? 0,
+    paidCurrentPeriodUzs: decimal(row.paid_current_period_uzs ?? row.paidCurrentPeriodUzs) ?? 0,
+    remainingUzs: decimal(row.remaining_uzs ?? row.remainingUzs) ?? 0,
+    rowKeys: Array.isArray(row.row_keys ?? row.rowKeys)
+      ? ((row.row_keys ?? row.rowKeys) as unknown[]).map(key => String(key))
+      : [],
+  }
+}
+
 // Compatibility aliases are deliberately kept in this boundary normalizer.
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export function normalizeCashPosition(value: unknown): CashPosition {
@@ -314,6 +330,9 @@ export function normalizeCashPosition(value: unknown): CashPosition {
       previousMonthDays: numberOrNull(payroll.previous_month_days ?? payroll.previousMonthDays) ?? 0,
     },
     monthlyCosts: {
+      groups: Array.isArray(monthlyCosts.groups)
+        ? monthlyCosts.groups.map(normalizeCashPositionCostGroup)
+        : [],
       accruedEstimateUzs: decimal(
         monthlyCosts.accrued_estimate_uzs ?? monthlyCosts.accruedEstimateUzs,
       ) ?? 0,
