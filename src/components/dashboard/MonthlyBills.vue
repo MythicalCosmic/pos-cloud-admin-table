@@ -8,7 +8,7 @@ import { useFormatters } from '@/composables/useFormatters'
 import { fetchCashPosition } from '@/services/moneyControlApi'
 import type { CashPosition, CashPositionMonthlyCostRow } from '@/types/moneyControl'
 
-const { t, locale } = useI18n({ useScope: 'global' })
+const { t } = useI18n({ useScope: 'global' })
 const { formatCurrency } = useFormatters()
 const { translate: translateError } = useApiError()
 
@@ -47,20 +47,14 @@ function pct(part: number, whole: number): number {
   return whole > 0 ? Math.max(0, Math.min(100, (part / whole) * 100)) : 0
 }
 
-const LOCALE_TAGS: Record<string, string> = { en: 'en-GB', ru: 'ru-RU', uz: 'uz-Latn-UZ' }
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
-/** "September" for a YYYY-MM-DD date, in the interface language. */
+/** "September" for a YYYY-MM-DD date, from the app's own month translations
+ * (browsers do not all carry Uzbek month names). */
 function monthName(isoDate: string | null | undefined): string {
-  if (!isoDate)
-    return ''
-  const [year, month] = isoDate.split('-').map(Number)
-  if (!year || !month)
-    return ''
+  const month = Number(isoDate?.split('-')[1])
 
-  const name = new Intl.DateTimeFormat(LOCALE_TAGS[String(locale.value)] ?? 'en-GB', { month: 'long', timeZone: 'UTC' })
-    .format(new Date(Date.UTC(year, month - 1, 1)))
-
-  return name.charAt(0).toLocaleUpperCase() + name.slice(1)
+  return (month >= 1 && month <= 12) ? t(MONTHS[month - 1]) : ''
 }
 
 const days = computed(() => {
