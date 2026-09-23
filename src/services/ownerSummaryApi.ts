@@ -19,41 +19,6 @@ export interface OwnerWarning {
   amount_uzs?: number
 }
 
-export interface OwnerExpectedBill {
-  reporting_group: 'RENT' | 'UTILITIES' | 'TAXES' | string
-  basis: 'FIXED' | 'LAST_MONTH' | null
-  reference_month: string | null
-  monthly_plan_uzs: number
-  planned_uzs: number
-  recorded_uzs: number
-  remaining_uzs: number
-}
-
-/** Costs expected for the period but not recorded yet (see owner_expected_costs.py). */
-export interface OwnerExpected {
-  as_of: string
-  covered_days: number
-  salaries: {
-    basis: 'FIXED' | null
-    monthly_plan_uzs: number
-    planned_uzs: number
-    recorded_uzs: number
-    remaining_uzs: number
-  }
-  bills: OwnerExpectedBill[]
-  suppliers: {
-    reference_month: string
-    reference_share_pct: string
-    expected_uzs: number
-    recorded_uzs: number
-    remaining_uzs: number
-  } | null
-  total_remaining_uzs: number
-  estimated_profit_uzs: number
-  estimated_after_owner_withdrawals_uzs: number
-  not_included: string[]
-}
-
 export interface OwnerSummary {
   range: { from: string; to: string }
   sales: {
@@ -94,7 +59,6 @@ export interface OwnerSummary {
     supplier_debt_uzs: number
     suppliers_with_debt: number
   }
-  expected?: OwnerExpected | null
   warnings: OwnerWarning[]
 }
 

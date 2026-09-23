@@ -86,77 +86,6 @@ const profitTone = computed(() => {
   return value > 0 ? 'is-positive' : value < 0 ? 'is-negative' : ''
 })
 
-const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
-
-function monthLabel(yearMonth: string | null | undefined) {
-  const month = Number(yearMonth?.split('-')[1])
-
-  return (month >= 1 && month <= 12) ? t(MONTHS[month - 1]) : ''
-}
-
-function dayLabel(isoDate: string) {
-  const [, month, day] = isoDate.split('-').map(Number)
-
-  return (month >= 1 && month <= 12) ? `${day} ${t(MONTHS[month - 1])}` : isoDate
-}
-
-// Costs the period will still carry but that nobody has typed in yet. When
-// any are expected, the headline profit is the estimate (closer to reality);
-// the recorded profit stays visible as the first line of the bridge.
-const expected = computed(() => {
-  const data = summary.value?.expected
-  if (!data || data.total_remaining_uzs <= 0)
-    return null
-
-  const lines: Array<{ key: string; label: string; value: number; detail: string; estimate?: boolean }> = []
-  if (data.salaries.basis && data.salaries.remaining_uzs > 0) {
-    lines.push({
-      key: 'salaries',
-      label: t('owner_expected_salaries'),
-      value: data.salaries.remaining_uzs,
-      detail: t('owner_expected_salaries_detail', {
-        plan: formatCurrency(data.salaries.monthly_plan_uzs),
-        recorded: formatCurrency(data.salaries.recorded_uzs),
-      }),
-    })
-  }
-  for (const bill of data.bills) {
-    if (!bill.basis || bill.remaining_uzs <= 0)
-      continue
-    lines.push({
-      key: `bill-${bill.reporting_group}`,
-      label: t(`owner_expected_bill_${bill.reporting_group}`),
-      value: bill.remaining_uzs,
-      detail: t(`owner_expected_bill_${bill.basis}`, {
-        month: monthLabel(bill.reference_month),
-        amount: formatCurrency(bill.monthly_plan_uzs),
-        recorded: formatCurrency(bill.recorded_uzs),
-      }),
-    })
-  }
-  if (data.suppliers && data.suppliers.remaining_uzs > 0) {
-    lines.push({
-      key: 'suppliers',
-      label: t('owner_expected_suppliers'),
-      value: data.suppliers.remaining_uzs,
-      detail: t('owner_expected_suppliers_detail', {
-        pct: data.suppliers.reference_share_pct,
-        month: monthLabel(data.suppliers.reference_month),
-        recorded: formatCurrency(data.suppliers.recorded_uzs),
-      }),
-      estimate: true,
-    })
-  }
-
-  return {
-    lines,
-    subtitle: t('owner_expected_subtitle', { days: data.covered_days, date: dayLabel(data.as_of) }),
-    estimated: data.estimated_profit_uzs,
-    afterOwner: data.estimated_after_owner_withdrawals_uzs,
-    notIncluded: data.not_included,
-  }
-})
-
 function tone(value: number) {
   return value > 0 ? 'is-positive' : value < 0 ? 'is-negative' : ''
 }
@@ -168,27 +97,17 @@ const outcomes = computed(() => {
   if (!data)
     return []
 
-  const estimate = expected.value
-  const left = estimate ? estimate.afterOwner : data.profit.after_owner_withdrawals_uzs
+  const left = data.profit.after_owner_withdrawals_uzs
 
   return [
-    estimate
-      ? {
-        key: 'profit',
-        label: t('owner_estimated_profit'),
-        value: estimate.estimated,
-        icon: 'trend',
-        tone: tone(estimate.estimated),
-        detail: t('owner_estimated_profit_hint', { amount: signed(data.profit.raw_profit_uzs) }),
-      }
-      : {
-        key: 'profit',
-        label: t('owner_raw_profit'),
-        value: data.profit.raw_profit_uzs,
-        icon: 'trend',
-        tone: profitTone.value,
-        detail: data.profit.raw_margin_pct !== null ? t('owner_margin', { pct: data.profit.raw_margin_pct }) : '',
-      },
+    {
+      key: 'profit',
+      label: t('owner_raw_profit'),
+      value: data.profit.raw_profit_uzs,
+      icon: 'trend',
+      tone: profitTone.value,
+      detail: data.profit.raw_margin_pct !== null ? t('owner_margin', { pct: data.profit.raw_margin_pct }) : '',
+    },
     {
       key: 'withdrawals',
       label: t('owner_withdrawals_taken'),
@@ -203,7 +122,7 @@ const outcomes = computed(() => {
       value: left,
       icon: 'coins',
       tone: tone(left),
-      detail: estimate ? t('owner_money_left_estimated_hint') : t('owner_money_left_hint'),
+      detail: t('owner_money_left_hint'),
     },
   ]
 })
@@ -318,65 +237,6 @@ function warningText(warning: OwnerSummary['warnings'][number]) {
         </div>
       </div>
 
-      <section
-        v-if="expected"
-        class="owner-bridge"
-        aria-labelledby="owner-bridge-title"
-      >
-        <header class="owner-bridge__head">
-          <h3 id="owner-bridge-title">
-            <DesignIcon
-              name="hourglass"
-              :size="16"
-            />{{ t('owner_expected_title') }}
-          </h3>
-          <p>{{ expected.subtitle }}</p>
-        </header>
-        <ol class="owner-bridge__rows">
-          <li class="owner-bridge__row is-start">
-            <span class="owner-bridge__label">{{ t('owner_expected_recorded_profit') }}</span>
-            <strong class="owner-bridge__value">{{ signed(summary.profit.raw_profit_uzs) }}</strong>
-          </li>
-          <li
-            v-for="line in expected.lines"
-            :key="line.key"
-            class="owner-bridge__row"
-            :class="{ 'is-estimate': line.estimate }"
-          >
-            <span class="owner-bridge__label">
-              {{ line.label }}
-              <small>{{ line.detail }}</small>
-            </span>
-            <strong class="owner-bridge__value">−{{ formatCurrency(line.value) }}</strong>
-          </li>
-          <li
-            class="owner-bridge__row is-total"
-            :class="tone(expected.estimated)"
-          >
-            <span class="owner-bridge__label">{{ t('owner_expected_total') }}</span>
-            <strong class="owner-bridge__value">{{ signed(expected.estimated) }}</strong>
-          </li>
-          <li class="owner-bridge__row is-after">
-            <span class="owner-bridge__label">{{ t('owner_expected_after_owner') }}</span>
-            <strong class="owner-bridge__value">{{ signed(expected.afterOwner) }}</strong>
-          </li>
-        </ol>
-        <div
-          v-if="expected.notIncluded.length"
-          class="owner-bridge__missing"
-        >
-          <strong>{{ t('owner_expected_not_included') }}:</strong>
-          <ul>
-            <li
-              v-for="code in expected.notIncluded"
-              :key="code"
-            >
-              {{ t(`owner_expected_missing_${code}`) }}
-            </li>
-          </ul>
-        </div>
-      </section>
-
       <div class="owner-money__outcome">
         <div
           v-for="outcome in outcomes"
@@ -486,30 +346,6 @@ function warningText(warning: OwnerSummary['warnings'][number]) {
 .owner-money__fix { margin-left: 6px; color: var(--primary); font-weight: 600; text-decoration: none; white-space: nowrap; }
 .owner-money__fix:hover { text-decoration: underline; }
 .owner-money__fix:focus-visible { outline: none; box-shadow: var(--shadow-focus); border-radius: 4px; }
-
-.owner-bridge { display: grid; gap: 12px; padding: 16px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface-2); }
-.owner-bridge__head h3 { display: flex; align-items: center; gap: 7px; margin: 0; font-size: 14px; font-weight: 650; }
-.owner-bridge__head h3 svg { color: var(--warning-strong); }
-.owner-bridge__head p { margin: 3px 0 0; color: var(--text-secondary); font-size: 12px; }
-.owner-bridge__rows { display: grid; margin: 0; padding: 0; list-style: none; }
-.owner-bridge__row { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 9px 0; border-top: 1px dashed var(--border); }
-.owner-bridge__row:first-child { border-top: 0; }
-.owner-bridge__label { display: grid; gap: 2px; min-width: 0; color: var(--text); font-size: 13px; }
-.owner-bridge__label small { color: var(--text-tertiary); font-size: 11px; line-height: 1.4; }
-.owner-bridge__value { flex: none; font-family: var(--font-mono); font-size: 15px; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.owner-bridge__row:not(.is-start):not(.is-total):not(.is-after) .owner-bridge__value { color: var(--warning-strong); }
-.owner-bridge__row.is-estimate .owner-bridge__label { font-style: italic; }
-.owner-bridge__row.is-start .owner-bridge__label { color: var(--text-secondary); }
-.owner-bridge__row.is-total { margin-top: 4px; padding: 12px 14px; border: 1px solid var(--primary-border); border-radius: 12px; background: var(--primary-weak); }
-.owner-bridge__row.is-total .owner-bridge__label { font-weight: 650; }
-.owner-bridge__row.is-total .owner-bridge__value { font-size: 22px; font-weight: 650; }
-.owner-bridge__row.is-total.is-positive .owner-bridge__value { color: var(--color-positive); }
-.owner-bridge__row.is-total.is-negative .owner-bridge__value { color: var(--color-negative); }
-.owner-bridge__row.is-total + .owner-bridge__row { border-top: 0; }
-.owner-bridge__row.is-after .owner-bridge__label { color: var(--text-secondary); }
-.owner-bridge__missing { padding: 10px 12px; border-radius: 10px; background: var(--surface-inset); color: var(--text-secondary); font-size: 12px; line-height: 1.5; }
-.owner-bridge__missing strong { color: var(--text); }
-.owner-bridge__missing ul { margin: 4px 0 0; padding-left: 18px; }
 
 @media (max-width: 1200px) {
   .owner-money__flow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
