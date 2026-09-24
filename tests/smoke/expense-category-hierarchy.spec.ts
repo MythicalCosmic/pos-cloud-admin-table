@@ -346,7 +346,7 @@ test('manages hierarchy, cost behavior, group safety, and long mobile labels', a
 
   await mobileCostBehavior.scrollIntoViewIfNeeded()
   await expect(mobileCostBehavior).toBeVisible()
-  await expect(mobileEditor.getByRole('combobox', { name: 'Yuqori toifa' })).toBeVisible()
+  await expect(mobileEditor.getByRole('combobox', { name: 'Yuqori kategoriya' })).toBeVisible()
   expect(await mobileEditor.evaluate(element => element.scrollWidth - element.clientWidth)).toBeLessThanOrEqual(0)
   await page.screenshot({ path: '/tmp/alpha-expense-category-editor-mobile-dark.png', animations: 'disabled' })
   await mobileEditor.getByTitle('Yopish').click()

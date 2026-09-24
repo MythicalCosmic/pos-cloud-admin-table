@@ -392,7 +392,7 @@ test.describe('Money Control', () => {
     ).toContainText(/-600,000/)
     await expect(expenseCategories.getByText('Supplies', { exact: true })).toBeVisible()
     await expect(expenseCategories.getByText('Repairs', { exact: true })).toBeVisible()
-    await expect(page.getByText('Backend integration is not connected yet')).toHaveCount(0)
+    await expect(page.getByText('This section isn\'t available yet')).toHaveCount(0)
 
     const reconciliation = page.locator('.reconciliation-card')
 
@@ -461,8 +461,8 @@ test.describe('Money Control', () => {
     await page.goto('/money-control')
 
     await expect(page.getByRole('heading', { name: 'Money Control' })).toBeVisible()
-    await expect(page.getByText('Backend integration is not connected yet', { exact: true })).toBeVisible()
-    await expect(page.getByText(/Deploy the Money Control endpoints/)).toBeVisible()
+    await expect(page.getByText('This section isn\'t available yet', { exact: true })).toBeVisible()
+    await expect(page.getByText(/Figures will appear here once this feature is enabled/)).toBeVisible()
 
     // No successful business response means no fabricated KPI cards or tables.
     await expect(page.locator('.money-control-summary')).toHaveCount(0)

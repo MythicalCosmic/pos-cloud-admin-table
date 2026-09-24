@@ -197,7 +197,7 @@ test.describe('shift physical-cash labels', () => {
     })
 
     await page.getByRole('button', { name: 'Receive money' }).click()
-    await expect(page.getByText('Backend upgrade required for physical cash')).toBeVisible()
+    await expect(page.getByText('Cash reconciliation isn\'t available yet')).toBeVisible()
     await expect(page.getByRole('button', { name: 'Confirm settlement' })).toBeDisabled()
   })
 

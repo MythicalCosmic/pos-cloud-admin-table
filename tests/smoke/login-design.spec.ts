@@ -151,7 +151,7 @@ test('offline login has actionable feedback that follows the selected language',
   await expect(page.getByRole('alert')).toContainText('Could not reach the server.')
   await page.getByRole('combobox', { name: 'Switch language' }).click()
   await page.getByRole('option', { name: 'Русский', exact: true }).click()
-  await expect(page.getByRole('alert')).toContainText('Нет связи с сервером.')
+  await expect(page.getByRole('alert')).toContainText('Не удалось подключиться к серверу.')
   await expect(page.locator('#login-password')).toHaveValue(password)
 })
 

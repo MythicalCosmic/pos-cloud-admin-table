@@ -312,7 +312,7 @@ test.describe('secure stock adjustments', () => {
     })
 
     await chooseOption(page, 'Stock Item', 'Lot-tracked cheese')
-    await expect(page.getByText(/Direct adjustments are temporarily unavailable for batch-tracked items/)).toBeVisible()
+    await expect(page.getByText(/Direct adjustments aren't available yet for batch-tracked items/)).toBeVisible()
     await expect(page.getByRole('button', { name: 'Submit Adjustment' })).toBeDisabled()
     expect(runtimeErrors).toEqual([])
   })
@@ -356,7 +356,7 @@ test.describe('secure stock adjustments', () => {
 
     await expect(page.getByRole('button', { name: 'Submit Adjustment' })).toBeVisible()
     await expect(page.getByText('You don\'t have permission for this action', { exact: true })).toHaveCount(2)
-    await expect(page.getByRole('button', { name: 'Seed Defaults' })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Add defaults' })).toHaveCount(0)
     await expect(page.getByRole('button', { name: 'New Code' })).toHaveCount(0)
     expect(protectedReads).toEqual([])
   })
@@ -402,7 +402,7 @@ test.describe('secure stock adjustments', () => {
     })
 
     await batchRow.getByTitle('Adjust quantity').click()
-    await expect(page.getByText(/Direct adjustments are temporarily unavailable for batch-tracked items/)).toBeVisible()
+    await expect(page.getByText(/Direct adjustments aren't available yet for batch-tracked items/)).toBeVisible()
     await expect(page.getByRole('dialog', { name: 'Adjust quantity' })).toHaveCount(0)
     expect(requests).toHaveLength(1)
     expect(runtimeErrors).toEqual([])
@@ -604,11 +604,11 @@ test.describe('secure stock adjustments', () => {
     const alternativeUnitRow = page.getByRole('row').filter({ hasText: 'Adjustment 115' })
 
     await expect(wasteRow.getByTitle('Reverse adjustment')).toBeEnabled()
-    await expect(incomingRow.getByTitle(/locked until the server atomically protects/i)).toBeDisabled()
-    await expect(batchRow.getByTitle(/locked until the server atomically protects/i)).toBeDisabled()
+    await expect(incomingRow.getByTitle(/Reversing this adjustment isn't available yet/i)).toBeDisabled()
+    await expect(batchRow.getByTitle(/Reversing this adjustment isn't available yet/i)).toBeDisabled()
     await expect(alternativeUnitRow).toContainText(/1\s+bag/)
     await expect(alternativeUnitRow).toContainText(/25\s+kg/)
-    await expect(alternativeUnitRow.getByTitle(/locked until the server atomically protects/i)).toBeDisabled()
+    await expect(alternativeUnitRow.getByTitle(/Reversing this adjustment isn't available yet/i)).toBeDisabled()
     await expect(reversedRow.getByText('Reversed', { exact: true })).toBeVisible()
     await expect(reversalRow.getByText('Reversal', { exact: true })).toBeVisible()
 

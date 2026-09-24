@@ -31,7 +31,12 @@ original durable UX and dialog feedback has been incorporated below.
 - Restyling must preserve API calls, fields, routes, permissions, translations,
   filters, table columns, and actions. Flag necessary logic changes.
 - All visible strings must work in Uzbek, Russian, and English. Update all
-  three files in `src/plugins/i18n/locales/` together.
+  three files in `src/plugins/i18n/locales/` together. Uzbek uses oʻ/gʻ
+  (U+02BB) and the tutuq belgisi ʼ (U+02BC), never `'`, `‘` or `’`; Uzbek and
+  Russian quote with «». Glossary (2026-09-24): Product = товар / mahsulot;
+  stock Item = tovar; Category = kategoriya; Revenue = выручка / tushum.
+  Action failures read «Не удалось …» / «…ib boʻlmadi». Write for restaurant
+  staff: no backend, endpoint, API or ID jargon in visible text.
 - Prefer real backend data and honest states. Never invent live-looking
   business values. Compare Periods is the approved, visibly labeled demo-data
   exception until its backend endpoint is available.

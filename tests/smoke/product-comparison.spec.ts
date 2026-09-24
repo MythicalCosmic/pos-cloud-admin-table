@@ -298,7 +298,7 @@ test('never presents full-catalog totals as the selected product', async ({ page
   await page.goto('/analytics/compare?a_start=2026-09-01&a_end=2026-09-14&b_start=2026-08-01&b_end=2026-08-14&mode=custom&gran=day&avg=0&product_id=42')
 
   await expect(page.getByText('Comparison preview', { exact: true })).toBeVisible()
-  await expect(page.getByText('This page is using deterministic preview data because the comparison endpoint cannot compare a single product yet.', { exact: true })).toBeVisible()
+  await expect(page.getByText('This page shows sample data because comparing a single product isn\'t available yet.', { exact: true })).toBeVisible()
   await expect(page.getByText('Preview data', { exact: true })).toBeVisible()
   await expect(page.getByText('Live comparison', { exact: true })).toHaveCount(0)
 })

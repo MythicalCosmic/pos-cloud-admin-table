@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test'
 const translations = [
   { locale: 'en', title: 'Unable to sign in', description: 'Email or password is incorrect' },
   { locale: 'ru', title: 'Не удалось войти', description: 'Неверный email или пароль' },
-  { locale: 'uz', title: 'Hisobga kirib bo‘lmadi', description: 'Email yoki parol noto\'g\'ri' },
+  { locale: 'uz', title: 'Hisobga kirib boʻlmadi', description: 'Email yoki parol notoʻgʻri' },
 ]
 
 for (const copy of translations) {

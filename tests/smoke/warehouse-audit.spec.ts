@@ -680,7 +680,7 @@ test.describe('warehouse stock safety boundaries', () => {
     expect(api.overApprovals[0].body).toEqual({
       reason: 'Supplier invoice INV-920 confirms two promotional kilograms.',
     })
-    await expect(page.getByText(/server did not return verification/i)).toBeVisible()
+    await expect(page.getByText(/couldn't be confirmed/i)).toBeVisible()
     await expect(receivingDialog.getByRole('button', { name: 'Approve over-receipt' })).toHaveCount(0)
     expect(api.receivingDetailReads()).toBeGreaterThanOrEqual(2)
   })
@@ -1540,7 +1540,7 @@ test.describe('warehouse stock safety boundaries', () => {
 
     await page.goto('/stock/batches')
 
-    await expect(page.getByText(/temporarily read-only.*cannot post these movements safely/i)).toBeVisible()
+    await expect(page.getByText(/view-only for now.*can't be recorded yet/i)).toBeVisible()
     await expect(page.getByRole('button', { name: 'Auto-consume' })).toHaveCount(0)
     await expect(page.getByTitle('Consume from batch')).toHaveCount(0)
   })
@@ -1592,7 +1592,7 @@ test.describe('warehouse stock safety boundaries', () => {
 
     await page.goto('/stock/items/901')
 
-    await expect(page.getByText(/Direct adjustments are temporarily unavailable for batch-tracked items/)).toBeVisible()
+    await expect(page.getByText(/Direct adjustments aren't available yet for batch-tracked items/)).toBeVisible()
     await expect(page.getByRole('button', { name: 'Adjust stock' })).toBeDisabled()
     expect(adjustmentPosts).toHaveLength(0)
   })
