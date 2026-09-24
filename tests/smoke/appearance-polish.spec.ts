@@ -88,7 +88,10 @@ for (const [index, palette] of alphaPaletteIds.entries()) for (const mode of ['l
     await expect(page.locator('html')).toHaveAttribute('data-palette', palette)
     await expect(page.locator('html')).toHaveAttribute('data-theme', mode)
     const tokens = alphaPaletteTokens(palette, mode)
-    await expect(page.locator('.v-application')).toHaveCSS('background-color', `rgb(${rgb(tokens.bg).join(', ')})`)
+    // The glass finish paints the palette background (under its ambient washes)
+    // on body; Vuetify's root is transparent but must still mirror the token.
+    await expect(page.locator('body')).toHaveCSS('background-color', `rgb(${rgb(tokens.bg).join(', ')})`)
+    expect(await page.locator('.v-application').evaluate(el => getComputedStyle(el).getPropertyValue('--v-theme-background').replace(/\s/g, ''))).toBe(rgb(tokens.bg).join(','))
     const colors = await page.locator('.v-application').evaluate(el => ({ raw: getComputedStyle(document.documentElement).getPropertyValue('--primary').trim(), mirrored: getComputedStyle(el).getPropertyValue('--v-theme-primary').replace(/\s/g, '') }))
     expect(colors).toEqual({ raw: tokens.primary, mirrored: rgb(tokens.primary).join(',') })
     await expect(page.locator('.mobile-record')).toHaveCount(2)

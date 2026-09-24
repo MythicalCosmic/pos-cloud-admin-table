@@ -122,8 +122,25 @@ visible server errors and topmost-only focus/Escape handling remain intact.
 Motion stays brief: controls use 160ms feedback, row emphasis 150ms, metrics
 180ms and dialog opacity/transform 220ms. Hover/press movement is small; records
 have no repeated entrance choreography. Reduced motion removes transitions.
-The washes and local SVG symbols are static, and backdrop blur is limited to
-the dialog layer; there is no new continuous rendering loop for operational pages.
+The washes and local SVG symbols are static; backdrop blur is limited to the
+glass chrome and menus described below and the dialog layer. There is no
+continuous rendering loop for operational pages.
+
+### Glass and vibrance finish: September 24
+
+[Glass styles](../src/styles/design-glass.css) load last and apply app-wide,
+including the dashboard. A static ambient field (radial washes of primary, the
+fourth and the third chart colors over `--bg`) sits behind the app; Vuetify's
+application background is transparent so it shows through. The sidebar, topbar,
+mobile tab bar and floating menus are frosted glass. Cards, dashboard panels,
+identity panels and settings sections are translucent with a light top edge but
+no per-card blur, so long pages scroll cheaply. Joined KPI rail cells stay
+opaque because their separators are the rail background. Primary buttons, the
+active sidebar route, the current header route and symbol tiles use a
+primary→fourth-color gradient with a soft glow; on-primary text keeps at least
+5:1 contrast on every palette and theme. Dialog headers remain neutral.
+`prefers-reduced-transparency` restores opaque surfaces and removes blur, and
+browsers without backdrop-filter get near-opaque chrome.
 
 ### Dashboard layout: September 10
 
