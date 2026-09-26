@@ -80,6 +80,16 @@ const steps = computed(() => {
   ]
 })
 
+// All costs of the period in one figure, so the owner sees the whole spend
+// before the per-bucket cards break it down.
+const totalCosts = computed(() => {
+  const costs = summary.value?.costs
+  if (!costs)
+    return 0
+
+  return costs.total_uzs ?? costs.suppliers.total_uzs + costs.operating.total_uzs + costs.payroll.total_uzs
+})
+
 const profitTone = computed(() => {
   const value = summary.value?.profit.raw_profit_uzs ?? 0
 
@@ -237,6 +247,22 @@ function warningText(warning: OwnerSummary['warnings'][number]) {
         </div>
       </div>
 
+      <div
+        class="owner-money__total"
+        data-step="total-costs"
+      >
+        <span class="owner-step__label">
+          <DesignIcon
+            name="receipt"
+            :size="15"
+          />{{ t('owner_total_costs') }}
+        </span>
+        <strong class="owner-money__total-value">−{{ formatCurrency(totalCosts) }}</strong>
+        <small class="owner-step__detail">
+          {{ steps.filter(step => step.sign).map(step => `${step.label} ${formatCurrency(step.value)}`).join(' · ') }}
+        </small>
+      </div>
+
       <div class="owner-money__outcome">
         <div
           v-for="outcome in outcomes"
@@ -332,6 +358,11 @@ function warningText(warning: OwnerSummary['warnings'][number]) {
 .owner-step--result.is-positive .owner-step__value { color: var(--color-positive); }
 .owner-step--result.is-negative .owner-step__value { color: var(--color-negative); }
 
+.owner-money__total { display: grid; grid-template-columns: auto 1fr; align-items: baseline; gap: 4px 16px; padding: 14px 18px; border: 1px solid var(--warning-border); border-radius: 14px; background: var(--warning-weak); }
+.owner-money__total .owner-step__label svg { color: var(--warning-strong); }
+.owner-money__total-value { color: var(--warning-strong); font-family: var(--font-mono); font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -.03em; justify-self: end; overflow-wrap: anywhere; }
+.owner-money__total .owner-step__detail { grid-column: 1 / -1; }
+
 .owner-money__balances { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 22px; padding: 12px 14px; border-radius: 12px; background: var(--surface-inset); }
 .owner-money__balances-title { color: var(--text-tertiary); font-size: 11px; font-weight: 650; letter-spacing: .04em; text-transform: uppercase; }
 .owner-money__balances > div { display: flex; align-items: baseline; gap: 8px; }
@@ -357,5 +388,7 @@ function warningText(warning: OwnerSummary['warnings'][number]) {
   .owner-money__flow { grid-template-columns: minmax(0, 1fr); }
   .owner-step__value { font-size: 18px; }
   .owner-step--result .owner-step__value { font-size: 26px; }
+  .owner-money__total { grid-template-columns: minmax(0, 1fr); }
+  .owner-money__total-value { justify-self: start; font-size: 22px; }
 }
 </style>
