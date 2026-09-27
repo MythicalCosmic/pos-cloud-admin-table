@@ -97,7 +97,10 @@ const EXPENSE_STATUSES: ExpenseStatus[] = [
 
 const EXPENSE_SOURCES: ExpenseSource[] = ['DRAWER', 'SAFE', 'BANK']
 const FILTER_QUERY_KEYS = ['status', 'category', 'from', 'to', 'source', 'behavior', 'group', 'suppliers', 'q']
-const SUPPLIER_SCOPES = ['all', 'only'] as const
+
+// Default ('') shows every expense, supplier purchases included; 'all' is kept
+// only so old bookmarked links still parse.
+const SUPPLIER_SCOPES = ['exclude', 'only', 'all'] as const
 type SupplierScope = typeof SUPPLIER_SCOPES[number] | ''
 
 function queryText(key: string): string {
@@ -133,7 +136,8 @@ const reportingGroupFilter = ref<string>(queryChoice('group', EXPENSE_REPORTING_
 const sourceFilter = ref<ExpenseSource | ''>(queryChoice('source', EXPENSE_SOURCES))
 
 // Supplier purchases live on the supplier pages; by default the list shows the other expenses.
-const supplierScope = ref<SupplierScope>(SUPPLIER_SCOPES.find(value => value === queryText('suppliers')) ?? '')
+const initialSupplierScope = SUPPLIER_SCOPES.find(value => value === queryText('suppliers')) ?? ''
+const supplierScope = ref<SupplierScope>(initialSupplierScope === 'all' ? '' : initialSupplierScope)
 const dateRange = ref<DateRangeValue>(hasInitialRange ? { from: initialFrom, to: initialTo } : allTime())
 const search = ref(queryText('q'))
 const showMoreFilters = ref(!!(costBehaviorFilter.value || reportingGroupFilter.value || supplierScope.value))
@@ -187,7 +191,7 @@ const sourceFilterOptions = computed(() => EXPENSE_SOURCES.map(value => ({
 const moreFilterCount = computed(() => [costBehaviorFilter.value, reportingGroupFilter.value, supplierScope.value].filter(Boolean).length)
 
 const supplierScopeOptions = computed(() => [
-  { value: 'all', label: t('expense_supplier_scope_all') },
+  { value: 'exclude', label: t('expense_supplier_scope_exclude') },
   { value: 'only', label: t('expense_supplier_scope_only') },
 ])
 
@@ -362,7 +366,7 @@ function expenseFilters(): ExpenseListParams {
     date_from: dateRange.value.from || undefined,
     date_to: dateRange.value.to || undefined,
     search: search.value.trim() || undefined,
-    supplier_purchases: supplierScope.value === 'all' ? undefined : (supplierScope.value === 'only' ? 'only' : 'exclude'),
+    supplier_purchases: (supplierScope.value === 'exclude' || supplierScope.value === 'only') ? supplierScope.value : undefined,
   }
 }
 

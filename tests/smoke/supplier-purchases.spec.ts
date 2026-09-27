@@ -91,7 +91,12 @@ test('the expense list leaves supplier purchases out unless asked', async ({ pag
 
   await page.goto('/hr-expenses')
   await expect.poll(() => listQueries.length).toBeGreaterThan(0)
-  expect(listQueries.every(url => url.searchParams.get('supplier_purchases') === 'exclude')).toBe(true)
+
+  // Default shows every expense, supplier purchases included.
+  expect(listQueries.every(url => !url.searchParams.has('supplier_purchases'))).toBe(true)
+
+  await page.goto('/hr-expenses?suppliers=exclude')
+  await expect.poll(() => listQueries.at(-1)?.searchParams.get('supplier_purchases')).toBe('exclude')
 
   await page.goto('/hr-expenses?suppliers=only')
   await expect(page.getByRole('link', { name: "Donar go'sht" })).toHaveAttribute('href', '/stock/suppliers/22')
