@@ -49,12 +49,12 @@ const cashiers = ref<any[]>([])
 
 async function loadCashiers() {
   try {
-    // The role control was removed from this toolbar. Fetch all staff once so
-    // the cashier filter can still find every shift owner.
+    // The filter lists cashiers only; other staff (kitchen, no-login payroll
+    // profiles, admins) never own a till shift and just cluttered the list.
     const res = await axios.get('/users', { params: { per_page: 200 } })
     const d = res.data?.data ?? res.data
 
-    cashiers.value = d?.users ?? []
+    cashiers.value = (d?.users ?? []).filter((u: any) => u.role === 'CASHIER')
   }
   catch {
     cashiers.value = []
