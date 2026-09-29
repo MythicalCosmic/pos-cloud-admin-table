@@ -368,3 +368,63 @@
 
 
 [data-theme="dark"] .workspace-sidebar .workspace-nav-link.is-active { color: var(--on-primary); }
+
+/* Recently opened pages and group counts (sidebar v2). */
+.sidebar-recent {
+  padding-block-start: 4px;
+}
+
+.sidebar-recent__title {
+  margin: 0;
+  color: var(--text-tertiary);
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: .06em;
+  padding-block: 6px 2px;
+  padding-inline: 12px;
+  text-transform: uppercase;
+}
+
+.sidebar-group__count {
+  margin-inline-start: auto;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text-tertiary);
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1;
+  padding-block: 3px;
+  padding-inline: 7px;
+}
+
+.sidebar-group.has-active > .sidebar-group__heading {
+  color: var(--text);
+}
+
+.sidebar-group.has-active > .sidebar-group__heading .sidebar-group__count {
+  background: var(--primary-weak);
+  color: var(--primary);
+}
+
+.sidebar-group__rail {
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  block-size: 40px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  inline-size: 100%;
+}
+
+.sidebar-group__rail:hover,
+.sidebar-group__rail.is-active {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.sidebar-group__rail:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+}

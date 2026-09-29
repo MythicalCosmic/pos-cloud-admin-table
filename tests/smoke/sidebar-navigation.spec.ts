@@ -1,52 +1,60 @@
 import { type Page, expect, test } from '@playwright/test'
 
 const expectedAdminNav = [
+  // pinned, always visible
   '/',
-  '/analytics/compare',
-  '/ai-assistant',
-  '/shifts-analytics',
-  '/users',
-  '/categories',
-  '/products',
   '/orders',
+  '/shifts-analytics',
+  '/hr-expenses',
+  '/money-control',
+  '/treasury',
+  // Sales
+  '/products',
+  '/categories',
   '/places',
   '/discounts',
   '/discounts/secret-word',
   '/loyalty',
+  // Finance
+  '/cashbox/categories',
+  // Staff
+  '/users',
   '/hr-employees',
   '/hr-salaries',
   '/hr-departments',
-  '/cashbox/categories',
-  '/hr-expenses',
-  '/money-control',
-  '/treasury',
+  // Reports
+  '/analytics/compare',
   '/analytics/product-statistics',
   '/reports/product-performance',
   '/analytics/menu-engineering',
   '/forecast/tomorrow',
+  '/ai-assistant',
+  // Warehouse: daily
   '/warehouse',
-  '/stock/items',
   '/stock/levels',
-  '/stock/batches',
-  '/stock/suppliers',
   '/stock/purchase-invoices',
+  '/stock/suppliers',
   '/stock/purchase-orders',
   '/stock/receiving',
+  '/stock/transfers',
   '/stock/counts',
   '/stock/adjustment-requests',
   '/stock/adjustments',
-  '/stock/transfers',
-  '/stock/alerts',
-  '/stock/reservations',
+  // Warehouse: setup
+  '/stock/items',
   '/stock/categories',
+  '/stock/units',
   '/stock/locations',
+  '/stock/recipes',
   '/stock/product-links',
   '/stock/production-orders',
-  '/stock/recipes',
-  '/stock/settings',
+  '/stock/batches',
+  '/stock/alerts',
+  '/stock/reservations',
   '/stock/transactions',
-  '/stock/units',
   '/stock/variance-codes',
+  '/stock/settings',
+  // Settings
   '/app-settings',
   '/settings/roles',
   '/notifications',
@@ -78,15 +86,15 @@ test.describe('selected admin navigation', () => {
     })
   })
 
-  test('shows the approved pages in order and keeps notifications last', async ({ page }) => {
+  test('shows every page once: pinned first, then task groups, notifications last', async ({ page }) => {
     await page.goto('/warehouse')
 
     const sidebar = page.locator('#primary-navigation')
 
     await expect(page.locator('#app')).not.toHaveAttribute('aria-busy', 'true')
-    await expect(sidebar.locator('a.nav-item').first()).toBeVisible()
+    await expect(sidebar.locator('a.nav-item:not([data-recent])').first()).toBeVisible()
 
-    const hrefs = await sidebar.locator('a.nav-item').evaluateAll(links =>
+    const hrefs = await sidebar.locator('a.nav-item:not([data-recent])').evaluateAll(links =>
       links.map(link => link.getAttribute('href')),
     )
 
@@ -94,13 +102,13 @@ test.describe('selected admin navigation', () => {
 
     expect(hrefs).toEqual(expectedAdminNav)
     expect(sections.map(section => section.trim())).toEqual([
-      'Management',
-      'Staff',
+      'Sales',
       'Finance',
-      'Analytics',
-      'Stock',
+      'Staff',
+      'Reports',
+      'Warehouse: daily',
+      'Warehouse: setup',
       'Settings',
-      'Notifications',
     ])
     expect(hrefs.slice(-5)).toEqual([
       '/notifications',
@@ -139,7 +147,7 @@ test.describe('selected admin navigation', () => {
     await page.locator('.mobile-tabbar [aria-controls="primary-navigation"]').click()
     await expect(sidebar).toHaveClass(/is-open/)
 
-    await sidebar.locator('.sidebar-group__heading').filter({ hasText: 'Bildirishnomalar' }).click()
+    await sidebar.locator('.sidebar-group__heading').filter({ hasText: 'Sozlamalar' }).click()
 
     const lastNotification = sidebar.locator('a[href="/notification-types"]')
 

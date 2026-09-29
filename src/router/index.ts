@@ -149,4 +149,36 @@ router.beforeEach(to => {
   }
 })
 
+// After a deploy an already-open tab still points at the previous build's
+// hashed page chunks, which no longer exist. The lazy route import then
+// rejects and a sidebar click silently does nothing. Load the target page
+// fresh instead (once per target, so a real outage cannot loop).
+const CHUNK_RELOAD_KEY = 'alphapos-chunk-reload'
+const CHUNK_ERROR = /Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module|Loading (CSS )?chunk|ChunkLoadError/i
+
+router.onError((error, to) => {
+  if (!CHUNK_ERROR.test(String((error as Error)?.message ?? error)))
+    return
+  const target = to?.fullPath || window.location.pathname
+  try {
+    if (sessionStorage.getItem(CHUNK_RELOAD_KEY) === target)
+      return
+    sessionStorage.setItem(CHUNK_RELOAD_KEY, target)
+  }
+  catch { /* Without storage, still try the one reload below. */ }
+  window.location.assign(target)
+})
+
+router.afterEach(() => {
+  try { sessionStorage.removeItem(CHUNK_RELOAD_KEY) }
+  catch { /* Nothing to clear. */ }
+})
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('vite:preloadError', event => {
+    event.preventDefault()
+    window.location.reload()
+  })
+}
+
 export default router

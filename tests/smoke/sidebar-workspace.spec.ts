@@ -29,14 +29,23 @@ test('sidebar search exposes grouped destinations and restores the current route
   await search.press('Escape')
   await expect(search).toHaveValue('')
   await expect(sidebar.locator('a[aria-current="page"]')).toBeVisible()
-  const finance = sidebar.getByRole('button', { name: 'Finance', exact: true })
-  await expect(finance).toHaveAttribute('aria-expanded', 'true')
-  await expect(sidebar.locator('a[href="/treasury"]')).toBeVisible()
-  await finance.click()
+  // One group open at a time: the one holding the current page.
+  const sales = sidebar.getByRole('button', { name: /^Sales/ })
+  const finance = sidebar.getByRole('button', { name: /^Finance/ })
+  await expect(sales).toHaveAttribute('aria-expanded', 'true')
   await expect(finance).toHaveAttribute('aria-expanded', 'false')
-  await expect(sidebar.locator('a[href="/treasury"]')).toBeHidden()
+  await finance.click()
+  await expect(finance).toHaveAttribute('aria-expanded', 'true')
+  await expect(sales).toHaveAttribute('aria-expanded', 'false')
+  await expect(sidebar.locator('a[href="/cashbox/categories"]')).toBeVisible()
+  await expect(sidebar.locator('a.nav-item:not([data-recent])[href="/discounts"]')).toBeHidden()
+  // Everyday pages stay pinned whatever group is open.
+  await expect(sidebar.locator('a[href="/treasury"]')).toBeVisible()
+  await expect(sidebar.locator('a[href="/orders"]')).toBeVisible()
+  // The page visited before shows under "Recently opened".
+  await expect(sidebar.locator('a[data-recent][href="/discounts/secret-word"]')).toBeVisible()
   await page.reload()
-  await expect(sidebar.getByRole('button', { name: 'Finance', exact: true })).toHaveAttribute('aria-expanded', 'false')
+  await expect(sidebar.getByRole('button', { name: /^Sales/ })).toHaveAttribute('aria-expanded', 'true')
 })
 
 test('compact navigation keeps accessible labels and expands correctly on mobile', async ({ page }) => {
@@ -45,7 +54,9 @@ test('compact navigation keeps accessible labels and expands correctly on mobile
   const sidebar = page.locator('#primary-navigation')
   await sidebar.getByRole('button', { name: 'Collapse sidebar', exact: true }).first().click()
   await expect(sidebar).toHaveClass(/is-collapsed/)
-  await expect(sidebar.getByRole('link', { name: 'Users', exact: true })).toHaveAttribute('aria-current', 'page')
+  // Collapsed, each group is one icon; the group holding the page is marked.
+  await expect(sidebar.getByRole('button', { name: 'Staff', exact: true })).toHaveClass(/is-active/)
+  await expect(sidebar.getByRole('link', { name: 'Dashboard', exact: true })).toBeVisible()
   await page.setViewportSize({ width: 390, height: 844 })
   await page.locator('.mobile-tabbar [aria-controls="primary-navigation"]').click()
   await expect(sidebar).not.toHaveClass(/is-collapsed/)

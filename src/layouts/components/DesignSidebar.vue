@@ -13,7 +13,6 @@ import { useUserAccess } from '@/composables/useUserAccess'
 // Navigation uses the established Alpha palette. Primary destinations stay
 // visible; searchable domain groups keep the full route set within reach.
 
-interface NavSection { type: 'section'; label: string }
 interface NavItem {
   type: 'item'
   id: string
@@ -25,7 +24,6 @@ interface NavItem {
   allPermissions?: string[]
   allowedRoles?: string[]
 }
-type NavEntry = NavSection | NavItem
 
 const props = defineProps<{ collapsed?: boolean; open?: boolean }>()
 const emit = defineEmits<{ (e: 'navGo'): void; (e: 'close'): void; (e: 'toggle'): void }>()
@@ -82,43 +80,37 @@ function badgeFor(id: string): string | undefined {
 }
 
 // Keep route identities and backend permissions independent of presentation.
-const NAV: NavEntry[] = [
+const ITEMS: NavItem[] = [
   { type: 'item', id: 'dashboard', label: 'Dashboard', icon: 'dashboard', to: '/' },
-  { type: 'item', id: 'compare-periods', label: 'Product comparison', icon: 'exchange', to: '/analytics/compare' },
-  { type: 'item', id: 'ai', label: 'AI Assistant', icon: 'ai', to: '/ai-assistant' },
-  { type: 'item', id: 'shifts', label: 'Shifts', icon: 'clock', to: '/shifts-analytics' },
-  { type: 'section', label: 'Management' },
-  { type: 'item', id: 'users', label: 'Users', icon: 'users', to: '/users' },
-  { type: 'item', id: 'categories', label: 'Categories', icon: 'grid', to: '/categories' },
-  { type: 'item', id: 'products', label: 'Products', icon: 'box', to: '/products' },
   { type: 'item', id: 'orders', label: 'Orders', icon: 'receipt', to: '/orders' },
+  { type: 'item', id: 'shifts', label: 'Shifts', icon: 'clock', to: '/shifts-analytics' },
+  { type: 'item', id: 'hr-expenses', label: 'Expenses', icon: 'coins', to: '/hr-expenses', anyPermission: EXPENSE_REQUEST_PERMISSIONS },
+  { type: 'item', id: 'money-control', label: 'Money Control', icon: 'wallet', to: '/money-control', anyPermission: ['money.control.view'] },
+  { type: 'item', id: 'treasury', label: 'Treasury', icon: 'store', to: '/treasury', anyPermission: ['treasury.account.view'] },
+  { type: 'item', id: 'products', label: 'Products', icon: 'box', to: '/products' },
+  { type: 'item', id: 'categories', label: 'Categories', icon: 'grid', to: '/categories' },
   { type: 'item', id: 'places', label: 'Places & Tables', icon: 'table', to: '/places' },
   { type: 'item', id: 'discounts', label: 'Discounts', icon: 'tag', to: '/discounts' },
   { type: 'item', id: 'secret-word-discounts', label: 'discount_secret_title', icon: 'lock', to: '/discounts/secret-word' },
   { type: 'item', id: 'loyalty', label: 'Loyalty', icon: 'gift', to: '/loyalty' },
-  { type: 'section', label: 'Staff' },
+  { type: 'item', id: 'cash', label: 'Cashbox Expense Categories', icon: 'register', to: '/cashbox/categories' },
+  { type: 'item', id: 'users', label: 'Users', icon: 'users', to: '/users' },
   { type: 'item', id: 'hr-employees', label: 'Employees', icon: 'users', to: '/hr-employees', allowedRoles: ['ADMIN'] },
   { type: 'item', id: 'hr-salaries', label: 'Salaries', icon: 'wallet', to: '/hr-salaries', allowedRoles: ['ADMIN'] },
   { type: 'item', id: 'hr-departments', label: 'Departments', icon: 'building', to: '/hr-departments', allowedRoles: ['ADMIN'] },
-  { type: 'section', label: 'Finance' },
-  { type: 'item', id: 'cash', label: 'Cashbox Expense Categories', icon: 'register', to: '/cashbox/categories' },
-  { type: 'item', id: 'hr-expenses', label: 'Expenses', icon: 'coins', to: '/hr-expenses', anyPermission: EXPENSE_REQUEST_PERMISSIONS },
-  { type: 'item', id: 'money-control', label: 'Money Control', icon: 'wallet', to: '/money-control', anyPermission: ['money.control.view'] },
-  { type: 'item', id: 'treasury', label: 'Treasury', icon: 'store', to: '/treasury', anyPermission: ['treasury.account.view'] },
-  { type: 'section', label: 'Analytics' },
+  { type: 'item', id: 'compare-periods', label: 'Product comparison', icon: 'exchange', to: '/analytics/compare' },
   { type: 'item', id: 'product-statistics', label: 'Product sales analytics', icon: 'trend', to: '/analytics/product-statistics' },
   { type: 'item', id: 'product-performance', label: 'report_title', icon: 'receipt', to: '/reports/product-performance', allowedRoles: ['ADMIN', 'MANAGER'] },
   { type: 'item', id: 'menu-engineering', label: 'Menu Engineering', icon: 'chart', to: '/analytics/menu-engineering' },
   { type: 'item', id: 'demand-forecast', label: 'Demand Forecast', icon: 'trend', to: '/forecast/tomorrow' },
-  { type: 'section', label: 'Stock' },
+  { type: 'item', id: 'ai', label: 'AI Assistant', icon: 'ai', to: '/ai-assistant' },
   { type: 'item', id: 'warehouse', label: 'Warehouse operations', icon: 'package', to: '/warehouse', anyPermission: WAREHOUSE_WORKSPACE_PERMISSIONS },
-  { type: 'item', id: 'stock-items', label: 'Stock Items', icon: 'box', to: '/stock/items', anyPermission: ['stock.catalog.view'] },
   { type: 'item', id: 'stock-levels', label: 'Stock Levels', icon: 'bars', to: '/stock/levels', anyPermission: ['stock.level.view'] },
-  { type: 'item', id: 'stock-batches', label: 'Batches', icon: 'package', to: '/stock/batches', anyPermission: ['stock.batch.view'] },
-  { type: 'item', id: 'stock-suppliers', label: 'Suppliers', icon: 'building', to: '/stock/suppliers', anyPermission: ['stock.supplier.view'] },
   { type: 'item', id: 'stock-purchase-invoices', label: 'Supplier invoices', icon: 'inbox', to: '/stock/purchase-invoices', anyPermission: ['stock.purchase_invoice.view', 'stock.purchase_invoice.receive'] },
+  { type: 'item', id: 'stock-suppliers', label: 'Suppliers', icon: 'building', to: '/stock/suppliers', anyPermission: ['stock.supplier.view'] },
   { type: 'item', id: 'stock-purchase-orders', label: 'Purchase Orders', icon: 'receipt', to: '/stock/purchase-orders', anyPermission: ['stock.purchase.view'] },
   { type: 'item', id: 'stock-receiving', label: 'PO receiving', icon: 'inbox', to: '/stock/receiving', anyPermission: ['stock.purchase.view'] },
+  { type: 'item', id: 'stock-transfers', label: 'Transfers', icon: 'share', to: '/stock/transfers', anyPermission: ['stock.transfer.view'] },
   { type: 'item', id: 'stock-counts', label: 'Stock Counts', icon: 'list', to: '/stock/counts', anyPermission: ['stock.count.view'] },
   { type: 'item', id: 'stock-adjustment-requests', label: 'Stock adjustment requests', icon: 'sliders', to: '/stock/adjustment-requests', anyPermission: ['stock.adjustment.request'] },
   {
@@ -130,22 +122,21 @@ const NAV: NavEntry[] = [
     allPermissions: ['stock.adjustment.approve', 'stock.catalog.view'],
     anyPermission: ['stock.level.view', 'stock.inventory_control.view'],
   },
-  { type: 'item', id: 'stock-transfers', label: 'Transfers', icon: 'share', to: '/stock/transfers', anyPermission: ['stock.transfer.view'] },
-  { type: 'item', id: 'stock-alerts', label: 'Stock Alerts', icon: 'alert', to: '/stock/alerts' },
-  { type: 'item', id: 'stock-reservations', label: 'Reservations', icon: 'lock', to: '/stock/reservations' },
+  { type: 'item', id: 'stock-items', label: 'Stock Items', icon: 'box', to: '/stock/items', anyPermission: ['stock.catalog.view'] },
   { type: 'item', id: 'stock-categories', label: 'Stock Categories', icon: 'grid', to: '/stock/categories' },
+  { type: 'item', id: 'stock-units', label: 'Units', icon: 'list', to: '/stock/units' },
   { type: 'item', id: 'stock-locations', label: 'Stock Locations', icon: 'building', to: '/stock/locations', anyPermission: ['stock.level.view', 'stock.inventory_control.view'] },
+  { type: 'item', id: 'stock-recipes', label: 'Recipes', icon: 'list', to: '/stock/recipes' },
   { type: 'item', id: 'stock-product-links', label: 'Product Stock Links', icon: 'share', to: '/stock/product-links' },
   { type: 'item', id: 'stock-production-orders', label: 'Production Orders', icon: 'gear', to: '/stock/production-orders' },
-  { type: 'item', id: 'stock-recipes', label: 'Recipes', icon: 'list', to: '/stock/recipes' },
-  { type: 'item', id: 'stock-settings', label: 'Stock Settings', icon: 'gear', to: '/stock/settings' },
+  { type: 'item', id: 'stock-batches', label: 'Batches', icon: 'package', to: '/stock/batches', anyPermission: ['stock.batch.view'] },
+  { type: 'item', id: 'stock-alerts', label: 'Stock Alerts', icon: 'alert', to: '/stock/alerts' },
+  { type: 'item', id: 'stock-reservations', label: 'Reservations', icon: 'lock', to: '/stock/reservations' },
   { type: 'item', id: 'stock-transactions', label: 'Stock Transactions', icon: 'clock', to: '/stock/transactions' },
-  { type: 'item', id: 'stock-units', label: 'Units', icon: 'list', to: '/stock/units' },
   { type: 'item', id: 'stock-variance-codes', label: 'Variance Codes', icon: 'alert', to: '/stock/variance-codes' },
-  { type: 'section', label: 'Settings' },
+  { type: 'item', id: 'stock-settings', label: 'Stock Settings', icon: 'gear', to: '/stock/settings' },
   { type: 'item', id: 'app-settings', label: 'App Settings', icon: 'gear', to: '/app-settings' },
   { type: 'item', id: 'roles', label: 'Roles & Permissions', icon: 'lock', to: '/settings/roles' },
-  { type: 'section', label: 'Notifications' },
   { type: 'item', id: 'notifications', label: 'Notifications', icon: 'bell', to: '/notifications' },
   { type: 'item', id: 'notification-queue', label: 'Notification Queue', icon: 'inbox', to: '/notification-queue' },
   { type: 'item', id: 'notification-settings', label: 'Notification Settings', icon: 'sliders', to: '/notification-settings' },
@@ -153,93 +144,127 @@ const NAV: NavEntry[] = [
   { type: 'item', id: 'notification-types', label: 'Notification Types', icon: 'bell', to: '/notification-types' },
 ]
 
-const WAREHOUSE_NAV: NavEntry[] = [
-  { type: 'item', id: 'warehouse', label: 'Warehouse operations', icon: 'package', to: '/warehouse' },
-  { type: 'section', label: 'Stock' },
-  { type: 'item', id: 'stock-items', label: 'Stock Items', icon: 'box', to: '/stock/items', anyPermission: ['stock.catalog.view'] },
-  { type: 'item', id: 'stock-levels', label: 'Stock Levels', icon: 'bars', to: '/stock/levels', anyPermission: ['stock.level.view'] },
-  { type: 'item', id: 'stock-batches', label: 'Batches', icon: 'package', to: '/stock/batches', anyPermission: ['stock.batch.view'] },
-  { type: 'item', id: 'stock-suppliers', label: 'Suppliers', icon: 'building', to: '/stock/suppliers', anyPermission: ['stock.supplier.view'] },
-  { type: 'item', id: 'stock-purchase-invoices', label: 'Supplier invoices', icon: 'inbox', to: '/stock/purchase-invoices', anyPermission: ['stock.purchase_invoice.view', 'stock.purchase_invoice.receive'] },
-  { type: 'item', id: 'stock-purchase-orders', label: 'Purchase Orders', icon: 'receipt', to: '/stock/purchase-orders', anyPermission: ['stock.purchase.view'] },
-  { type: 'item', id: 'stock-receiving', label: 'PO receiving', icon: 'inbox', to: '/stock/receiving', anyPermission: ['stock.purchase.view'] },
-  { type: 'item', id: 'stock-counts', label: 'Stock Counts', icon: 'list', to: '/stock/counts', anyPermission: ['stock.count.view'] },
-  { type: 'item', id: 'stock-adjustment-requests', label: 'Stock adjustment requests', icon: 'sliders', to: '/stock/adjustment-requests', anyPermission: ['stock.adjustment.request'] },
-  {
-    type: 'item',
-    id: 'stock-adjustments',
-    label: 'Adjustments',
-    icon: 'sliders',
-    to: '/stock/adjustments',
-    allPermissions: ['stock.adjustment.approve', 'stock.catalog.view'],
-    anyPermission: ['stock.level.view', 'stock.inventory_control.view'],
-  },
-  { type: 'item', id: 'stock-transfers', label: 'Transfers', icon: 'share', to: '/stock/transfers', anyPermission: ['stock.transfer.view'] },
-  { type: 'section', label: 'Finance' },
-  { type: 'item', id: 'hr-expenses', label: 'Expenses', icon: 'coins', to: '/hr-expenses', anyPermission: EXPENSE_REQUEST_PERMISSIONS },
-]
+const ITEM_BY_ID = new Map(ITEMS.map(item => [item.id, item]))
 
-const visibleNav = computed<NavEntry[]>(() => {
-  const source = isWarehouse.value ? WAREHOUSE_NAV : NAV
+interface GroupDef { id: string; label: string; icon: string; items: string[] }
+interface Layout { pinned: string[]; groups: GroupDef[] }
 
-  const allowed = source.filter(entry => entry.type === 'section' || (
-    (!entry.anyPermission?.length || hasAnyPermission(entry.anyPermission))
-    && (!entry.allPermissions?.length || hasAllPermissions(entry.allPermissions))
-    && (!entry.allowedRoles?.length || entry.allowedRoles.includes(role.value))
-  ))
+// The everyday pages sit on top and never hide; everything else lives in a
+// handful of task-named groups, and only one group is open at a time.
+const ADMIN_LAYOUT: Layout = {
+  pinned: ['dashboard', 'orders', 'shifts', 'hr-expenses', 'money-control', 'treasury'],
+  groups: [
+    { id: 'sales', label: 'nav_group_sales', icon: 'receipt', items: ['products', 'categories', 'places', 'discounts', 'secret-word-discounts', 'loyalty'] },
+    { id: 'finance', label: 'Finance', icon: 'wallet', items: ['cash'] },
+    { id: 'staff', label: 'Staff', icon: 'users', items: ['users', 'hr-employees', 'hr-salaries', 'hr-departments'] },
+    { id: 'reports', label: 'nav_group_reports', icon: 'chart', items: ['compare-periods', 'product-statistics', 'product-performance', 'menu-engineering', 'demand-forecast', 'ai'] },
+    { id: 'stock-daily', label: 'nav_group_stock_daily', icon: 'package', items: ['warehouse', 'stock-levels', 'stock-purchase-invoices', 'stock-suppliers', 'stock-purchase-orders', 'stock-receiving', 'stock-transfers', 'stock-counts', 'stock-adjustment-requests', 'stock-adjustments'] },
+    { id: 'stock-setup', label: 'nav_group_stock_setup', icon: 'box', items: ['stock-items', 'stock-categories', 'stock-units', 'stock-locations', 'stock-recipes', 'stock-product-links', 'stock-production-orders', 'stock-batches', 'stock-alerts', 'stock-reservations', 'stock-transactions', 'stock-variance-codes', 'stock-settings'] },
+    { id: 'settings', label: 'Settings', icon: 'gear', items: ['app-settings', 'roles', 'notifications', 'notification-queue', 'notification-settings', 'notification-templates', 'notification-types'] },
+  ],
+}
 
-  return allowed.filter((entry, index) => {
-    if (entry.type !== 'section')
-      return true
+const WAREHOUSE_LAYOUT: Layout = {
+  pinned: ['warehouse', 'hr-expenses'],
+  groups: [
+    { id: 'stock-daily', label: 'nav_group_stock_daily', icon: 'package', items: ['stock-levels', 'stock-purchase-invoices', 'stock-suppliers', 'stock-purchase-orders', 'stock-receiving', 'stock-transfers', 'stock-counts', 'stock-adjustment-requests', 'stock-adjustments'] },
+    { id: 'stock-setup', label: 'nav_group_stock_setup', icon: 'box', items: ['stock-items', 'stock-batches'] },
+  ],
+}
 
-    const next = allowed[index + 1]
+function allowed(item: NavItem | undefined): item is NavItem {
+  if (!item)
+    return false
+  if (isWarehouse.value && item.id === 'warehouse')
+    return true
 
-    return !!next && next.type === 'item'
-  })
-})
+  return (!item.anyPermission?.length || hasAnyPermission(item.anyPermission))
+    && (!item.allPermissions?.length || hasAllPermissions(item.allPermissions))
+    && (!item.allowedRoles?.length || item.allowedRoles.includes(role.value))
+}
 
-interface NavGroup { label: string; items: NavItem[] }
+const layout = computed(() => isWarehouse.value ? WAREHOUSE_LAYOUT : ADMIN_LAYOUT)
+const pinned = computed(() => layout.value.pinned.map(id => ITEM_BY_ID.get(id)).filter(allowed))
+
+interface NavGroup { id: string; label: string; icon: string; items: NavItem[] }
+
+const groups = computed<NavGroup[]>(() => layout.value.groups
+  .map(group => ({ ...group, items: group.items.map(id => ITEM_BY_ID.get(id)).filter(allowed) }))
+  .filter(group => group.items.length))
+
+const visibleItems = computed(() => [...pinned.value, ...groups.value.flatMap(group => group.items)])
+
 const search = ref('')
 const searchInput = ref<{ focus: () => void } | null>(null)
-const collapsedGroups = ref<string[]>(['Stock', 'Settings', 'Notifications'])
 const compact = computed(() => !!props.collapsed && !isMobile.value)
-const sectionIcons: Record<string, string> = { Management: 'grid', Finance: 'wallet', Analytics: 'chart', Stock: 'package', Settings: 'gear', Notifications: 'bell' }
-
-const activePath = computed(() => visibleNav.value
-  .filter((entry): entry is NavItem => entry.type === 'item' && (route.path === entry.to || route.path.startsWith(`${entry.to}/`)))
-  .sort((a, b) => b.to.length - a.to.length)[0]?.to)
 
 function navLabel(item: NavItem): string { return routeLabelForPath(item.to) || item.label }
+
+const activePath = computed(() => visibleItems.value
+  .filter(item => route.path === item.to || route.path.startsWith(`${item.to}/`) || (item.to === '/' && route.path === '/'))
+  .filter(item => item.to !== '/' || route.path === '/')
+  .sort((a, b) => b.to.length - a.to.length)[0]?.to)
+
 function isActive(item: NavItem): boolean { return activePath.value === item.to }
 
-const groups = computed(() => {
-  const result: NavGroup[] = [{ label: '', items: [] }]
-  for (const entry of visibleNav.value) {
-    if (entry.type === 'section')
-      result.push({ label: entry.label, items: [] })
-    else
-      result[result.length - 1].items.push(entry)
-  }
+const activeGroupId = computed(() => groups.value.find(group => group.items.some(isActive))?.id ?? null)
+const openGroup = ref<string | null>(null)
+
+function groupOpen(id: string) { return openGroup.value === id }
+function toggleGroup(id: string) {
+  openGroup.value = openGroup.value === id ? null : id
+}
+async function openFromRail(id: string) {
+  openGroup.value = id
+  emit('toggle')
+}
+
+const searchResults = computed(() => {
   const query = search.value.trim().toLocaleLowerCase()
-  return result.map(group => ({ ...group, items: group.items.filter(item => !query || (group.label && t(group.label).toLocaleLowerCase().includes(query)) || t(navLabel(item)).toLocaleLowerCase().includes(query)) })).filter(group => group.items.length)
+  if (!query)
+    return []
+
+  return [
+    ...pinned.value.map(item => ({ item, group: '' })),
+    ...groups.value.flatMap(group => group.items.map(item => ({ item, group: group.label }))),
+  ].filter(({ item, group }) => t(navLabel(item)).toLocaleLowerCase().includes(query)
+    || (group && t(group).toLocaleLowerCase().includes(query)))
+    .map(({ item }) => item)
 })
 
-function groupOpen(label: string) { return !label || !!search.value.trim() || !collapsedGroups.value.includes(label) }
-function toggleGroup(label: string) {
-  collapsedGroups.value = collapsedGroups.value.includes(label) ? collapsedGroups.value.filter(key => key !== label) : [...collapsedGroups.value, label]
-  try { localStorage.setItem('alphapos-nav-groups', JSON.stringify(collapsedGroups.value)) }
-  catch { /* Navigation remains usable when storage is unavailable. */ }
+// Recently opened pages, so the second visit is one click from the top.
+const RECENT_KEY = 'alphapos-nav-recent'
+const recentIds = ref<string[]>([])
+
+const recent = computed(() => recentIds.value
+  .map(id => ITEM_BY_ID.get(id))
+  .filter((item): item is NavItem => allowed(item) && visibleItems.value.includes(item) && !pinned.value.includes(item) && !isActive(item))
+  .slice(0, 4))
+
+function rememberActive() {
+  const item = visibleItems.value.find(isActive)
+  if (!item || pinned.value.includes(item))
+    return
+  recentIds.value = [item.id, ...recentIds.value.filter(id => id !== item.id)].slice(0, 6)
+  try { localStorage.setItem(RECENT_KEY, JSON.stringify(recentIds.value)) }
+  catch { /* Navigation stays usable without storage. */ }
 }
-function revealActiveGroup() {
-  const group = groups.value.find(candidate => candidate.items.some(isActive))
-  if (group)
-    collapsedGroups.value = collapsedGroups.value.filter(label => label !== group.label)
-}
+
 function onSearchKey(event: KeyboardEvent) {
   if (event.key === 'Escape' && search.value) {
     event.preventDefault()
     event.stopPropagation()
     search.value = ''
+  }
+  if (event.key === 'Enter' && searchResults.value.length) {
+    event.preventDefault()
+
+    const first = searchResults.value[0]
+
+    search.value = ''
+    if (route.path !== first.to)
+      router.push(first.to)
+    emit('navGo')
   }
 }
 async function focusSearch(event: KeyboardEvent) {
@@ -254,23 +279,30 @@ async function focusSearch(event: KeyboardEvent) {
 }
 onMounted(() => {
   try {
-    const saved = JSON.parse(localStorage.getItem('alphapos-nav-groups') || 'null')
+    const saved = JSON.parse(localStorage.getItem(RECENT_KEY) || 'null')
     if (Array.isArray(saved) && saved.every(value => typeof value === 'string'))
-      collapsedGroups.value = saved
+      recentIds.value = saved
   }
-  catch { /* Keep the default groups. */ }
-  revealActiveGroup()
+  catch { /* Start with no recent pages. */ }
+  openGroup.value = activeGroupId.value
+  rememberActive()
   window.addEventListener('keydown', focusSearch)
 })
 onBeforeUnmount(() => window.removeEventListener('keydown', focusSearch))
-watch(() => route.path, () => { search.value = ''; revealActiveGroup() })
+watch(() => route.path, () => {
+  search.value = ''
+  if (activeGroupId.value)
+    openGroup.value = activeGroupId.value
+  rememberActive()
+})
 
 function onNavClick(e: MouseEvent, item: NavItem) {
   // Honor modifier / middle clicks — let the browser open in new tab/window via the anchor's href.
   if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || e.button === 1)
     return
   e.preventDefault()
-  if (route.path !== item.to)
+  search.value = ''
+  if (route.fullPath !== item.to)
     router.push(item.to)
   emit('navGo')
 }
@@ -353,53 +385,121 @@ function onNavClick(e: MouseEvent, item: NavItem) {
       class="sidebar__nav"
       :aria-label="t('Navigation')"
     >
-      <section
-        v-for="group in groups"
-        :key="group.label"
-        class="sidebar-group"
-        :class="{ 'sidebar-group--primary': !group.label }"
-      >
-        <button
-          v-if="group.label && !compact"
-          type="button"
-          class="sidebar-group__heading"
-          :aria-expanded="groupOpen(group.label)"
-          :aria-controls="`sidebar-group-${group.label}`"
-          @click="toggleGroup(group.label)"
-        >
-          <DesignIcon
-            :name="sectionIcons[group.label] || 'grid'"
-            :size="15"
-          /><span>{{ t(group.label) }}</span><DesignIcon
-            class="sidebar-group__chevron"
-            name="chevdown"
-            :size="14"
-          />
-        </button>
-        <div
-          v-show="compact || groupOpen(group.label)"
-          :id="`sidebar-group-${group.label}`"
-          class="sidebar-group__items"
-        >
+      <template v-if="search.trim() && !compact">
+        <div class="sidebar-group__items sidebar-results">
           <SidebarLink
-            v-for="item in group.items"
+            v-for="item in searchResults"
             :key="item.id"
             :to="item.to"
             :label="t(navLabel(item))"
             :icon="item.icon"
             :active="isActive(item)"
-            :compact="compact"
+            :compact="false"
             :badge="badgeFor(item.id) || item.badge"
             @navigate="onNavClick($event, item)"
           />
         </div>
-      </section>
-      <p
-        v-if="!groups.length"
-        class="sidebar__empty"
-      >
-        {{ t('No results') }}
-      </p>
+        <p
+          v-if="!searchResults.length"
+          class="sidebar__empty"
+        >
+          {{ t('No results') }}
+        </p>
+      </template>
+      <template v-else>
+        <section class="sidebar-group sidebar-group--primary">
+          <div class="sidebar-group__items">
+            <SidebarLink
+              v-for="item in pinned"
+              :key="item.id"
+              :to="item.to"
+              :label="t(navLabel(item))"
+              :icon="item.icon"
+              :active="isActive(item)"
+              :compact="compact"
+              :badge="badgeFor(item.id) || item.badge"
+              @navigate="onNavClick($event, item)"
+            />
+          </div>
+        </section>
+        <section
+          v-if="recent.length && !compact"
+          class="sidebar-group sidebar-recent"
+        >
+          <p class="sidebar-recent__title">
+            {{ t('nav_recent') }}
+          </p>
+          <div class="sidebar-group__items">
+            <SidebarLink
+              v-for="item in recent"
+              :key="`recent-${item.id}`"
+              :to="item.to"
+              :label="t(navLabel(item))"
+              :icon="item.icon"
+              :active="false"
+              :compact="false"
+              data-recent
+              @navigate="onNavClick($event, item)"
+            />
+          </div>
+        </section>
+        <section
+          v-for="group in groups"
+          :key="group.id"
+          class="sidebar-group"
+          :class="{ 'has-active': group.id === activeGroupId }"
+        >
+          <button
+            v-if="compact"
+            type="button"
+            class="sidebar-group__rail"
+            :class="{ 'is-active': group.id === activeGroupId }"
+            :title="t(group.label)"
+            :aria-label="t(group.label)"
+            @click="openFromRail(group.id)"
+          >
+            <DesignIcon
+              :name="group.icon"
+              :size="19"
+            />
+          </button>
+          <template v-else>
+            <button
+              type="button"
+              class="sidebar-group__heading"
+              :aria-expanded="groupOpen(group.id)"
+              :aria-controls="`sidebar-group-${group.id}`"
+              @click="toggleGroup(group.id)"
+            >
+              <DesignIcon
+                :name="group.icon"
+                :size="15"
+              /><span>{{ t(group.label) }}</span><small class="sidebar-group__count">{{ group.items.length }}</small><DesignIcon
+                class="sidebar-group__chevron"
+                name="chevdown"
+                :size="14"
+              />
+            </button>
+            <div
+              v-show="groupOpen(group.id)"
+              :id="`sidebar-group-${group.id}`"
+              class="sidebar-group__items"
+            >
+              <SidebarLink
+                v-for="item in group.items"
+                :key="item.id"
+                :to="item.to"
+                :label="t(navLabel(item))"
+                :icon="item.icon"
+                :active="isActive(item)"
+                :compact="false"
+                :badge="badgeFor(item.id) || item.badge"
+                @navigate="onNavClick($event, item)"
+              />
+            </div>
+          </template>
+        </section>
+      </template>
     </nav>
     <div class="sidebar__footer">
       <button
